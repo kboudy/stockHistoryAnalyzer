@@ -1,6 +1,6 @@
 const axios = require('axios'),
   moment = require('moment'),
-  { consumerKey } = require('./constants'),
+  { consumerKey, stockDataDir } = require('./constants'),
   path = require('path'),
   fs = require('fs');
 
@@ -56,7 +56,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       currentYear += 5;
     }
     fs.writeFileSync(
-      path.join(__dirname, `stockData/${symbol}.json`),
+      path.join(stockDataDir, `${symbol}.json`),
       JSON.stringify(allHistoricalData),
       'utf8'
     );
