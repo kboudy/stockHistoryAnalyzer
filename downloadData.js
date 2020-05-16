@@ -1,6 +1,6 @@
 const axios = require('axios'),
   moment = require('moment'),
-  { consumerKey, stockDataDir } = require('./helpers/constants'),
+  { TDA_consumerKey, stockDataDir } = require('./helpers/constants'),
   path = require('path'),
   fs = require('fs');
 
@@ -11,7 +11,7 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
       .valueOf();
     const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
 
-    const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
+    const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
 
     const res = await axios.get(url);
     const { candles } = res.data;
