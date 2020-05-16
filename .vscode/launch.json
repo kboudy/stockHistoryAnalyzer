@@ -7,9 +7,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "patternAnalysis.js",
+      "name": "discoverPatterns.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/patternAnalysis.js"
+      "program": "${workspaceFolder}/discoverPatterns.js"
     }
   ]
 }

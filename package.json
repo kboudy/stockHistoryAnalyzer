@@ -20,7 +20,9 @@
   "dependencies": {
     "axios": "^0.19.2",
     "lodash": "^4.17.15",
+    "mathjs": "^7.0.0",
     "moment": "^2.25.3",
+    "mongoose": "^5.9.14",
     "papaparse": "^5.1.0"
   }
 }

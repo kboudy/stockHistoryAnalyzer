@@ -1,4 +1,4 @@
-const { stockDataDir } = require('./constants'),
+const { stockDataDir } = require('./helpers/constants'),
   path = require('path'),
   fs = require('fs');
 
@@ -6,8 +6,11 @@ exports.loadHistoricalDataForSymbol = (symbol) => {
   const candles = JSON.parse(
     fs.readFileSync(path.join(stockDataDir, `${symbol}.json`), 'utf8')
   );
-  const dateArray = Object.keys(candles).sort();
-  return { dateArray, candles };
+  return Object.keys(candles)
+    .sort()
+    .map((d) => {
+      return { date: d, ...candles[d] };
+    });
 };
 
 exports.getAvailableSymbolNames = () => {

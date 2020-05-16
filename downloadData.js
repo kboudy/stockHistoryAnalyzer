@@ -1,6 +1,6 @@
 const axios = require('axios'),
   moment = require('moment'),
-  { consumerKey, stockDataDir } = require('./constants'),
+  { consumerKey, stockDataDir } = require('./helpers/constants'),
   path = require('path'),
   fs = require('fs');
 
