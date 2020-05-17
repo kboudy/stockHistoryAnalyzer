@@ -164,7 +164,10 @@ const discoverPatternsTest = () => {
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
-    patternStat.scoreIndexes = scores.map((s) => s.index);
+    patternStat.scoreIndexes = _.orderBy(
+      scores.map((s) => s.index),
+      (s) => parseInt(s)
+    );
     patternStat.scoreCount = scores.length;
     debugger;
   }
