@@ -7,9 +7,16 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "discoverPatterns.js",
+      "name": "index.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/discoverPatterns.js"
+      "program": "${workspaceFolder}/index.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "testDiscoverPatterns.js",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/tests/testDiscoverPatterns.js"
     }
   ]
 }

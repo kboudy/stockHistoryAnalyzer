@@ -81,9 +81,6 @@ const matchPattern = (sampleBars, allBars) => {
   return scores;
 };
 
-const significantBars = [1, 2, 5, 10, 20, 30, 40, 50];
-exports.significantBars = significantBars;
-
 const isCrossOver = (startIndex1, startIndex2, numberOfBars) => {
   const endIndex1 = startIndex1 + numberOfBars;
   const endIndex2 = startIndex2 + numberOfBars;
@@ -98,7 +95,8 @@ exports.getMatches = (
   startIndex,
   numberOfBars,
   targetPriceHistories, // an array of priceHistories to compare against the sourcePriceHistory
-  targetPriceHistorySymbols
+  targetPriceHistorySymbols,
+  significantBars
 ) => {
   const endIndex = startIndex + numberOfBars;
   const barsToMatch = sourcePriceHistory.slice(startIndex, endIndex);

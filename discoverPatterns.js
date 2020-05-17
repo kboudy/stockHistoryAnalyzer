@@ -24,7 +24,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
   const jobRun = await PatternStatsJobRun.create({
     created: moment.utc(),
-    numberOfBars: NUMBER_OF_BARS,
+    numberOfBars,
     sourcePriceInfo: { symbol },
     targetPriceInfos: [{ symbol }],
   });
@@ -43,10 +43,11 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     const scores = patternMatching.getMatches(
       sourcePriceHistory,
       i,
-      NUMBER_OF_BARS,
+      numberOfBars,
       targetPriceHistories,
-      [symbol] // the list of symbols which matches targetPriceHistories'
+      [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
+      constants.significantBars
     );
 
     if (scores.length === 0) {
@@ -63,16 +64,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.stdDev_maxDownsidePercent_byBarX = {};
     patternStat.upsideDownsideRatio_byBarX = {};
 
-    patternStat.avg_maxUpsidePercent_atBarX = {};
-    patternStat.stdDev_maxUpsidePercent_atBarX = {};
-    patternStat.avg_maxDownsidePercent_atBarX = {};
-    patternStat.stdDev_maxDownsidePercent_atBarX = {};
-    patternStat.upsideDownsideRatio_atBarX = {};
-
     patternStat.avg_profitLossPercent_atBarX = {};
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
-    for (const sb of patternMatching.significantBars) {
+    for (const sb of constants.significantBars) {
       const mup = scores
         .filter((s) => s.maxUpsidePercent_byBarX[sb] !== null)
         .map((s) => s.maxUpsidePercent_byBarX[sb]);
@@ -148,6 +143,8 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 // list the results in order of tightest-clumping consistent high or low.  store the standard deviation - that will probably be a tell
 
 (async () => {
+  discoverPatternsTest();
+
   await mongoApi.connectMongoose();
   const symbols = getAvailableSymbolNames();
 
