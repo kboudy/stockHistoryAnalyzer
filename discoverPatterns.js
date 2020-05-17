@@ -68,36 +68,36 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     for (const sb of constants.significantBars) {
-      const mup = scores
+      const mup_by = scores
         .filter((s) => s.maxUpsidePercent_byBarX[sb] !== null)
         .map((s) => s.maxUpsidePercent_byBarX[sb]);
 
-      const mdp = scores
+      const mdp_by = scores
         .filter((s) => s.maxDownsidePercent_byBarX[sb] !== null)
         .map((s) => s.maxDownsidePercent_byBarX[sb]);
 
-      const plp = scores
+      const plp_at = scores
         .filter((s) => s.profitLossPercent_atBarX[sb] !== null)
         .map((s) => s.profitLossPercent_atBarX[sb]);
 
-      if (mup.length > 0) {
+      if (mup_by.length > 0) {
         patternStat.avg_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
-          mup.reduce((a, b) => a + b) / scores.length
+          mup_by.reduce((a, b) => a + b) / scores.length
         );
         patternStat.stdDev_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
-          std(mup)
+          std(mup_by)
         );
       } else {
         patternStat.avg_maxUpsidePercent_byBarX[sb] = null;
         patternStat.stdDev_maxUpsidePercent_byBarX[sb] = null;
       }
 
-      if (mup.length > 0) {
+      if (mup_by.length > 0) {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
-          -mdp.reduce((a, b) => a + b) / scores.length
+          -mdp_by.reduce((a, b) => a + b) / scores.length
         );
         patternStat.stdDev_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
-          std(mdp)
+          std(mdp_by)
         );
       } else {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = null;
@@ -115,12 +115,12 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.upsideDownsideRatio_byBarX[sb] = null;
       }
 
-      if (plp.length > 0) {
+      if (plp_at.length > 0) {
         patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
-          plp.reduce((a, b) => a + b) / scores.length
+          plp_at.reduce((a, b) => a + b) / scores.length
         );
         patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
-          std(plp)
+          std(plp_at)
         );
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
