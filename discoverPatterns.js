@@ -66,7 +66,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.upsideDownsideRatio_byBarX = {};
 
     patternStat.avg_profitLossPercent_atBarX = {};
-    patternStat.percentProfitable_atBarX;
+    patternStat.percentProfitable_atBarX = {};
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     for (const sb of constants.significantBars) {
@@ -153,6 +153,8 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   const symbols = getAvailableSymbolNames();
 
   for (const symbol of symbols) {
+    console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);
+    process.stdout.write('  ');
     await discoverPatternsForSymbol(symbol, NUMBER_OF_BARS);
   }
   await mongoApi.disconnectMongoose();
