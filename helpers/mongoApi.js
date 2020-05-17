@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'),
+  { sleep } = require('../helpers/miscMethods');
 
 const INDEX_NAME = 'stock_analysis',
   MONGO_HOST_NAME = 'localhost',
@@ -6,10 +7,6 @@ const INDEX_NAME = 'stock_analysis',
 
 const mongoUrl = `mongodb://${MONGO_HOST_NAME}:${MONGO_PORT}/${INDEX_NAME}`;
 exports.mongoUrl = mongoUrl;
-
-const sleep = (ms) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
 
 const connectMongoose = async () => {
   const dbOptions = {

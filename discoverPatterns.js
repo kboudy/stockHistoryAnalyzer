@@ -19,7 +19,7 @@ const NUMBER_OF_BARS = 20;
 
 const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   let runningCount = 0;
-  const sourcePriceHistory = loadHistoricalDataForSymbol(symbol);
+  const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
   const totalCount = sourcePriceHistory.length - numberOfBars;
   let lastLoggedPercentComplete = 0;
 
@@ -187,7 +187,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  const symbols = getAvailableSymbolNames();
+  const symbols = await getAvailableSymbolNames();
 
   for (const symbol of symbols) {
     console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);

@@ -1,8 +1,11 @@
 const axios = require('axios'),
   moment = require('moment'),
   _ = require('lodash'),
-  { TDA_consumerKey, stockDataDir } = require('./helpers/constants'),
+  { TDA_consumerKey } = require('./helpers/constants'),
+  { sleep } = require('./helpers/miscMethods'),
   path = require('path'),
+  mongoApi = require('./helpers/mongoApi'),
+  Candle = require('./models/candle'),
   fs = require('fs');
 
 const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
@@ -14,21 +17,29 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
 
     const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
 
-    const res = await axios.get(url);
-    const { candles } = res.data;
+    let res;
+    try {
+      res = await axios.get(url);
+      await sleep(100); // to keep from getting a 429 - "too many requests", from TDAmeritrade
+      const { candles } = res.data;
+    } catch (err) {
+      // forgive the error if the start & end dates are the same
+      if (startDate !== endDate) {
+        throw err;
+      } else {
+        return [];
+      }
+    }
 
     if (candles.length === 0) {
       return {};
     }
-    const historicalDataByDate = candles.reduce((mainObj, item) => {
-      const cd = { ...item };
-      delete cd.datetime;
-      const date = moment(item.datetime).format('YYYY-MM-DD');
-      mainObj[date] = cd;
-      return mainObj;
-    }, {});
-
-    return historicalDataByDate;
+    for (const candle of candles) {
+      candle.date = moment(candle.datetime).format('YYYY-MM-DD');
+      candle.symbol = symbol;
+      delete candle.datetime;
+    }
+    return candles;
   } catch (err) {
     debugger;
   }
@@ -36,23 +47,26 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
 
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
-    const jsonPath = path.join(stockDataDir, `${symbol}.json`);
-
-    let allHistoricalData = {};
     let existingMaxDate = null;
     let currentYear = 1960;
-    if (fs.existsSync(jsonPath)) {
-      allHistoricalData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-      const dates = Object.keys(allHistoricalData);
-      existingMaxDate = _.orderBy(dates, (d) => d)[dates.length - 1];
-      currentYear = parseInt(existingMaxDate.split('-')[0]);
+
+    let candleWithMaxDate = await Candle.findOne({ symbol: symbol })
+      .sort({ date: -1 })
+      .limit(1);
+
+    if (candleWithMaxDate) {
+      currentYear = parseInt(candleWithMaxDate.date.split('-')[0]);
+      existingMaxDate = moment(candleWithMaxDate.date, 'YYYY-MM-DD')
+        .add(1, 'days')
+        .format('YYYY-MM-DD');
     }
+
     const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
     while (true) {
       let startDate = existingMaxDate
         ? existingMaxDate
         : `${currentYear}-01-01`;
-      existingMaxDate = null;
+      candleWithMaxDate = null;
       let endDate = `${currentYear + 4}-01-01`;
       if (startDate > yesterday) {
         startDate = yesterday;
@@ -65,17 +79,21 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
         startDate,
         endDate
       );
-      allHistoricalData = { ...allHistoricalData, ...historicalData };
+
+      if (historicalData.length) {
+        await Candle.insertMany(historicalData);
+      }
+
       if (endDate === yesterday) {
         break;
       }
       currentYear += 5;
     }
-    fs.writeFileSync(jsonPath, JSON.stringify(allHistoricalData), 'utf8');
   }
 };
 
 (async () => {
+  await mongoApi.connectMongoose();
   await downloadAndSaveMultipleSymbolHistory([
     'AAPL',
     'EEM',
@@ -89,4 +107,5 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     'SPY',
     'TSLA',
   ]);
+  await mongoApi.disconnectMongoose();
 })();

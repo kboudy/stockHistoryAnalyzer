@@ -1,25 +1,25 @@
-const { stockDataDir } = require('./constants'),
-  path = require('path'),
-  fs = require('fs');
+const path = require('path'),
+  Candle = require('../models/candle'),
+  _ = require('lodash');
 
-exports.loadHistoricalDataForSymbol = (symbol) => {
-  const candles = JSON.parse(
-    fs.readFileSync(path.join(stockDataDir, `${symbol}.json`), 'utf8')
-  );
-  return Object.keys(candles)
-    .sort()
-    .map((d) => {
-      return { date: d, ...candles[d] };
+exports.loadHistoricalDataForSymbol = async (symbol) => {
+  const candles = await Candle.find({ symbol }).lean().sort({ date: 1 });
+  const simplified = [];
+  for (const c of candles) {
+    simplified.push({
+      symbol: c.symbol,
+      date: c.date,
+      open: parseFloat(c.open),
+      high: parseFloat(c.high),
+      low: parseFloat(c.low),
+      close: parseFloat(c.close),
+      volume: parseInt(c.volume),
     });
+  }
+  return _.orderBy(simplified, (s) => s.date);
 };
 
-exports.getAvailableSymbolNames = () => {
-  const symbols = [];
-  const files = fs.readdirSync(stockDataDir);
-  for (const f of files) {
-    if (f.toLowerCase().endsWith('.json')) {
-      symbols.push(f.slice(0, f.length - 5).toUpperCase());
-    }
-  }
+exports.getAvailableSymbolNames = async () => {
+  const symbols = await Candle.find({}).lean().distinct('symbol');
   return symbols.sort();
 };
