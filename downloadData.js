@@ -21,7 +21,6 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
     try {
       res = await axios.get(url);
       await sleep(100); // to keep from getting a 429 - "too many requests", from TDAmeritrade
-      const { candles } = res.data;
     } catch (err) {
       // forgive the error if the start & end dates are the same
       if (startDate !== endDate) {
@@ -31,6 +30,7 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
       }
     }
 
+    const { candles } = res.data;
     if (candles.length === 0) {
       return {};
     }
@@ -47,6 +47,7 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
 
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
+    console.log(`Downloading ${symbol}`);
     let existingMaxDate = null;
     let currentYear = 1960;
 
@@ -55,10 +56,10 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       .limit(1);
 
     if (candleWithMaxDate) {
+      //note: i'm always wiping & re-requesting the last candle
+      await candleWithMaxDate.remove();
       currentYear = parseInt(candleWithMaxDate.date.split('-')[0]);
-      existingMaxDate = moment(candleWithMaxDate.date, 'YYYY-MM-DD')
-        .add(1, 'days')
-        .format('YYYY-MM-DD');
+      existingMaxDate = candleWithMaxDate.date;
     }
 
     const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
@@ -96,6 +97,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   await mongoApi.connectMongoose();
   await downloadAndSaveMultipleSymbolHistory([
     'AAPL',
+    'AMZN',
     'EEM',
     'EFA',
     'GLD',
