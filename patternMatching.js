@@ -181,7 +181,10 @@ exports.getMatches = (
       const maxUpsidePercent_byBarX = {};
       const profitLossPercent_atBarX = {};
       for (const sb of significantBars) {
-        if (highestOfXBars[sb] === -1) {
+        if (
+          highestOfXBars[sb] === -1 ||
+          highestOfXBars[sb] < targetPriceHistory[lastBarIndex].close
+        ) {
           maxUpsidePercent_byBarX[sb] = null;
         } else {
           maxUpsidePercent_byBarX[sb] =
@@ -207,7 +210,10 @@ exports.getMatches = (
 
       const maxDownsidePercent_byBarX = {};
       for (const sb of significantBars) {
-        if (lowestOfXBars[sb] === 999999999) {
+        if (
+          lowestOfXBars[sb] === 999999999 ||
+          lowestOfXBars[sb] > targetPriceHistory[lastBarIndex].close
+        ) {
           maxDownsidePercent_byBarX[sb] = null;
         } else {
           maxDownsidePercent_byBarX[sb] =

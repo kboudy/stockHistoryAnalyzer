@@ -1,3 +1,5 @@
+//PURPOSE: to run multiple price history series against the matching algo & store the aggregated results in mongodb
+
 const {
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
@@ -8,6 +10,7 @@ const {
   { toTwoDecimals } = require('./helpers/miscMethods'),
   moment = require('moment'),
   mongoApi = require('./helpers/mongoApi'),
+  mongoose = require('mongoose'),
   patternMatching = require('./patternMatching'),
   PatternStats = require('./models/patternStats'),
   PatternStatsJobRun = require('./models/patternStatsJobRun');
@@ -94,7 +97,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.stdDev_maxUpsidePercent_byBarX[sb] = null;
       }
 
-      if (mup_by.length > 0) {
+      if (mdp_by.length > 0) {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
           -mdp_by.reduce((a, b) => a + b) / mdp_by.length
         );
@@ -154,6 +157,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
 (async () => {
   await mongoApi.connectMongoose();
+  //await mongoose.connection.db.dropDatabase();
   const symbols = getAvailableSymbolNames();
 
   for (const symbol of symbols) {
