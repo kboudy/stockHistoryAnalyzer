@@ -149,8 +149,6 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 // list the results in order of tightest-clumping consistent high or low.  store the standard deviation - that will probably be a tell
 
 (async () => {
-  discoverPatternsTest();
-
   await mongoApi.connectMongoose();
   const symbols = getAvailableSymbolNames();
 
