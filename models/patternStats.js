@@ -31,6 +31,18 @@ const PatternStatsSchema = new Schema({
   percentProfitable_atBarX: {
     type: Schema.Types.Mixed,
   },
+  percentProfitable_by_1_percent_atBarX: {
+    type: Schema.Types.Mixed,
+  },
+  percentProfitable_by_2_percent_atBarX: {
+    type: Schema.Types.Mixed,
+  },
+  percentProfitable_by_5_percent_atBarX: {
+    type: Schema.Types.Mixed,
+  },
+  percentProfitable_by_10_percent_atBarX: {
+    type: Schema.Types.Mixed,
+  },
   scoreDates: {
     type: Schema.Types.Mixed,
   },

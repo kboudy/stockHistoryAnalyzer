@@ -92,6 +92,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.upsideDownsideRatio_byBarX = {};
     patternStat.avg_profitLossPercent_atBarX = {};
     patternStat.percentProfitable_atBarX = {};
+    patternStat.percentProfitable_by_1_percent_atBarX = {};
+    patternStat.percentProfitable_by_2_percent_atBarX = {};
+    patternStat.percentProfitable_by_5_percent_atBarX = {};
+    patternStat.percentProfitable_by_10_percent_atBarX = {};
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     if (scores.length === 0) {
@@ -157,6 +161,18 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
           (plp_at.filter((a) => a > 0).length * 100) / plp_at.length
         );
+        patternStat.percentProfitable_by_1_percent_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a >= 1).length * 100) / plp_at.length
+        );
+        patternStat.percentProfitable_by_2_percent_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a >= 2).length * 100) / plp_at.length
+        );
+        patternStat.percentProfitable_by_5_percent_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a >= 5).length * 100) / plp_at.length
+        );
+        patternStat.percentProfitable_by_10_percent_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a >= 10).length * 100) / plp_at.length
+        );
         patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
           std(plp_at)
         );
@@ -164,6 +180,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_atBarX[sb] = null;
         patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
+        patternStat.percentProfitable_by_1_percent_atBarX[sb] = null;
+        patternStat.percentProfitable_by_2_percent_atBarX[sb] = null;
+        patternStat.percentProfitable_by_5_percent_atBarX[sb] = null;
+        patternStat.percentProfitable_by_10_percent_atBarX[sb] = null;
       }
     }
     patternStat.avgScore = toTwoDecimals(
