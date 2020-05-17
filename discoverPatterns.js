@@ -48,7 +48,6 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
       constants.significantBars,
-      // ignore any pattern matches that have a score >= this
       constants.MAX_PATTERN_MATCHING_SCORE
     );
 
@@ -67,6 +66,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.upsideDownsideRatio_byBarX = {};
 
     patternStat.avg_profitLossPercent_atBarX = {};
+    patternStat.percentProfitable_atBarX;
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     for (const sb of constants.significantBars) {
@@ -121,11 +121,15 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
           plp_at.reduce((a, b) => a + b) / scores.length
         );
+        patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a > 0).length * 100) / scores.length
+        );
         patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
           std(plp_at)
         );
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
+        patternStat.percentProfitable_atBarX[sb] = null;
         patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
       }
     }

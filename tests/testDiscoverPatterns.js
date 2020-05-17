@@ -94,6 +94,7 @@ const discoverPatternsTest = () => {
     patternStat.upsideDownsideRatio_byBarX = {};
 
     patternStat.avg_profitLossPercent_atBarX = {};
+    patternStat.percentProfitable_atBarX = {};
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     for (const sb of significantBars) {
@@ -151,17 +152,21 @@ const discoverPatternsTest = () => {
         patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
           std(plp_at)
         );
+        patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
+          (plp_at.filter((a) => a > 0).length * 100) / scores.length
+        );
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
         patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
+        patternStat.percentProfitable_atBarX[sb] = null;
       }
     }
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
     patternStat.scoreCount = scores.length;
+    debugger;
   }
-  console.log();
 };
 
 (async () => {
