@@ -47,7 +47,9 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       targetPriceHistories,
       [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
-      constants.significantBars
+      constants.significantBars,
+      // ignore any pattern matches that have a score >= this
+      constants.MAX_PATTERN_MATCHING_SCORE
     );
 
     if (scores.length === 0) {

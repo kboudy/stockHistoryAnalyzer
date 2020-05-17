@@ -1,5 +1,6 @@
 const { std } = require('mathjs'),
   patternMatching = require('../patternMatching'),
+  constants = require('../helpers/constants'),
   moment = require('moment');
 
 const createTestSourceHistory = () => {
@@ -75,7 +76,8 @@ const discoverPatternsTest = () => {
       numberOfBars,
       targetPriceHistories,
       [symbol],
-      significantBars
+      significantBars,
+      constants.MAX_PATTERN_MATCHING_SCORE
     );
 
     if (scores.length === 0) {
