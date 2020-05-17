@@ -32,7 +32,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   for (let i = 0; i < sourcePriceHistory.length - numberOfBars; i++) {
     runningCount++;
     const percentComplete = Math.round((100 * runningCount) / totalCount);
-    if (percentComplete - lastLoggedPercentComplete === 5) {
+    if (percentComplete - lastLoggedPercentComplete === 10) {
       process.stdout.write(`${percentComplete}%`);
       if (percentComplete !== 100) {
         process.stdout.write('...');
@@ -136,6 +136,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
+    patternStat.scoreIndexes = scores.map((s) => s.index);
     patternStat.scoreCount = scores.length;
 
     await PatternStats.create(patternStat);
