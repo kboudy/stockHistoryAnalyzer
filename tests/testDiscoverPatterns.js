@@ -53,7 +53,7 @@ const testAllDiscoveredPatterns = async () => {
           ) > 0.1
         ) {
           console.log(
-            `Different avg_profitLossPercent_atBarX: ${patternStatsJobRun.sourcePriceInfo.symbol} sb:${sb} patternStat.sourceIndex:${patternStat.sourceIndex}`
+            `Different avg_profitLossPercent_atBarX: ${patternStatsJobRun.sourcePriceInfo.symbol} sb:${sb} patternStat.sourceDate:${patternStat.sourceDate}`
           );
         }
       }

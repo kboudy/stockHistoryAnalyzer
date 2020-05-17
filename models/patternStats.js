@@ -7,8 +7,8 @@ const PatternStatsSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'PatternStatsJobRun',
   },
-  sourceIndex: {
-    type: Number,
+  sourceDate: {
+    type: Schema.Types.String,
   },
   upsideDownsideRatio_byBarX: {
     type: Schema.Types.Mixed,
@@ -31,7 +31,7 @@ const PatternStatsSchema = new Schema({
   percentProfitable_atBarX: {
     type: Schema.Types.Mixed,
   },
-  scoreIndexes: {
+  scoreDates: {
     type: Schema.Types.Mixed,
   },
   stdDev_profitLossPercent_atBarX: {

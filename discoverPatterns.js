@@ -27,14 +27,21 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   const targetPriceHistories = [sourcePriceHistory];
 
   // pre-existing check
-  let thereWasPreExistingData = false;
+  let preExistingMaxDate = null;
+
   let jobRun = await PatternStatsJobRun.findOne({
     numberOfBars,
     sourcePriceInfo: { symbol },
     targetPriceInfos: [{ symbol }],
   });
   if (jobRun) {
-    thereWasPreExistingData = true;
+    // get the current max date
+    let psWithMaxDate = await PatternStats.findOne({})
+      .sort({ sourceDate: -1 })
+      .limit(1);
+    if (psWithMaxDate) {
+      preExistingMaxDate = psWithMaxDate.sourceDate;
+    }
     jobRun.updated = moment.utc();
     await jobRun.save();
   } else {
@@ -57,14 +64,11 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       lastLoggedPercentComplete = percentComplete;
     }
 
-    if (thereWasPreExistingData) {
-      const preExistingPatternStat = await PatternStats.findOne({
-        jobRun: jobRun.id,
-        sourceIndex: i,
-      });
-      if (preExistingPatternStat) {
-        continue;
-      }
+    if (
+      preExistingMaxDate &&
+      sourcePriceHistory[i].date <= preExistingMaxDate
+    ) {
+      continue;
     }
 
     const scores = patternMatching.getMatches(
@@ -80,7 +84,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
     const patternStat = {};
     patternStat.jobRun = jobRun.id;
-    patternStat.sourceIndex = i;
+    patternStat.sourceDate = sourcePriceHistory[i].date;
     patternStat.avg_maxUpsidePercent_byBarX = {};
     patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
@@ -92,7 +96,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
     if (scores.length === 0) {
       patternStat.avgScore = null;
-      patternStat.scoreIndexes = [];
+      patternStat.scoreDates = [];
       patternStat.scoreCount = 0;
       await PatternStats.create(patternStat);
       continue;
@@ -165,9 +169,9 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
-    patternStat.scoreIndexes = _.orderBy(
-      scores.map((s) => s.index),
-      (s) => parseInt(s)
+    patternStat.scoreDates = _.orderBy(
+      scores.map((s) => sourcePriceHistory[s.index].date),
+      (d) => d
     );
     patternStat.scoreCount = scores.length;
 
