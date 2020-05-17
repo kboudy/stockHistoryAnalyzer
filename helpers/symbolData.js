@@ -1,4 +1,4 @@
-const { stockDataDir } = require('./helpers/constants'),
+const { stockDataDir } = require('./constants'),
   path = require('path'),
   fs = require('fs');
 

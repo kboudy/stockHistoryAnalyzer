@@ -1,10 +1,11 @@
 const {
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
-  } = require('./symbolData'),
+  } = require('./helpers/symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
   constants = require('./helpers/constants'),
+  { toTwoDecimals } = require('./helpers/miscMethods'),
   moment = require('moment'),
   mongoApi = require('./helpers/mongoApi'),
   patternMatching = require('./patternMatching'),
@@ -55,7 +56,6 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       continue;
     }
     const patternStat = {};
-    toTwoDecimals = (n) => Math.round(n * 100) / 100;
     patternStat.jobRun = jobRun.id;
     patternStat.sourceIndex = i;
 
@@ -84,7 +84,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
       if (mup_by.length > 0) {
         patternStat.avg_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
-          mup_by.reduce((a, b) => a + b) / scores.length
+          mup_by.reduce((a, b) => a + b) / mup_by.length
         );
         patternStat.stdDev_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
           std(mup_by)
@@ -96,7 +96,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
       if (mup_by.length > 0) {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
-          -mdp_by.reduce((a, b) => a + b) / scores.length
+          -mdp_by.reduce((a, b) => a + b) / mdp_by.length
         );
         patternStat.stdDev_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
           std(mdp_by)
@@ -119,10 +119,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
       if (plp_at.length > 0) {
         patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
-          plp_at.reduce((a, b) => a + b) / scores.length
+          plp_at.reduce((a, b) => a + b) / plp_at.length
         );
         patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a > 0).length * 100) / scores.length
+          (plp_at.filter((a) => a > 0).length * 100) / plp_at.length
         );
         patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
           std(plp_at)
