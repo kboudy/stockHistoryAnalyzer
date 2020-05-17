@@ -4,6 +4,7 @@ const Schema = mongoose.Schema;
 
 const PatternStatsJobRunSchema = new Schema({
   created: { type: Date },
+  updated: { type: Date },
   numberOfBars: Number,
   sourcePriceInfo: { type: Schema.Types.Mixed },
   targetPriceInfos: { type: [Schema.Types.Mixed] },

@@ -26,12 +26,25 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   // for now, we'll just compare the equity against itself
   const targetPriceHistories = [sourcePriceHistory];
 
-  const jobRun = await PatternStatsJobRun.create({
-    created: moment.utc(),
+  // pre-existing check
+  let thereWasPreExistingData = false;
+  let jobRun = await PatternStatsJobRun.findOne({
     numberOfBars,
     sourcePriceInfo: { symbol },
     targetPriceInfos: [{ symbol }],
   });
+  if (jobRun) {
+    thereWasPreExistingData = true;
+    jobRun.updated = moment.utc();
+    await jobRun.save();
+  } else {
+    jobRun = await PatternStatsJobRun.create({
+      created: moment.utc(),
+      numberOfBars,
+      sourcePriceInfo: { symbol },
+      targetPriceInfos: [{ symbol }],
+    });
+  }
 
   for (let i = 0; i < sourcePriceHistory.length - numberOfBars; i++) {
     runningCount++;
@@ -42,6 +55,16 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         process.stdout.write('...');
       }
       lastLoggedPercentComplete = percentComplete;
+    }
+
+    if (thereWasPreExistingData) {
+      const preExistingPatternStat = await PatternStats.findOne({
+        jobRun: jobRun.id,
+        sourceIndex: i,
+      });
+      if (preExistingPatternStat) {
+        continue;
+      }
     }
 
     const scores = patternMatching.getMatches(
@@ -55,22 +78,25 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       constants.MAX_PATTERN_MATCHING_SCORE
     );
 
-    if (scores.length === 0) {
-      continue;
-    }
     const patternStat = {};
     patternStat.jobRun = jobRun.id;
     patternStat.sourceIndex = i;
-
     patternStat.avg_maxUpsidePercent_byBarX = {};
     patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
     patternStat.stdDev_maxDownsidePercent_byBarX = {};
     patternStat.upsideDownsideRatio_byBarX = {};
-
     patternStat.avg_profitLossPercent_atBarX = {};
     patternStat.percentProfitable_atBarX = {};
     patternStat.stdDev_profitLossPercent_atBarX = {};
+
+    if (scores.length === 0) {
+      patternStat.avgScore = null;
+      patternStat.scoreIndexes = [];
+      patternStat.scoreCount = 0;
+      await PatternStats.create(patternStat);
+      continue;
+    }
 
     for (const sb of constants.significantBars) {
       const mup_by = scores
@@ -151,13 +177,12 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 };
 
 // loop through every position of priceHistory searching for matches of that sample (1-NumberOfBars)
-// aggregate the scores from the matches (by their +- 10/30 max/min stats)
+// aggregate the scores from the matches
 
 // list the results in order of tightest-clumping consistent high or low.  store the standard deviation - that will probably be a tell
 
 (async () => {
   await mongoApi.connectMongoose();
-  //await mongoose.connection.db.dropDatabase();
   const symbols = getAvailableSymbolNames();
 
   for (const symbol of symbols) {

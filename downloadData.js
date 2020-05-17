@@ -1,5 +1,6 @@
 const axios = require('axios'),
   moment = require('moment'),
+  _ = require('lodash'),
   { TDA_consumerKey, stockDataDir } = require('./helpers/constants'),
   path = require('path'),
   fs = require('fs');
@@ -35,12 +36,27 @@ const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
 
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
-    let currentYear = 1960;
-    const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
+    const jsonPath = path.join(stockDataDir, `${symbol}.json`);
+
     let allHistoricalData = {};
+    let existingMaxDate = null;
+    let currentYear = 1960;
+    if (fs.existsSync(jsonPath)) {
+      allHistoricalData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      const dates = Object.keys(allHistoricalData);
+      existingMaxDate = _.orderBy(dates, (d) => d)[dates.length - 1];
+      currentYear = parseInt(existingMaxDate.split('-')[0]);
+    }
+    const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
     while (true) {
-      const startDate = `${currentYear}-01-01`;
+      let startDate = existingMaxDate
+        ? existingMaxDate
+        : `${currentYear}-01-01`;
+      existingMaxDate = null;
       let endDate = `${currentYear + 4}-01-01`;
+      if (startDate > yesterday) {
+        startDate = yesterday;
+      }
       if (endDate > yesterday) {
         endDate = yesterday;
       }
@@ -55,11 +71,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       }
       currentYear += 5;
     }
-    fs.writeFileSync(
-      path.join(stockDataDir, `${symbol}.json`),
-      JSON.stringify(allHistoricalData),
-      'utf8'
-    );
+    fs.writeFileSync(jsonPath, JSON.stringify(allHistoricalData), 'utf8');
   }
 };
 
@@ -74,7 +86,6 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     'IWM',
     'QQQ',
     'SLV',
-    'SNRE',
     'SPY',
     'TSLA',
   ]);
