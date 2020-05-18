@@ -15,9 +15,11 @@ const {
   PatternStats = require('./models/patternStats'),
   PatternStatsJobRun = require('./models/patternStatsJobRun');
 
-const NUMBER_OF_BARS = 20;
-
-const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
+const discoverPatternsForSymbol = async (
+  symbol,
+  numberOfBars,
+  maxPatternMatchingScore
+) => {
   let runningCount = 0;
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
   const totalCount = sourcePriceHistory.length - numberOfBars;
@@ -26,8 +28,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   // pre-existing check
   let preExistingMaxDate = null;
 
+  // PatternStatsJobRuns should be unique per these fields
   let jobRun = await PatternStatsJobRun.findOne({
     numberOfBars,
+    maxPatternMatchingScore,
     sourcePriceInfo: { symbol },
     targetPriceInfos: [{ symbol }],
   });
@@ -45,6 +49,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     jobRun = await PatternStatsJobRun.create({
       created: moment.utc(),
       numberOfBars,
+      maxPatternMatchingScore,
       sourcePriceInfo: { symbol },
       targetPriceInfos: [{ symbol }],
     });
@@ -80,7 +85,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
       [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
       constants.significantBars,
-      constants.MAX_PATTERN_MATCHING_SCORE
+      maxPatternMatchingScore
     );
 
     const patternStat = {};
@@ -223,12 +228,20 @@ const zz = 55;
 (async () => {
   await mongoApi.connectMongoose();
 
+  // ignore any pattern matches that have a score >= this
+  const maxPatternMatchingScore = 12;
+  const numberOfBars = 20;
+
   const symbols = await getAvailableSymbolNames();
 
   for (const symbol of symbols) {
     console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);
     process.stdout.write('  ');
-    await discoverPatternsForSymbol(symbol, NUMBER_OF_BARS);
+    await discoverPatternsForSymbol(
+      symbol,
+      numberOfBars,
+      maxPatternMatchingScore
+    );
   }
   await mongoApi.disconnectMongoose();
 })();

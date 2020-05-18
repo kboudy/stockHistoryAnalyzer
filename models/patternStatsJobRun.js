@@ -6,6 +6,7 @@ const PatternStatsJobRunSchema = new Schema({
   created: { type: Date },
   updated: { type: Date },
   numberOfBars: Number,
+  maxPatternMatchingScore: Number,
   sourcePriceInfo: { type: Schema.Types.Mixed },
   targetPriceInfos: { type: [Schema.Types.Mixed] },
 });
