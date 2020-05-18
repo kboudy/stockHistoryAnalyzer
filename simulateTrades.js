@@ -5,6 +5,8 @@ const {
     loadHistoricalDataForSymbol,
   } = require('./helpers/symbolData'),
   _ = require('lodash'),
+  moment = require('moment'),
+  constants = require('./helpers/constants'),
   mongoApi = require('./helpers/mongoApi'),
   PatternStats = require('./models/patternStats'),
   PatternStatsJobRun = require('./models/patternStatsJobRun');
@@ -39,16 +41,12 @@ const runTradeSimulation = async (config) => {
     : await getAvailableSymbolNames();
   cachedAllSymbols = allSymbols;
 
-  const symbolCount = config.symbolsToTrade
-    ? config.symbolsToTrade.length
-    : allSymbols.length;
+  const symbolsToIterate = config.symbolsToTrade
+    ? config.symbolsToTrade
+    : allSymbols;
 
-  for (const symbol of allSymbols) {
-    if (config.symbolsToTrade && !config.symbolsToTrade.includes(symbol)) {
-      continue;
-    }
+  for (const symbol of symbolsToIterate) {
     console.log(`${symbol}`);
-
     // for now, assuming 1 job run per symbol
     const jobRuns = await PatternStatsJobRun.find({
       'sourcePriceInfo.symbol': symbol,
@@ -76,15 +74,74 @@ const runTradeSimulation = async (config) => {
       const profitableCount_perBar = {};
       for (const p of patternStats) {
         if (!config.min_scoreCount || p.scoreCount >= config.min_scoreCount) {
-          for (const sb of config.significantBarsToTrade) {
-            if (
-              config.min_percentProfitable_atBarX &&
-              config.min_percentProfitable_atBarX[sb] &&
-              p.percentProfitable_atBarX[sb] <
-                config.min_percentProfitable_atBarX[sb]
-            ) {
+          const validationPairs = [
+            {
+              configVal: config.min_percentProfitable_atBarX,
+              patternStatsVal: p.percentProfitable_atBarX,
+            },
+            {
+              configVal: config.min_percentProfitable_by_1_percent_atBarX,
+              patternStatsVal: p.percentProfitable_by_1_percent_atBarX,
+            },
+            {
+              configVal: config.min_percentProfitable_by_2_percent_atBarX,
+              patternStatsVal: p.percentProfitable_by_2_percent_atBarX,
+            },
+            {
+              configVal: config.min_percentProfitable_by_5_percent_atBarX,
+              patternStatsVal: p.percentProfitable_by_5_percent_atBarX,
+            },
+            {
+              configVal: config.min_percentProfitable_by_10_percent_atBarX,
+              patternStatsVal: p.percentProfitable_by_10_percent_atBarX,
+            },
+            {
+              configVal: config.min_upsideDownsideRatio_byBarX,
+              patternStatsVal: p.upsideDownsideRatio_byBarX,
+            },
+            {
+              configVal: config.min_avg_maxUpsidePercent_byBarX,
+              patternStatsVal: p.avg_maxUpsidePercent_byBarX,
+            },
+            {
+              configVal: config.max_avg_maxDownsidePercent_byBarX,
+              patternStatsVal: p.avg_maxDownsidePercent_byBarX,
+              isMax: true,
+            },
+            {
+              configVal: config.min_avg_profitLossPercent_atBarX,
+              patternStatsVal: p.avg_profitLossPercent_atBarX,
+            },
+            {
+              configVal: config.min_avgScore,
+              patternStatsVal: p.avgScore,
+            },
+          ];
+          for (const sb of config.significantBarsToTrade
+            ? config.significantBarsToTrade
+            : constants.significantBarsToTrade) {
+            let validationPassed = true;
+            for (const vp of validationPairs) {
+              if (vp.configVal && vp.configVal[sb]) {
+                if (vp.patternStatsVal[sb] !== 0 && !vp.patternStatsVal[sb]) {
+                  // if the value is null/undefined and config is looking for a match, fail validation
+                  validationPassed = false;
+                  break;
+                }
+                if (
+                  vp.isMax
+                    ? vp.patternStatsVal[sb] > vp.configVal[sb]
+                    : vp.patternStatsVal[sb] < vp.configVal[sb]
+                ) {
+                  validationPassed = false;
+                  break;
+                }
+              }
+            }
+            if (!validationPassed) {
               continue;
             }
+
             // all criteria passed - execute trade (if there's enough data)
             const patternStatCandleIndex = candles.indexOf(
               candles.filter((c) => c.date === p.sourceDate)[0]
@@ -132,7 +189,7 @@ const runTradeSimulation = async (config) => {
       for (const sb of config.significantBarsToTrade) {
         const avgProfitLossPercent =
           Math.round(
-            (1000 * profitLossPercentSum_perBar[sb]) / tradeCount_perBar[sb]
+            (10 * profitLossPercentSum_perBar[sb]) / tradeCount_perBar[sb]
           ) / 10;
 
         const profitablePercent =
@@ -141,11 +198,19 @@ const runTradeSimulation = async (config) => {
           ) / 10;
 
         const tradeCount = tradeCount_perBar[sb];
+        const daysEvaluatedCount = moment(
+          candles[candles.length - 1].date,
+          'YYYY-MM-DD'
+        ).diff(moment(candles[0].date, 'YYYY-MM-DD'), 'days');
+        const tradeCountPerYear =
+          Math.round((10 * tradeCount) / (daysEvaluatedCount / 365.25)) / 10;
         const profitLossCollection = profitLossCollection_perBar[sb];
         tradeResults_perSymbol_perBar[symbol][sb] = {
           avgProfitLossPercent,
           profitablePercent,
           tradeCount,
+          daysEvaluatedCount,
+          tradeCountPerYear,
           profitLossCollection,
         };
       }
@@ -155,7 +220,7 @@ const runTradeSimulation = async (config) => {
 };
 exports.runTradeSimulation = runTradeSimulation;
 
-/* (async () => {
+(async () => {
   await mongoApi.connectMongoose();
 
   const results = await runTradeSimulation({
@@ -176,4 +241,3 @@ exports.runTradeSimulation = runTradeSimulation;
 
   await mongoApi.disconnectMongoose();
 })();
- */
