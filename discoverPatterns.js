@@ -157,6 +157,12 @@ const discoverPatternsForSymbol = async (
           patternStat.avg_maxUpsidePercent_byBarX[sb] /
             patternStat.avg_maxDownsidePercent_byBarX[sb]
         );
+        if (
+          patternStat.upsideDownsideRatio_byBarX[sb] ===
+          Number.NEGATIVE_INFINITY
+        ) {
+          patternStat.upsideDownsideRatio_byBarX[sb] = Number.INFINITY;
+        }
       } else {
         patternStat.upsideDownsideRatio_byBarX[sb] = null;
       }

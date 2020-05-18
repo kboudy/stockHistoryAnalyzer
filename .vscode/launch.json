@@ -21,9 +21,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "simulateTrades.js",
+      "name": "tuneTradeCriteria.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/simulateTrades.js"
+      "program": "${workspaceFolder}/tuneTradeCriteria.js"
     },
     {
       "type": "node",

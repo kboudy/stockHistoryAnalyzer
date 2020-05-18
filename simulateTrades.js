@@ -19,7 +19,7 @@ example config:
     min_percentProfitable_by_2_percent_atBarX: null,
     min_percentProfitable_by_5_percent_atBarX: null,
     min_percentProfitable_by_10_percent_atBarX: null,
-    min_avgScore: null,
+    max_avgScore: null,
     min_scoreCount: 10,
   };
 */
@@ -28,9 +28,9 @@ const cachedHistoricalData = {};
 
 const runTradeSimulation = async (
   symbols,
-  significantBars,
   numberOfBars,
   maxPatternMatchingScore,
+  significantBars,
   config
 ) => {
   const tradeResults_perSymbol_perBar = {};
@@ -107,8 +107,9 @@ const runTradeSimulation = async (
             patternStatsVal: p.avg_profitLossPercent_atBarX,
           },
           {
-            configVal: config.min_avgScore,
+            configVal: config.max_avgScore,
             patternStatsVal: p.avgScore,
+            isMax: true,
           },
         ];
         for (const sb of significantBars) {
