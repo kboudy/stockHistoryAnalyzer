@@ -5,20 +5,12 @@ const {
     loadHistoricalDataForSymbol,
   } = require('./helpers/symbolData'),
   _ = require('lodash'),
-  { std } = require('mathjs'),
-  constants = require('./helpers/constants'),
-  { toTwoDecimals } = require('./helpers/miscMethods'),
-  moment = require('moment'),
   mongoApi = require('./helpers/mongoApi'),
-  mongoose = require('mongoose'),
-  patternMatching = require('./patternMatching'),
   PatternStats = require('./models/patternStats'),
   PatternStatsJobRun = require('./models/patternStatsJobRun');
 
-(async () => {
-  await mongoApi.connectMongoose();
-
-  const symbols = await getAvailableSymbolNames();
+/*
+example config:
 
   const config = {
     symbolsToTrade: null,
@@ -35,22 +27,41 @@ const {
     min_avgScore: null,
     min_scoreCount: 10,
   };
+*/
+
+const cachedHistoricalData = {};
+let cachedAllSymbols = null;
+
+const runTradeSimulation = async (config) => {
+  const tradeResults_perSymbol_perBar = {};
+  const allSymbols = cachedAllSymbols
+    ? cachedAllSymbols
+    : await getAvailableSymbolNames();
+  cachedAllSymbols = allSymbols;
 
   const symbolCount = config.symbolsToTrade
     ? config.symbolsToTrade.length
-    : symbols.length;
-  let loopNumber = 1;
+    : allSymbols.length;
 
-  for (const symbol of symbols) {
+  for (const symbol of allSymbols) {
     if (config.symbolsToTrade && !config.symbolsToTrade.includes(symbol)) {
       continue;
     }
-    console.log(`${symbol} (${loopNumber}/${symbolCount})`);
-    loopNumber++;
+    console.log(`${symbol}`);
+
+    // for now, assuming 1 job run per symbol
     const jobRuns = await PatternStatsJobRun.find({
       'sourcePriceInfo.symbol': symbol,
     });
-    const candles = await loadHistoricalDataForSymbol(symbol);
+
+    const candles = cachedHistoricalData[symbol]
+      ? cachedHistoricalData[symbol]
+      : await loadHistoricalDataForSymbol(symbol);
+    cachedHistoricalData[symbol] = candles;
+
+    if (jobRuns.length > 1) {
+      throw 'expected 1 job run per symbol';
+    }
     for (const j of jobRuns) {
       console.log(`  - jobRun numberOfBars:${j.numberOfBars} id:${j.id}`);
       const patternStats = _.orderBy(
@@ -60,7 +71,9 @@ const {
         (s) => s.sourceDate
       );
       const profitLossPercentSum_perBar = {};
+      const profitLossCollection_perBar = {};
       const tradeCount_perBar = {};
+      const profitableCount_perBar = {};
       for (const p of patternStats) {
         if (!config.min_scoreCount || p.scoreCount >= config.min_scoreCount) {
           for (const sb of config.significantBarsToTrade) {
@@ -73,10 +86,10 @@ const {
               continue;
             }
             // all criteria passed - execute trade (if there's enough data)
-            const candleIndex = candles.indexOf(
+            const patternStatCandleIndex = candles.indexOf(
               candles.filter((c) => c.date === p.sourceDate)[0]
             );
-            const tradeCandleIndex = candleIndex + j.numberOfBars;
+            const tradeCandleIndex = patternStatCandleIndex + j.numberOfBars;
             if (tradeCandleIndex + sb < candles.length) {
               const profitLossPercent =
                 Math.round(
@@ -85,33 +98,82 @@ const {
                       candles[tradeCandleIndex].close)) /
                     candles[tradeCandleIndex].close
                 ) / 10;
+              if (!profitLossCollection_perBar[sb]) {
+                profitLossCollection_perBar[sb] = [];
+              }
+              profitLossCollection_perBar[sb].push(profitLossPercent);
               if (!profitLossPercentSum_perBar[sb]) {
                 profitLossPercentSum_perBar[sb] = 0;
               }
               profitLossPercentSum_perBar[sb] += profitLossPercent;
+              if (!profitableCount_perBar[sb]) {
+                profitableCount_perBar[sb] = 0;
+              }
+              if (profitLossPercent > 0) {
+                profitableCount_perBar[sb]++;
+              }
+
               if (!tradeCount_perBar[sb]) {
                 tradeCount_perBar[sb] = 0;
               }
               tradeCount_perBar[sb]++;
 
               /*               console.log(
-                `      + ${candles[tradeCandleIndex].date} - ${
-                  candles[tradeCandleIndex + sb].date
-                }: ${profitLossPercent}%`
-              ); */
+                  `      + ${candles[tradeCandleIndex].date} - ${
+                    candles[tradeCandleIndex + sb].date
+                  }: ${profitLossPercent}%`
+                ); */
             }
           }
         }
       }
-      //console.log('---------------------');
+
+      tradeResults_perSymbol_perBar[symbol] = {};
       for (const sb of config.significantBarsToTrade) {
-        console.log(
-          `  - ${sb} bars: trade count: ${tradeCount_perBar[sb]}, p/l%: ${(
-            profitLossPercentSum_perBar[sb] / tradeCount_perBar[sb]
-          ).toFixed(1)}`
-        );
+        const avgProfitLossPercent =
+          Math.round(
+            (1000 * profitLossPercentSum_perBar[sb]) / tradeCount_perBar[sb]
+          ) / 10;
+
+        const profitablePercent =
+          Math.round(
+            (1000 * profitableCount_perBar[sb]) / tradeCount_perBar[sb]
+          ) / 10;
+
+        const tradeCount = tradeCount_perBar[sb];
+        const profitLossCollection = profitLossCollection_perBar[sb];
+        tradeResults_perSymbol_perBar[symbol][sb] = {
+          avgProfitLossPercent,
+          profitablePercent,
+          tradeCount,
+          profitLossCollection,
+        };
       }
     }
   }
+  return tradeResults_perSymbol_perBar;
+};
+exports.runTradeSimulation = runTradeSimulation;
+
+/* (async () => {
+  await mongoApi.connectMongoose();
+
+  const results = await runTradeSimulation({
+    symbolsToTrade: null,
+    significantBarsToTrade: [1, 5, 10],
+    min_upsideDownsideRatio_byBarX: null,
+    min_avg_maxUpsidePercent_byBarX: null,
+    max_avg_maxDownsidePercent_byBarX: null,
+    min_avg_profitLossPercent_atBarX: null,
+    min_percentProfitable_atBarX: { 1: 70, 5: 70, 10: 70 },
+    min_percentProfitable_by_1_percent_atBarX: null,
+    min_percentProfitable_by_2_percent_atBarX: null,
+    min_percentProfitable_by_5_percent_atBarX: null,
+    min_percentProfitable_by_10_percent_atBarX: null,
+    min_avgScore: null,
+    min_scoreCount: 10,
+  });
+
   await mongoApi.disconnectMongoose();
 })();
+ */
