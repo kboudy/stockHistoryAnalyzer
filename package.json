@@ -23,6 +23,7 @@
     "mathjs": "^7.0.0",
     "moment": "^2.25.3",
     "mongoose": "^5.9.14",
+    "option-pricing-tree": "^1.0.1",
     "papaparse": "^5.1.0"
   }
 }

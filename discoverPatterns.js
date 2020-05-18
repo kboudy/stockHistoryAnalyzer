@@ -23,9 +23,6 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   const totalCount = sourcePriceHistory.length - numberOfBars;
   let lastLoggedPercentComplete = 0;
 
-  // for now, we'll just compare the equity against itself
-  const targetPriceHistories = [sourcePriceHistory];
-
   // pre-existing check
   let preExistingMaxDate = null;
 
@@ -54,6 +51,10 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
   }
 
   for (let i = 0; i < sourcePriceHistory.length - numberOfBars; i++) {
+    // for now, we'll just compare the equity against itself
+    // also, limiting it to the past date so we're not looking into the future
+    const targetPriceHistories = [sourcePriceHistory.slice(0, i + 1)];
+
     runningCount++;
     const percentComplete = Math.round((100 * runningCount) / totalCount);
     if (percentComplete - lastLoggedPercentComplete === 10) {
@@ -91,6 +92,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
     patternStat.stdDev_maxDownsidePercent_byBarX = {};
     patternStat.upsideDownsideRatio_byBarX = {};
     patternStat.avg_profitLossPercent_atBarX = {};
+    patternStat.listed_profitLossPercent_atBarX = {};
     patternStat.percentProfitable_atBarX = {};
     patternStat.percentProfitable_by_1_percent_atBarX = {};
     patternStat.percentProfitable_by_2_percent_atBarX = {};
@@ -158,6 +160,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
           plp_at.reduce((a, b) => a + b) / plp_at.length
         );
+        patternStat.listed_profitLossPercent_atBarX[sb] = plp_at;
         patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
           (plp_at.filter((a) => a > 0).length * 100) / plp_at.length
         );
@@ -178,6 +181,7 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
         );
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
+        patternStat.listed_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_atBarX[sb] = null;
         patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_by_1_percent_atBarX[sb] = null;
@@ -205,8 +209,20 @@ const discoverPatternsForSymbol = async (symbol, numberOfBars) => {
 
 // list the results in order of tightest-clumping consistent high or low.  store the standard deviation - that will probably be a tell
 
+const dropPatternCollections = async () => {
+  await mongoose.connection.db.dropCollection('patternstats');
+  await mongoose.connection.db.dropCollection('patternstatsjobruns');
+};
+
+/*
+var Tree = require('option-pricing-tree');
+var tree = new Tree('binomial', 'american', 'call', 1, 100, 100, 0.1, 0);
+var value = tree.build(100);
+const zz = 55;
+*/
 (async () => {
   await mongoApi.connectMongoose();
+
   const symbols = await getAvailableSymbolNames();
 
   for (const symbol of symbols) {

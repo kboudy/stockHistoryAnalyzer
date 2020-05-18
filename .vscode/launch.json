@@ -21,6 +21,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "simulateTrades.js",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/simulateTrades.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "testDiscoverPatterns.js",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/tests/testDiscoverPatterns.js"
