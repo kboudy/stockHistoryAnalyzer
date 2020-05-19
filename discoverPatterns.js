@@ -18,7 +18,8 @@ const {
 const discoverPatternsForSymbol = async (
   symbol,
   numberOfBars,
-  maxPatternMatchingScore
+  maxPatternMatchingScore,
+  significantBars
 ) => {
   let runningCount = 0;
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
@@ -49,6 +50,7 @@ const discoverPatternsForSymbol = async (
     jobRun = await PatternStatsJobRun.create({
       created: moment.utc(),
       numberOfBars,
+      significantBars,
       maxPatternMatchingScore,
       sourcePriceInfo: { symbol },
       targetPriceInfos: [{ symbol }],
@@ -84,7 +86,7 @@ const discoverPatternsForSymbol = async (
       targetPriceHistories,
       [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
-      constants.significantBars,
+      significantBars,
       maxPatternMatchingScore
     );
 
@@ -113,7 +115,7 @@ const discoverPatternsForSymbol = async (
       continue;
     }
 
-    for (const sb of constants.significantBars) {
+    for (const sb of significantBars) {
       const mup_by = scores
         .filter((s) => s.maxUpsidePercent_byBarX[sb] !== null)
         .map((s) => s.maxUpsidePercent_byBarX[sb]);
@@ -246,7 +248,8 @@ const zz = 55;
     await discoverPatternsForSymbol(
       symbol,
       numberOfBars,
-      maxPatternMatchingScore
+      maxPatternMatchingScore,
+      constants.significantBars
     );
   }
   await mongoApi.disconnectMongoose();

@@ -36,7 +36,6 @@ const runTradeSimulation = async (
   const tradeResults_perSymbol_perBar = {};
 
   for (const symbol of symbols) {
-    console.log(`${symbol}`);
     const jobRuns = await PatternStatsJobRun.find({
       'sourcePriceInfo.symbol': symbol,
       numberOfBars,
@@ -55,7 +54,6 @@ const runTradeSimulation = async (
       : await loadHistoricalDataForSymbol(symbol);
     cachedHistoricalData[symbol] = candles;
 
-    console.log(`  - jobRun id:${jobRun.id}`);
     const patternStats = _.orderBy(
       await PatternStats.find({
         jobRun: jobRun.id,
@@ -72,62 +70,90 @@ const runTradeSimulation = async (
           {
             configVal: config.min_percentProfitable_atBarX,
             patternStatsVal: p.percentProfitable_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_percentProfitable_by_1_percent_atBarX,
             patternStatsVal: p.percentProfitable_by_1_percent_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_percentProfitable_by_2_percent_atBarX,
             patternStatsVal: p.percentProfitable_by_2_percent_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_percentProfitable_by_5_percent_atBarX,
             patternStatsVal: p.percentProfitable_by_5_percent_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_percentProfitable_by_10_percent_atBarX,
             patternStatsVal: p.percentProfitable_by_10_percent_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_upsideDownsideRatio_byBarX,
             patternStatsVal: p.upsideDownsideRatio_byBarX,
+            includesBar: true,
           },
           {
             configVal: config.min_avg_maxUpsidePercent_byBarX,
             patternStatsVal: p.avg_maxUpsidePercent_byBarX,
+            includesBar: true,
           },
           {
             configVal: config.max_avg_maxDownsidePercent_byBarX,
             patternStatsVal: p.avg_maxDownsidePercent_byBarX,
             isMax: true,
+            includesBar: true,
           },
           {
             configVal: config.min_avg_profitLossPercent_atBarX,
             patternStatsVal: p.avg_profitLossPercent_atBarX,
+            includesBar: true,
           },
           {
             configVal: config.max_avgScore,
             patternStatsVal: p.avgScore,
             isMax: true,
+            includesBar: false,
           },
         ];
         for (const sb of significantBars) {
           let validationPassed = true;
           for (const vp of validationPairs) {
-            if (vp.configVal && vp.configVal[sb]) {
-              if (vp.patternStatsVal[sb] !== 0 && !vp.patternStatsVal[sb]) {
-                // if the value is null/undefined and config is looking for a match, fail validation
-                validationPassed = false;
-                break;
+            if (vp.includesBar) {
+              if (vp.configVal && vp.configVal[sb]) {
+                if (vp.patternStatsVal[sb] !== 0 && !vp.patternStatsVal[sb]) {
+                  // if the value is null/undefined and config is looking for a match, fail validation
+                  validationPassed = false;
+                  break;
+                }
+                if (
+                  vp.isMax
+                    ? vp.patternStatsVal[sb] > vp.configVal[sb]
+                    : vp.patternStatsVal[sb] < vp.configVal[sb]
+                ) {
+                  validationPassed = false;
+                  break;
+                }
               }
-              if (
-                vp.isMax
-                  ? vp.patternStatsVal[sb] > vp.configVal[sb]
-                  : vp.patternStatsVal[sb] < vp.configVal[sb]
-              ) {
-                validationPassed = false;
-                break;
+            } else {
+              if (vp.configVal) {
+                if (vp.patternStatsVal !== 0 && !vp.patternStatsVal) {
+                  // if the value is null/undefined and config is looking for a match, fail validation
+                  validationPassed = false;
+                  break;
+                }
+                if (
+                  vp.isMax
+                    ? vp.patternStatsVal > vp.configVal
+                    : vp.patternStatsVal < vp.configVal
+                ) {
+                  validationPassed = false;
+                  break;
+                }
               }
             }
           }
@@ -167,12 +193,6 @@ const runTradeSimulation = async (
               tradeCount_perBar[sb] = 0;
             }
             tradeCount_perBar[sb]++;
-
-            /*               console.log(
-                  `      + ${candles[tradeCandleIndex].date} - ${
-                    candles[tradeCandleIndex + sb].date
-                  }: ${profitLossPercent}%`
-                ); */
           }
         }
       }
