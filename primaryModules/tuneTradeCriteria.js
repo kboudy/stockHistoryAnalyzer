@@ -1,13 +1,13 @@
 //PURPOSE: find the best patternStats criteria to use as real trade triggers, by cycling through values
 
-const { getAvailableSymbolNames } = require('./helpers/symbolData'),
-  { runTradeSimulation } = require('./simulateTrades'),
-  { getAllPossibleCombinations } = require('./helpers/cartesian'),
+const { getAvailableSymbolNames } = require('../helpers/symbolData'),
+  { runTradeSimulation } = require('../helpers/simulateTrades'),
+  { getAllPossibleCombinations } = require('../helpers/cartesian'),
   moment = require('moment'),
-  mongoApi = require('./helpers/mongoApi'),
-  TradeSimulationRun = require('./models/tradeSimulationRun'),
-  PatternStats = require('./models/patternStats'),
-  PatternStatsJobRun = require('./models/patternStatsJobRun');
+  mongoApi = require('../helpers/mongoApi'),
+  TradeSimulationRun = require('../models/tradeSimulationRun'),
+  PatternStats = require('../models/patternStats'),
+  PatternStatsJobRun = require('../models/patternStatsJobRun');
 
 const criteriaAndTradeCountsThatHaveRun = [];
 
