@@ -107,6 +107,7 @@ exports.getMatches = (
       matchPattern(barsToMatch, targetPriceHistory),
       (s) => s.score
     );
+
     if (scores.length > 0 && scores[0].score === 0) {
       scores = scores.slice(1); // the first score will be the match bars (perfect === 0)
     }

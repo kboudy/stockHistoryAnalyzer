@@ -3,9 +3,9 @@ const Candle = require('../models/candle'),
 
 exports.loadHistoricalDataForSymbol = async (symbol) => {
   const candles = await Candle.find({ symbol }).lean().sort({ date: 1 });
-  const simplified = [];
+  const stripped = [];
   for (const c of candles) {
-    simplified.push({
+    stripped.push({
       symbol: c.symbol,
       date: c.date,
       open: parseFloat(c.open),
@@ -15,7 +15,7 @@ exports.loadHistoricalDataForSymbol = async (symbol) => {
       volume: parseInt(c.volume),
     });
   }
-  return _.orderBy(simplified, (s) => s.date);
+  return _.orderBy(stripped, (s) => s.date);
 };
 
 exports.getAvailableSymbolNames = async () => {

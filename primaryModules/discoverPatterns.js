@@ -21,9 +21,7 @@ const discoverPatternsForSymbol = async (
   maxPatternMatchingScore,
   significantBars
 ) => {
-  let runningCount = 0;
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
-  const totalCount = sourcePriceHistory.length - numberOfBars;
   let lastLoggedPercentComplete = 0;
 
   // pre-existing check
@@ -38,7 +36,7 @@ const discoverPatternsForSymbol = async (
   });
   if (jobRun) {
     // get the current max date
-    let psWithMaxDate = await PatternStats.findOne({})
+    let psWithMaxDate = await PatternStats.findOne({ jobRun: jobRun.id })
       .sort({ sourceDate: -1 })
       .limit(1);
     if (psWithMaxDate) {
@@ -60,10 +58,15 @@ const discoverPatternsForSymbol = async (
   for (let i = 0; i < sourcePriceHistory.length - numberOfBars; i++) {
     // for now, we'll just compare the equity against itself
     // also, limiting it to the past date so we're not looking into the future
-    const targetPriceHistories = [sourcePriceHistory.slice(0, i + 1)];
+    if (i < numberOfBars) {
+      // intentionally putting this check here instead of starting with "let i = numberOfBars"
+      // when I (slightly) tweak the code for multiple target histories, we'll want to start with "let i = 0" (for non-same histories)
+      continue;
+    }
 
-    runningCount++;
-    const percentComplete = Math.round((100 * runningCount) / totalCount);
+    const percentComplete = Math.round(
+      (100 * (i + 1)) / (sourcePriceHistory.length - numberOfBars)
+    );
     if (percentComplete - lastLoggedPercentComplete === 10) {
       process.stdout.write(`${percentComplete}%`);
       if (percentComplete !== 100) {
@@ -223,16 +226,14 @@ const discoverPatternsForSymbol = async (
 // list the results in order of tightest-clumping consistent high or low.  store the standard deviation - that will probably be a tell
 
 const dropPatternCollections = async () => {
-  await mongoose.connection.db.dropCollection('patternstats');
-  await mongoose.connection.db.dropCollection('patternstatsjobruns');
+  try {
+    await mongoose.connection.db.dropCollection('patternstats');
+  } catch (err) {}
+  try {
+    await mongoose.connection.db.dropCollection('patternstatsjobruns');
+  } catch (err) {}
 };
 
-/*
-var Tree = require('option-pricing-tree');
-var tree = new Tree('binomial', 'american', 'call', 1, 100, 100, 0.1, 0);
-var value = tree.build(100);
-const zz = 55;
-*/
 (async () => {
   await mongoApi.connectMongoose();
 
@@ -240,7 +241,7 @@ const zz = 55;
   const maxPatternMatchingScore = 12;
   const numberOfBars = 20;
 
-  const symbols = await getAvailableSymbolNames();
+  let symbols = await getAvailableSymbolNames();
 
   for (const symbol of symbols) {
     console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);

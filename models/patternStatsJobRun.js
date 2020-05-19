@@ -8,8 +8,8 @@ const PatternStatsJobRunSchema = new Schema({
   numberOfBars: Number,
   maxPatternMatchingScore: Number,
   significantBars: { type: Schema.Types.Mixed },
-  sourcePriceInfo: { type: Schema.Types.Mixed },
-  targetPriceInfos: { type: [Schema.Types.Mixed] },
+  sourceSymbol: { type: Schema.Types.String },
+  targetSymbols: { type: [Schema.Types.String] },
 });
 
 const PatternStatsJobRun = mongoose.model(

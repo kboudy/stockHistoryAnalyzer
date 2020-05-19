@@ -9,28 +9,21 @@
       "request": "launch",
       "name": "discoverPatterns.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/discoverPatterns.js"
+      "program": "${workspaceFolder}/primaryModules/discoverPatterns.js"
     },
     {
       "type": "node",
       "request": "launch",
       "name": "downloadData.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/downloadData.js"
+      "program": "${workspaceFolder}/primaryModules/downloadData.js"
     },
     {
       "type": "node",
       "request": "launch",
       "name": "tuneTradeCriteria.js",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/tuneTradeCriteria.js"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "testDiscoverPatterns.js",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/tests/testDiscoverPatterns.js"
+      "program": "${workspaceFolder}/primaryModules/tuneTradeCriteria.js"
     },
     {
       "type": "node",
@@ -38,6 +31,13 @@
       "name": "cartesian.js",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/helpers/cartesian.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "manualQuerying.js",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/manualQuerying.js"
     }
   ]
 }
