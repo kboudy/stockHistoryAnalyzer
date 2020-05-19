@@ -33,8 +33,8 @@ const discoverPatternsForSymbol = async (
   let jobRun = await PatternStatsJobRun.findOne({
     numberOfBars,
     maxPatternMatchingScore,
-    sourcePriceInfo: { symbol },
-    targetPriceInfos: [{ symbol }],
+    sourceSymbol: symbol,
+    targetSymbols: [symbol],
   });
   if (jobRun) {
     // get the current max date
@@ -52,8 +52,8 @@ const discoverPatternsForSymbol = async (
       numberOfBars,
       significantBars,
       maxPatternMatchingScore,
-      sourcePriceInfo: { symbol },
-      targetPriceInfos: [{ symbol }],
+      sourceSymbol: symbol,
+      targetSymbols: [symbol],
     });
   }
 

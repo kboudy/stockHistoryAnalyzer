@@ -68,7 +68,7 @@ const getValueStepsForCriteria = async (
   isMax
 ) => {
   const jobRun = await PatternStatsJobRun.findOne({
-    'sourcePriceInfo.symbol': symbol,
+    sourceSymbol: symbol,
     numberOfBars,
     maxPatternMatchingScore,
   });
@@ -338,27 +338,27 @@ const isNecessaryToRun = (tradeSimulationRunCriteria) => {
           continue;
         }
         const results = await runTradeSimulation(
-          [symbol],
+          symbol,
           numberOfBars,
           maxPatternMatchingScore,
-          [significantBar],
+          significantBar,
           config
         );
 
         // runTradeSimulation allows for multiple symbols & significantBars, but we're only passing in one
         // so we'll adjust the results accordingly
         // it also provides the entire profitLossCollection, which will be to bloaty to store
-        const adjustedResults = results[symbol][significantBar];
-        delete adjustedResults.profitLossCollection;
+        delete results.profitLossCollection;
+
         criteriaAndTradeCountsThatHaveRun.push({
           criteria: tradeSimulationRunCriteria,
-          tradeCountPerYear: adjustedResults.tradeCountPerYear,
+          tradeCountPerYear: results.tradeCountPerYear,
         });
 
         await TradeSimulationRun.create({
           created: moment.utc(),
           criteria: tradeSimulationRunCriteria,
-          results: adjustedResults,
+          results,
         });
 
         const runningCount = configCombinations.indexOf(config) + 1;

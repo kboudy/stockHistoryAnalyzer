@@ -1,7 +1,7 @@
 const axios = require('axios'),
   moment = require('moment'),
   _ = require('lodash'),
-  { TDA_consumerKey } = require('../helpers/constants'),
+  { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { sleep } = require('../helpers/miscMethods'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
@@ -135,20 +135,6 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await downloadAndSaveMultipleSymbolHistory([
-    'AAPL',
-    'AMZN',
-    'BTCUSD',
-    'EEM',
-    'EFA',
-    'GLD',
-    'HPQ',
-    'HYG',
-    'IWM',
-    'QQQ',
-    'SLV',
-    'SPY',
-    'TSLA',
-  ]);
+  await downloadAndSaveMultipleSymbolHistory(symbolsToDownload);
   await mongoApi.disconnectMongoose();
 })();
