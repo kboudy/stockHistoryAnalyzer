@@ -25,86 +25,35 @@ into an exhaustive cartesian array of objects:
 ]
 */
 
-const getNext = (cartesianArgArrays, currentState) => {
-  if (!currentState) {
-    const result = [];
-    for (const a of cartesianArgArrays) {
-      result.push(a[0]);
-    }
-    return result;
+const increment = (state, aa, colIdx = 0) => {
+  if (state[colIdx] + 1 < aa[colIdx].length) {
+    state[colIdx]++;
+    return state;
   }
-  const nextState = [...currentState];
-  for (const idx in nextState) {
-    const thisField = nextState[idx];
-    const cArg = cartesianArgArrays[idx];
-    const isLast = cArg.indexOf(thisField) === cArg.length - 1;
-    if (!isLast) {
-      nextState[idx] = cArg[cArg.indexOf(thisField) + 1];
-    }
+  state[colIdx] = 0;
+  colIdx++;
+  if (colIdx === state.length) {
+    return null;
   }
+  return increment(state, aa, colIdx);
 };
 
-const cartesianProductOf = (
-  a,
-  maxOptionalVariables,
-  mandatoryVariableCount
-) => {
-  // a = array of array
-  var i,
-    j,
-    l,
-    m,
-    a1,
-    o = [];
-  if (!a || a.length == 0) return a;
+exports.getAllPossibleCombinations = (objWithArrays) => {
+  const keys = Object.keys(objWithArrays);
+  const aa = keys.map((k) => objWithArrays[k]);
+  let state = keys.map((k) => 0);
 
-  a1 = a.splice(0, 1)[0]; // the first array of a
-  a = cartesianProductOf(a, maxOptionalVariables, mandatoryVariableCount);
-  for (i = 0, l = a1.length; i < l; i++) {
-    if (a && a.length) {
-      for (j = 0, m = a.length; j < m; j++) {
-        const newItem = [a1[i]].concat(a[j]);
-        const nonNullLength = newItem.filter((i) => i !== null).length;
-        if (nonNullLength <= maxOptionalVariables + mandatoryVariableCount) {
-          o.push(newItem);
-        }
+  const result = [];
+  do {
+    const r = keys.reduce((reduced, currentField, currentIndex) => {
+      const val = aa[currentIndex][state[currentIndex]];
+      if (val !== null) {
+        reduced[currentField] = val;
       }
-    } else {
-      o.push([a1[i]]);
-    }
-  }
-  return o;
-};
-
-// an optional variable has a "null" as a possibility, meaning it's non-essential
-// if maxOptionalIndicators = 4, it means that you might have RSI, MACD, KST & ACL + the mandatory ones (like, perhaps, stopLoss), but no others
-exports.getAllPossibleCombinations = (variables, maxOptionalVariables = 4) => {
-  const cartesianArgArrays = [];
-  const varNames = Object.keys(variables);
-  let mandatoryVariableCount = 0;
-
-  for (const varName of varNames) {
-    if (!variables[varName].includes(null)) {
-      mandatoryVariableCount++;
-    }
-    cartesianArgArrays.push(variables[varName]);
-  }
-
-  const cartesianResults = cartesianProductOf(
-    cartesianArgArrays,
-    maxOptionalVariables,
-    mandatoryVariableCount
-  );
-
-  const hydratedResult = [];
-  for (const cartesianResult of cartesianResults) {
-    const o = {};
-    for (const idx in cartesianResult) {
-      if (cartesianResult[idx] !== null) {
-        o[varNames[idx]] = cartesianResult[idx];
-      }
-    }
-    hydratedResult.push(o);
-  }
-  return hydratedResult;
+      return reduced;
+    }, {});
+    result.push(r);
+    state = increment(state, aa);
+  } while (state);
+  return result;
 };
