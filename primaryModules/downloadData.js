@@ -1,12 +1,11 @@
 const axios = require('axios'),
   moment = require('moment'),
   _ = require('lodash'),
-  { TDA_consumerKey } = require('./helpers/constants'),
-  { sleep } = require('./helpers/miscMethods'),
+  { TDA_consumerKey } = require('../helpers/constants'),
+  { sleep } = require('../helpers/miscMethods'),
   https = require('https'),
-  mongoApi = require('./helpers/mongoApi'),
-  Candle = require('./models/candle'),
-  fs = require('fs');
+  mongoApi = require('../helpers/mongoApi'),
+  Candle = require('../models/candle');
 
 const extractCryptoData = async (symbol, startDate, endDate) => {
   const endDateYear = parseInt(endDate.split('-')[0]);

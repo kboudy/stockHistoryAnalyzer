@@ -1,5 +1,5 @@
 const mongoose = require('mongoose'),
-  { sleep } = require('../helpers/miscMethods');
+  { sleep } = require('./miscMethods');
 
 const INDEX_NAME = 'stock_analysis',
   MONGO_HOST_NAME = 'localhost',

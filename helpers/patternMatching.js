@@ -1,5 +1,5 @@
 const _ = require('lodash'),
-  constants = require('./helpers/constants');
+  constants = require('./constants');
 
 const normalizeTo100 = (bars) => {
   let high = null;

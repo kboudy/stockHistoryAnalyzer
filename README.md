@@ -2,7 +2,7 @@
 
 ### Purpose: to reveal highly asymmetric trade opportunities using the pattern matching algorithm
 
-## Key Pieces
+## Primary modules
 
 ### `discoverPatterns.js`
 
@@ -36,3 +36,7 @@
     - percentProfitable_by_5_percent_atBarX
     - percentProfitable_by_10_percent_atBarX
     - stdDev_profitLossPercent_atBarX
+
+### `downloadData.js`
+
+- downloads the newest equity & crypto data (from TDA & cryptoDataDownload.com) into MongoDB

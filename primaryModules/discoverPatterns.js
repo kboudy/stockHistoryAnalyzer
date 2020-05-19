@@ -3,17 +3,17 @@
 const {
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
-  } = require('./helpers/symbolData'),
+  } = require('../helpers/symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
-  constants = require('./helpers/constants'),
-  { toTwoDecimals } = require('./helpers/miscMethods'),
+  constants = require('../helpers/constants'),
+  { toTwoDecimals } = require('../helpers/miscMethods'),
   moment = require('moment'),
-  mongoApi = require('./helpers/mongoApi'),
+  mongoApi = require('../helpers/mongoApi'),
   mongoose = require('mongoose'),
-  patternMatching = require('./patternMatching'),
-  PatternStats = require('./models/patternStats'),
-  PatternStatsJobRun = require('./models/patternStatsJobRun');
+  patternMatching = require('../helpers/patternMatching'),
+  PatternStats = require('../models/patternStats'),
+  PatternStatsJobRun = require('../models/patternStatsJobRun');
 
 const discoverPatternsForSymbol = async (
   symbol,

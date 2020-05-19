@@ -1,5 +1,4 @@
-const path = require('path'),
-  Candle = require('../models/candle'),
+const Candle = require('../models/candle'),
   _ = require('lodash');
 
 exports.loadHistoricalDataForSymbol = async (symbol) => {
