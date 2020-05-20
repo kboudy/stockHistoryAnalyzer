@@ -146,6 +146,7 @@ exports.getMatches = (
     scores = _.orderBy(nonCrossOvers, (s) => s.score);
 
     scores = scores.filter((s) => s.score <= maxPatternMatchingScore); // higher scores are poorer matches, so "MAX SCORE" is actually a bad score
+
     for (const s of scores) {
       const lastBarIndex = s.index + numberOfBars - 1;
 

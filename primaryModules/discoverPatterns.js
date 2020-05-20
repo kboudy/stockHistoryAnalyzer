@@ -82,7 +82,7 @@ const discoverPatternsForSymbol = async (
       continue;
     }
 
-    const targetPriceHistories = [sourcePriceHistory.slice(0, i - 1)];
+    const targetPriceHistories = [sourcePriceHistory.slice(0, i)];
 
     const scores = patternMatching.getMatches(
       sourcePriceHistory,

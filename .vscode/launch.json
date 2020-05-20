@@ -35,6 +35,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "discoverPatternsTest.js",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/discoverPatternsTest.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "manualQuerying.js",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/manualQuerying.js"
