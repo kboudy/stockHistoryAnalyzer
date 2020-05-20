@@ -10,6 +10,11 @@ const PatternStatsSchema = new Schema({
   sourceDate: {
     type: Schema.Types.String,
   },
+  // actualProfitLossPercent_atBarX is the "real" result, based on the source price history
+  // (for running trade simulations, not pattern discovery)
+  actualProfitLossPercent_atBarX: {
+    type: Schema.Types.Mixed,
+  },
   upsideDownsideRatio_byBarX: {
     type: Schema.Types.Mixed,
   },

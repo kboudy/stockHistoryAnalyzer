@@ -108,7 +108,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
         ? existingMaxDate
         : `${currentYear}-01-01`;
       candleWithMaxDate = null;
-      let endDate = `${currentYear + 4}-01-01`;
+      let endDate = `${currentYear + 4}-12-31`;
       if (startDate > yesterday) {
         startDate = yesterday;
       }

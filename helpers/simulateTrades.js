@@ -3,6 +3,7 @@
 const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   moment = require('moment'),
+  { isNullOrUndefined } = require('./miscMethods'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
 
@@ -30,7 +31,7 @@ const runTradeSimulation = async (
   symbol,
   numberOfBars,
   maxPatternMatchingScore,
-  sb, // significant bar
+  significantBar,
   config
 ) => {
   const jobRuns = await PatternStatsJobRun.find({
@@ -51,173 +52,128 @@ const runTradeSimulation = async (
     : await loadHistoricalDataForSymbol(symbol);
   cachedHistoricalData[symbol] = candles;
 
-  const patternStats = _.orderBy(
-    await PatternStats.find({
-      jobRun: jobRun.id,
-    }),
-    (s) => s.sourceDate
-  );
-  const profitLossPercentSum_perBar = {};
-  const profitLossCollection_perBar = {};
-  const tradeCount_perBar = {};
-  const profitableCount_perBar = {};
-  for (const p of patternStats) {
-    if (!config.min_scoreCount || p.scoreCount >= config.min_scoreCount) {
-      const validationPairs = [
-        {
-          configVal: config.min_percentProfitable_atBarX,
-          patternStatsVal: p.percentProfitable_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_percentProfitable_by_1_percent_atBarX,
-          patternStatsVal: p.percentProfitable_by_1_percent_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_percentProfitable_by_2_percent_atBarX,
-          patternStatsVal: p.percentProfitable_by_2_percent_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_percentProfitable_by_5_percent_atBarX,
-          patternStatsVal: p.percentProfitable_by_5_percent_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_percentProfitable_by_10_percent_atBarX,
-          patternStatsVal: p.percentProfitable_by_10_percent_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_upsideDownsideRatio_byBarX,
-          patternStatsVal: p.upsideDownsideRatio_byBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_avg_maxUpsidePercent_byBarX,
-          patternStatsVal: p.avg_maxUpsidePercent_byBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.max_avg_maxDownsidePercent_byBarX,
-          patternStatsVal: p.avg_maxDownsidePercent_byBarX,
-          isMax: true,
-          includesBar: true,
-        },
-        {
-          configVal: config.min_avg_profitLossPercent_atBarX,
-          patternStatsVal: p.avg_profitLossPercent_atBarX,
-          includesBar: true,
-        },
-        {
-          configVal: config.max_avgScore,
-          patternStatsVal: p.avgScore,
-          isMax: true,
-          includesBar: false,
-        },
-      ];
-
-      let validationPassed = true;
-      for (const vp of validationPairs) {
-        if (vp.includesBar) {
-          if (vp.configVal && vp.configVal[sb]) {
-            if (vp.patternStatsVal[sb] !== 0 && !vp.patternStatsVal[sb]) {
-              // if the value is null/undefined and config is looking for a match, fail validation
-              validationPassed = false;
-              break;
-            }
-            if (
-              vp.isMax
-                ? vp.patternStatsVal[sb] > vp.configVal[sb]
-                : vp.patternStatsVal[sb] < vp.configVal[sb]
-            ) {
-              validationPassed = false;
-              break;
-            }
-          }
-        } else {
-          if (vp.configVal) {
-            if (vp.patternStatsVal !== 0 && !vp.patternStatsVal) {
-              // if the value is null/undefined and config is looking for a match, fail validation
-              validationPassed = false;
-              break;
-            }
-            if (
-              vp.isMax
-                ? vp.patternStatsVal > vp.configVal
-                : vp.patternStatsVal < vp.configVal
-            ) {
-              validationPassed = false;
-              break;
-            }
-          }
-        }
-      }
-      if (!validationPassed) {
-        continue;
-      }
-
-      // all criteria passed - execute trade (if there's enough data)
-      const patternStatCandleIndex = candles.indexOf(
-        candles.filter((c) => c.date === p.sourceDate)[0]
-      );
-      const tradeCandleIndex = patternStatCandleIndex + numberOfBars;
-      if (tradeCandleIndex + sb < candles.length) {
-        const profitLossPercent =
-          Math.round(
-            (1000 *
-              (candles[tradeCandleIndex + sb].close -
-                candles[tradeCandleIndex].close)) /
-              candles[tradeCandleIndex].close
-          ) / 10;
-        if (!profitLossCollection_perBar[sb]) {
-          profitLossCollection_perBar[sb] = [];
-        }
-        profitLossCollection_perBar[sb].push(profitLossPercent);
-        if (!profitLossPercentSum_perBar[sb]) {
-          profitLossPercentSum_perBar[sb] = 0;
-        }
-        profitLossPercentSum_perBar[sb] += profitLossPercent;
-        if (!profitableCount_perBar[sb]) {
-          profitableCount_perBar[sb] = 0;
-        }
-        if (profitLossPercent > 0) {
-          profitableCount_perBar[sb]++;
-        }
-
-        if (!tradeCount_perBar[sb]) {
-          tradeCount_perBar[sb] = 0;
-        }
-        tradeCount_perBar[sb]++;
-      }
-    }
+  //----------------------------
+  const queryFilter = {
+    jobRun: jobRun.id,
+  };
+  if (
+    config.min_percentProfitable_atBarX &&
+    config.min_percentProfitable_atBarX[significantBar]
+  ) {
+    queryFilter[`percentProfitable_atBarX.${significantBar}`] = {
+      $gte: config.min_percentProfitable_atBarX[significantBar],
+    };
   }
+  if (
+    config.min_percentProfitable_by_2_percent_atBarX &&
+    config.min_percentProfitable_by_2_percent_atBarX[significantBar]
+  ) {
+    queryFilter[`percentProfitable_by_2_percent_atBarX.${significantBar}`] = {
+      $gte: config.min_percentProfitable_by_2_percent_atBarX[significantBar],
+    };
+  }
+  if (
+    config.min_percentProfitable_by_5_percent_atBarX &&
+    config.min_percentProfitable_by_5_percent_atBarX[significantBar]
+  ) {
+    queryFilter[`percentProfitable_by_5_percent_atBarX.${significantBar}`] = {
+      $gte: config.min_percentProfitable_by_5_percent_atBarX[significantBar],
+    };
+  }
+  if (
+    config.min_percentProfitable_by_10_percent_atBarX &&
+    config.min_percentProfitable_by_10_percent_atBarX[significantBar]
+  ) {
+    queryFilter[`percentProfitable_by_10_percent_atBarX.${significantBar}`] = {
+      $gte: config.min_percentProfitable_by_10_percent_atBarX[significantBar],
+    };
+  }
+  if (
+    config.min_upsideDownsideRatio_byBarX &&
+    config.min_upsideDownsideRatio_byBarX[significantBar]
+  ) {
+    queryFilter[`upsideDownsideRatio_byBarX.${significantBar}`] = {
+      $gte: config.min_upsideDownsideRatio_byBarX[significantBar],
+    };
+  }
+  if (
+    config.min_avg_maxUpsidePercent_byBarX &&
+    config.min_avg_maxUpsidePercent_byBarX[significantBar]
+  ) {
+    queryFilter[`avg_maxUpsidePercent_byBarX.${significantBar}`] = {
+      $gte: config.min_avg_maxUpsidePercent_byBarX[significantBar],
+    };
+  }
+  if (
+    config.max_avg_maxDownsidePercent_byBarX &&
+    config.max_avg_maxDownsidePercent_byBarX[significantBar]
+  ) {
+    queryFilter[`avg_maxDownsidePercent_byBarX.${significantBar}`] = {
+      $lte: config.max_avg_maxDownsidePercent_byBarX[significantBar],
+    };
+  }
+  if (
+    config.min_avg_profitLossPercent_atBarX &&
+    config.min_avg_profitLossPercent_atBarX[significantBar]
+  ) {
+    queryFilter[`avg_profitLossPercent_atBarX.${significantBar}`] = {
+      $gte: config.min_avg_profitLossPercent_atBarX[significantBar],
+    };
+  }
+  if (config.min_scoreCount) {
+    queryFilter['scoreCount'] = {
+      $gte: config.min_scoreCount,
+    };
+  }
+  if (config.max_avgScore) {
+    queryFilter['avgScore'] = {
+      $lte: config.max_avgScore,
+    };
+  }
+  //----------------------------
 
+  const patternStats = (
+    await PatternStats.find(queryFilter).sort({
+      sourceDate: 1,
+    })
+  ).filter(
+    (ps) =>
+      !isNullOrUndefined(ps.actualProfitLossPercent_atBarX[significantBar])
+  );
+  const listedProfitLossPercents = patternStats.map(
+    (p) => p.actualProfitLossPercent_atBarX[significantBar]
+  );
+
+  const tradeCount = patternStats.length;
+  const profitableCount = patternStats.filter(
+    (p) => p.actualProfitLossPercent_atBarX[significantBar] > 0
+  ).length;
   const avgProfitLossPercent =
-    Math.round((10 * profitLossPercentSum_perBar[sb]) / tradeCount_perBar[sb]) /
-    10;
+    Math.round(
+      10 *
+        _.meanBy(
+          patternStats,
+          (p) => p.actualProfitLossPercent_atBarX[significantBar]
+        )
+    ) / 10;
 
-  const profitablePercent =
-    Math.round((1000 * profitableCount_perBar[sb]) / tradeCount_perBar[sb]) /
-    10;
+  const percentProfitable =
+    Math.round((1000 * profitableCount) / tradeCount) / 10;
 
-  const tradeCount = tradeCount_perBar[sb];
   const daysEvaluatedCount = moment(
     candles[candles.length - 1].date,
     'YYYY-MM-DD'
   ).diff(moment(candles[0].date, 'YYYY-MM-DD'), 'days');
   const tradeCountPerYear =
     Math.round((10 * tradeCount) / (daysEvaluatedCount / 365.25)) / 10;
-  const profitLossCollection = profitLossCollection_perBar[sb];
 
   const tradeResults = {
     avgProfitLossPercent,
-    profitablePercent,
+    listedProfitLossPercents,
+    percentProfitable,
     tradeCount,
     daysEvaluatedCount,
     tradeCountPerYear,
-    profitLossCollection,
   };
 
   return tradeResults;

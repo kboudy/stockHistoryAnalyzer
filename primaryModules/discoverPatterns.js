@@ -98,6 +98,7 @@ const discoverPatternsForSymbol = async (
     const patternStat = {};
     patternStat.jobRun = jobRun.id;
     patternStat.sourceDate = sourcePriceHistory[i].date;
+    patternStat.actualProfitLossPercent_atBarX = {};
     patternStat.avg_maxUpsidePercent_byBarX = {};
     patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
@@ -207,6 +208,23 @@ const discoverPatternsForSymbol = async (
         patternStat.percentProfitable_by_5_percent_atBarX[sb] = null;
         patternStat.percentProfitable_by_10_percent_atBarX[sb] = null;
       }
+
+      //------------------------------------------------------------------------------------
+      // finally, we'll record the real (forward-looking) profit loss %, per significant bar
+      const actualTradeSellCandle =
+        sourcePriceHistory[i + (numberOfBars - 1) + sb];
+      if (actualTradeSellCandle) {
+        const actualTradeBuyCandle = sourcePriceHistory[i + (numberOfBars - 1)];
+
+        patternStat.actualProfitLossPercent_atBarX[sb] =
+          Math.round(
+            (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
+              1000
+          ) / 10;
+      } else {
+        patternStat.actualProfitLossPercent_atBarX[sb] = null;
+      }
+      //------------------------------------------------------------------------------------
     }
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length

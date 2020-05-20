@@ -4,7 +4,9 @@ const { getAvailableSymbolNames } = require('../helpers/symbolData'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   { getAllPossibleCombinations } = require('../helpers/cartesian'),
   moment = require('moment'),
+  mongoose = require('mongoose'),
   mongoApi = require('../helpers/mongoApi'),
+  { isNullOrUndefined } = require('../helpers/miscMethods'),
   TradeSimulationRun = require('../models/tradeSimulationRun'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
@@ -79,10 +81,6 @@ const getValueStepsForCriteria = async (
     significantBar
   );
   return splitIntoSteps(minMaxValues, 5, isMax);
-};
-
-const isNullOrUndefined = (obj) => {
-  return typeof obj === 'undefined' || obj === null;
 };
 
 //-------------------------------
@@ -288,12 +286,19 @@ const isNecessaryToRun = (tradeSimulationRunCriteria) => {
 // end efficiency helpers
 //-------------------------------
 
+const dropTradeSimulationCollection = async () => {
+  try {
+    await mongoose.connection.db.dropCollection('tradesimulationruns');
+  } catch (err) {}
+};
+
 (async () => {
   const numberOfBars = 20;
   const maxPatternMatchingScore = 12;
   const significantBars = [1, 5, 10];
 
   await mongoApi.connectMongoose();
+  await dropTradeSimulationCollection();
   const symbols = await getAvailableSymbolNames();
 
   /*   const valuesToBruteForceTest = {
@@ -306,20 +311,17 @@ const isNecessaryToRun = (tradeSimulationRunCriteria) => {
   }; */
 
   const valuesToBruteForceTest = {
-    max_avgScore: [10, 11, 12],
-    min_percentProfitable_atBarX: [null, 60, 70, 80, 90],
-    min_percentProfitable_by_1_percent_atBarX: [70, 80, 90],
-    min_upsideDownsideRatio_byBarX: [null, 1, 2, 5],
+    max_avgScore: [11, 12],
+    min_percentProfitable_atBarX: [{ 1: 70, 5: 70, 10: 70 }],
+    min_percentProfitable_by_1_percent_atBarX: [{ 1: 70, 5: 70, 10: 70 }],
   };
+  const configCombinations = getAllPossibleCombinations(valuesToBruteForceTest);
   console.log('Running trade simulations:');
   for (const symbol of symbols) {
     console.log(`  - ${symbol}`);
     let lastLoggedPercentComplete = 0;
     for (const significantBar of significantBars) {
       process.stdout.write(`    - significantBar: ${significantBar}  `);
-      const configCombinations = getAllPossibleCombinations(
-        valuesToBruteForceTest
-      );
       for (const config of configCombinations) {
         const tradeSimulationRunCriteria = {
           symbol,
@@ -328,12 +330,6 @@ const isNecessaryToRun = (tradeSimulationRunCriteria) => {
           significantBar,
           config,
         };
-        if (
-          tradeSimulationRunCriteria.config
-            .min_percentProfitable_by_1_percent_atBarX >= 70
-        ) {
-          debugger;
-        }
         if (!isNecessaryToRun(tradeSimulationRunCriteria)) {
           continue;
         }

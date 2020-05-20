@@ -3,22 +3,25 @@ const _ = require('lodash'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
 
+const findMinSourceDate = async () => {
+  const minSourceDate = (
+    await PatternStats.findOne({}).sort({ sourceDate: 1 }).limit(1)
+  ).sourceDate;
+};
+
+const findZZ = async () => {
+  const someJobRun = await PatternStatsJobRun.findOne({});
+
+  const queryFilter = {
+    jobRun: someJobRun.id,
+    'actualProfitLossPercent_atBarX.1': { $gte: 5 },
+  };
+  const zz = await PatternStats.find(queryFilter);
+  debugger;
+};
+
 (async () => {
   await mongoApi.connectMongoose();
-
-  let maxSourceDate = null;
-  let maxTargetDate = null;
-  const allPatternStats = await PatternStats.find({});
-  for (const p of allPatternStats) {
-    if (!maxSourceDate || p.sourceDate > maxSourceDate) {
-      maxSourceDate = p.sourceDate;
-    }
-    const ordered = _.orderBy(p.scoreDates, (d) => d);
-    const thisMax = ordered[ordered.length - 1];
-    if (!maxTargetDate || thisMax > maxTargetDate) {
-      maxTargetDate = thisMax;
-    }
-  }
-
+  await findZZ();
   await mongoApi.disconnectMongoose();
 })();
