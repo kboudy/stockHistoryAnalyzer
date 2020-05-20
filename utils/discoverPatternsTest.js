@@ -32,7 +32,9 @@ const confirm_profitLossAtBarX = async () => {
           );
           const buyDateIndex = candleIndex + parseInt(numberOfBars) - 1;
           const sellDateIndex = buyDateIndex + parseInt(b);
-          const buyDate = candles[buyDateIndex].date;
+          if (!candles[sellDateIndex]) {
+            continue;
+          }
           const sellDate = candles[sellDateIndex].date;
           if (sellDate >= ps.sourceDate) {
             continue;
