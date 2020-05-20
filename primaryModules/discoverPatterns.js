@@ -243,16 +243,6 @@ const dropPatternCollections = async () => {
   const maxPatternMatchingScore = 12;
   const numberOfBars = 20;
 
-  /*   const tslaJob = await PatternStatsJobRun.findOne({ sourceSymbol: 'TSLA' });
-  if (tslaJob) {
-    await PatternStats.deleteMany({ jobRun: tslaJob.id });
-    await PatternStatsJobRun.deleteOne({ sourceSymbol: 'TSLA' });
-  } */
-
-  /*
-  await dropPatternCollections();
-   */
-
   let symbols = await getAvailableSymbolNames();
 
   for (const symbol of symbols) {
