@@ -123,7 +123,7 @@ const runTradeSimulation = async (
     'avg_profitLossPercent_atBarX',
     '$gte'
   );
-  addToQueryFilter('min_scoreCount', 'scoreCount', '$gte');
+  addToQueryFilter('min_scoreCount', 'scoreCount', '$gte', false);
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
   //----------------------------
