@@ -56,80 +56,76 @@ const runTradeSimulation = async (
   const queryFilter = {
     jobRun: jobRun.id,
   };
-  if (
-    config.min_percentProfitable_atBarX &&
-    config.min_percentProfitable_atBarX[significantBar]
-  ) {
-    queryFilter[`percentProfitable_atBarX.${significantBar}`] = {
-      $gte: config.min_percentProfitable_atBarX[significantBar],
-    };
-  }
-  if (
-    config.min_percentProfitable_by_2_percent_atBarX &&
-    config.min_percentProfitable_by_2_percent_atBarX[significantBar]
-  ) {
-    queryFilter[`percentProfitable_by_2_percent_atBarX.${significantBar}`] = {
-      $gte: config.min_percentProfitable_by_2_percent_atBarX[significantBar],
-    };
-  }
-  if (
-    config.min_percentProfitable_by_5_percent_atBarX &&
-    config.min_percentProfitable_by_5_percent_atBarX[significantBar]
-  ) {
-    queryFilter[`percentProfitable_by_5_percent_atBarX.${significantBar}`] = {
-      $gte: config.min_percentProfitable_by_5_percent_atBarX[significantBar],
-    };
-  }
-  if (
-    config.min_percentProfitable_by_10_percent_atBarX &&
-    config.min_percentProfitable_by_10_percent_atBarX[significantBar]
-  ) {
-    queryFilter[`percentProfitable_by_10_percent_atBarX.${significantBar}`] = {
-      $gte: config.min_percentProfitable_by_10_percent_atBarX[significantBar],
-    };
-  }
-  if (
-    config.min_upsideDownsideRatio_byBarX &&
-    config.min_upsideDownsideRatio_byBarX[significantBar]
-  ) {
-    queryFilter[`upsideDownsideRatio_byBarX.${significantBar}`] = {
-      $gte: config.min_upsideDownsideRatio_byBarX[significantBar],
-    };
-  }
-  if (
-    config.min_avg_maxUpsidePercent_byBarX &&
-    config.min_avg_maxUpsidePercent_byBarX[significantBar]
-  ) {
-    queryFilter[`avg_maxUpsidePercent_byBarX.${significantBar}`] = {
-      $gte: config.min_avg_maxUpsidePercent_byBarX[significantBar],
-    };
-  }
-  if (
-    config.max_avg_maxDownsidePercent_byBarX &&
-    config.max_avg_maxDownsidePercent_byBarX[significantBar]
-  ) {
-    queryFilter[`avg_maxDownsidePercent_byBarX.${significantBar}`] = {
-      $lte: config.max_avg_maxDownsidePercent_byBarX[significantBar],
-    };
-  }
-  if (
-    config.min_avg_profitLossPercent_atBarX &&
-    config.min_avg_profitLossPercent_atBarX[significantBar]
-  ) {
-    queryFilter[`avg_profitLossPercent_atBarX.${significantBar}`] = {
-      $gte: config.min_avg_profitLossPercent_atBarX[significantBar],
-    };
-  }
-  if (config.min_scoreCount) {
-    queryFilter['scoreCount'] = {
-      $gte: config.min_scoreCount,
-    };
-  }
-  if (config.max_avgScore) {
-    queryFilter['avgScore'] = {
-      $lte: config.max_avgScore,
-    };
-  }
+  const addToQueryFilter = (
+    configKey,
+    patternStatFieldName,
+    operator,
+    useSignificantBar = true
+  ) => {
+    if (
+      config[configKey] &&
+      (!useSignificantBar || config[configKey][significantBar])
+    ) {
+      if (useSignificantBar) {
+        queryFilter[`${patternStatFieldName}.${significantBar}`] = {
+          [operator]: config[configKey][significantBar],
+        };
+      } else {
+        queryFilter[patternStatFieldName] = {
+          [operator]: config[configKey],
+        };
+      }
+    }
+  };
+
+  addToQueryFilter(
+    'min_percentProfitable_atBarX',
+    'percentProfitable_atBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_percentProfitable_by_1_percent_atBarX',
+    'percentProfitable_by_1_percent_atBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_percentProfitable_by_2_percent_atBarX',
+    'percentProfitable_by_2_percent_atBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_percentProfitable_by_5_percent_atBarX',
+    'percentProfitable_by_5_percent_atBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_percentProfitable_by_10_percent_atBarX',
+    'percentProfitable_by_10_percent_atBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_upsideDownsideRatio_byBarX',
+    'upsideDownsideRatio_byBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'min_avg_maxUpsidePercent_byBarX',
+    'avg_maxUpsidePercent_byBarX',
+    '$gte'
+  );
+  addToQueryFilter(
+    'max_avg_maxDownsidePercent_byBarX',
+    'avg_maxDownsidePercent_byBarX',
+    '$lte'
+  );
+  addToQueryFilter(
+    'min_avg_profitLossPercent_atBarX',
+    'avg_profitLossPercent_atBarX',
+    '$gte'
+  );
+  addToQueryFilter('min_scoreCount', 'scoreCount', '$gte');
+  addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
+
   //----------------------------
 
   const patternStats = (
