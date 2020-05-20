@@ -82,6 +82,10 @@ const discoverPatternsForSymbol = async (
       continue;
     }
 
+    const targetPriceHistories = [
+      sourcePriceHistory.slice(0, i - numberOfBars),
+    ];
+
     const scores = patternMatching.getMatches(
       sourcePriceHistory,
       i,
@@ -210,7 +214,9 @@ const discoverPatternsForSymbol = async (
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
     patternStat.scoreDates = _.orderBy(
-      scores.map((s) => sourcePriceHistory[s.index].date),
+      scores.map(
+        (s) => targetPriceHistories[s.targetPriceHistoryIndex][s.index].date
+      ),
       (d) => d
     );
     patternStat.scoreCount = scores.length;
