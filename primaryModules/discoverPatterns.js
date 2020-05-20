@@ -82,9 +82,7 @@ const discoverPatternsForSymbol = async (
       continue;
     }
 
-    const targetPriceHistories = [
-      sourcePriceHistory.slice(0, i - numberOfBars),
-    ];
+    const targetPriceHistories = [sourcePriceHistory.slice(0, i - 1)];
 
     const scores = patternMatching.getMatches(
       sourcePriceHistory,
@@ -214,9 +212,7 @@ const discoverPatternsForSymbol = async (
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
     patternStat.scoreDates = _.orderBy(
-      scores.map(
-        (s) => targetPriceHistories[s.targetPriceHistoryIndex][s.index].date
-      ),
+      scores.map((s) => s.startDate),
       (d) => d
     );
     patternStat.scoreCount = scores.length;
@@ -246,6 +242,16 @@ const dropPatternCollections = async () => {
   // ignore any pattern matches that have a score >= this
   const maxPatternMatchingScore = 12;
   const numberOfBars = 20;
+
+  /*   const tslaJob = await PatternStatsJobRun.findOne({ sourceSymbol: 'TSLA' });
+  if (tslaJob) {
+    await PatternStats.deleteMany({ jobRun: tslaJob.id });
+    await PatternStatsJobRun.deleteOne({ sourceSymbol: 'TSLA' });
+  } */
+
+  /*
+  await dropPatternCollections();
+   */
 
   let symbols = await getAvailableSymbolNames();
 

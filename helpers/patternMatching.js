@@ -103,9 +103,6 @@ exports.getMatches = (
   const barsToMatch = sourcePriceHistory.slice(startIndex, endIndex);
   const scoresWithMaxMin = [];
   for (const targetPriceHistory of targetPriceHistories) {
-    const targetPriceHistoryIndex = targetPriceHistories.indexOf(
-      targetPriceHistory
-    );
     let scores = _.orderBy(
       matchPattern(barsToMatch, targetPriceHistory),
       (s) => s.score
@@ -239,7 +236,6 @@ exports.getMatches = (
         maxDownsidePercent_byBarX,
         profitLossPercent_atBarX,
         symbol: tphSymbol,
-        targetPriceHistoryIndex,
       });
     }
   }
