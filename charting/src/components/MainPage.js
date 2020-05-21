@@ -4,13 +4,10 @@ import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import LinkIcon from '@material-ui/icons/Link';
-import Dialog from '@material-ui/core/Dialog';
-import ListItem from '@material-ui/core/ListItem';
-import List from '@material-ui/core/List';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogContent from '@material-ui/core/DialogContent';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import Grid from '@material-ui/core/Grid';
 import InfoIcon from '@material-ui/icons/Info';
 import AddIcon from '@material-ui/icons/Add';
 import Button from '@material-ui/core/Button';
@@ -20,7 +17,6 @@ import queryString from 'query-string';
 import Chart from './Chart';
 
 import _ from 'lodash';
-import Grid from '@material-ui/core/Grid';
 import nodeServer from '../helpers/nodeServer';
 
 const useStyles = makeStyles((theme) => ({
@@ -35,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
   },
   logo: { marginRight: theme.spacing(2) },
   button: { marginLeft: theme.spacing(3) },
-  buttonRow: { marginTop: theme.spacing(1) },
+  formControl: { margin: theme.spacing(1) },
   chartTool: { marginLeft: theme.spacing(2) },
   extendedIcon: {
     marginRight: theme.spacing(1),
@@ -51,33 +47,73 @@ function MainPage(props) {
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [symbols, setSymbols] = React.useState([]);
 
+  const [windowDimensions, setWindowDimensions] = useState(null);
+
+  const [chartParams, setChartParams] = React.useState({
+    symbol: null,
+    significantBar: 1,
+    max_avgScore: 10,
+    min_percentProfitable_atBarX: { 1: 70 },
+  });
   const [chartData, setChartData] = React.useState([]);
 
   useEffect(() => {
     (async () => {
-      const tradeSimulationResults = await nodeServer.post(
-        'runTradeSimulation',
-        {
-          symbol: 'AAPL',
-          numberOfBars: 20,
-          ignoreMatchesAboveThisScore: 12,
-          significantBar: 1,
-          patternStatsConfig: {
-            max_avgScore: 10,
-            min_percentProfitable_atBarX: { 1: 70 },
-          },
-        }
-      );
-      const cData = [];
-      const plps = tradeSimulationResults.data.listedProfitLossPercents;
-      const plds = tradeSimulationResults.data.listedProfitLossSellDates;
-      for (let i = 0; i < plps.length; i++) {
-        cData.push({ name: plds[i], ['profit/loss %']: plps[i] });
-      }
-      setChartData(cData);
       setSymbols((await nodeServer.get('availableSymbols')).data);
+
+      window.addEventListener('resize', handleResize);
+      handleResize();
+
+      return () => {
+        // componentWillUnmount
+        window.removeEventListener('resize', handleResize);
+      };
     })();
   }, []);
+
+  const reloadChartData = async () => {
+    if (!chartParams.symbol) {
+      return;
+    }
+    const tradeSimulationResults = await nodeServer.post('runTradeSimulation', {
+      symbol: chartParams.symbol,
+      numberOfBars: 20,
+      ignoreMatchesAboveThisScore: 12,
+      significantBar: chartParams.significantBar,
+      patternStatsConfig: {
+        max_avgScore: chartParams.max_avgScore,
+        min_percentProfitable_atBarX: chartParams.min_percentProfitable_atBarX,
+      },
+    });
+    const cData = [];
+    const plps = tradeSimulationResults.data.listedProfitLossPercents;
+    const plds = tradeSimulationResults.data.listedProfitLossSellDates;
+    for (let i = 0; i < plps.length; i++) {
+      cData.push({ name: plds[i], ['profit/loss %']: plps[i] });
+    }
+    setChartData(cData);
+  };
+
+  useEffect(() => {
+    reloadChartData();
+  }, [chartParams]);
+
+  const handleResize = () => {
+    if (
+      !windowDimensions ||
+      windowDimensions.width !== window.innerWidth ||
+      windowDimensions.height !== window.innerHeight
+    ) {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+  };
+
+  if (!windowDimensions) {
+    return <div></div>;
+  }
 
   return (
     <div className={classes.root}>
@@ -114,7 +150,100 @@ function MainPage(props) {
       <div className={classes.appBarSpacer} />
       <Grid container className={classes.chartGridWrapper}>
         <Grid item>
-          <Chart width={1000} height={500} data={chartData} />
+          <Chart
+            width={Math.round(windowDimensions.width * 0.9)}
+            height={Math.round(windowDimensions.width * 0.9 * 0.25)}
+            data={chartData}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="lblSymbol"
+              id="cboSymbol"
+              value={chartParams.symbol}
+              onChange={(e) => {
+                setChartParams({
+                  ...chartParams,
+                  symbol: e.target.value,
+                });
+              }}
+            >
+              {symbols.map((val, index) => (
+                <MenuItem key={index} value={val}>
+                  {val}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>symbol</FormHelperText>
+          </FormControl>
+
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="lblSignificantBar"
+              id="cboSignificantBar"
+              value={chartParams.significantBar}
+              onChange={(e) => {
+                setChartParams({
+                  ...chartParams,
+                  significantBar: e.target.value,
+                });
+              }}
+            >
+              {[1, 5, 10].map((val, index) => (
+                <MenuItem key={index} value={val}>
+                  {val}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>significant bar</FormHelperText>
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="lblMaxAvgScore"
+              id="cboMaxAvgScore"
+              value={chartParams.max_avgScore}
+              onChange={(e) => {
+                setChartParams({
+                  ...chartParams,
+                  max_avgScore: e.target.value,
+                });
+              }}
+            >
+              {[10, 11, 12].map((val, index) => (
+                <MenuItem key={index} value={val}>
+                  {val}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>max avg score</FormHelperText>
+          </FormControl>
+          <FormControl className={classes.formControl}>
+            <Select
+              labelId="lblMinPercentProfitable"
+              id="cboMinPercentProfitable"
+              value={
+                chartParams.min_percentProfitable_atBarX[
+                  chartParams.significantBar
+                ]
+              }
+              onChange={(e) => {
+                setChartParams({
+                  ...chartParams,
+                  min_percentProfitable_atBarX: {
+                    [chartParams.significantBar]: e.target.value,
+                  },
+                });
+              }}
+            >
+              {[50, 60, 70, 80].map((val, index) => (
+                <MenuItem key={index} value={val}>
+                  {val}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>min percentProfitable at bar</FormHelperText>
+          </FormControl>
         </Grid>
       </Grid>
     </div>

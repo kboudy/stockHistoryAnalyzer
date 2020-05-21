@@ -80,6 +80,11 @@ exports.runTradeSimulation = async (req, res, next) => {
       patternStatsConfig,
     } = req.body;
 
+    debugger;
+    if (!symbol) {
+      return;
+    }
+
     const results = await runTradeSimulation(
       symbol,
       numberOfBars,

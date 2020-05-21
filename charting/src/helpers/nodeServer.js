@@ -3,7 +3,7 @@ import { nodeServerPort } from '../helpers/constants';
 
 const nodeServer = axios.create({
   baseURL: `http://localhost:${nodeServerPort}`,
-  timeout: 1000,
+  timeout: 30000,
 });
 
 export default nodeServer;
