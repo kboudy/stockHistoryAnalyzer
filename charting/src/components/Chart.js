@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import {
-  LineChart,
-  Line,
+  // LineChart,
+  // Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,9 +11,26 @@ import {
   Legend,
 } from 'recharts';
 
+const gradientOffset = (props) => {
+  const dataMax = Math.max(...props.data.map((d) => d[props.dataKeyName]));
+  const dataMin = Math.min(...props.data.map((d) => d[props.dataKeyName]));
+  if (props.data.length) {
+    debugger;
+  }
+
+  if (dataMax <= 0) {
+    return 0;
+  }
+  if (dataMin >= 0) {
+    return 1;
+  }
+
+  return dataMax / (dataMax - dataMin);
+};
+
 const Chart = (props) => {
   return (
-    <LineChart
+    <AreaChart
       width={props.width}
       height={props.height}
       data={props.data}
@@ -27,8 +46,27 @@ const Chart = (props) => {
       <YAxis />
       <Tooltip />
       <Legend />
-      <Line type="monotone" dataKey="profit/loss %" stroke="#8884d8" />
-    </LineChart>
+      <defs>
+        <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
+          <stop
+            offset={gradientOffset(props)}
+            stopColor="green"
+            stopOpacity={1}
+          />
+          <stop
+            offset={gradientOffset(props)}
+            stopColor="red"
+            stopOpacity={1}
+          />
+        </linearGradient>
+      </defs>
+      <Area
+        type="monotone"
+        dataKey={props.dataKeyName}
+        stroke="#000"
+        fill="url(#splitColor)"
+      />
+    </AreaChart>
   );
 };
 
