@@ -255,7 +255,6 @@ const dropPatternCollections = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await dropPatternCollections();
 
   // ignore any pattern matches that have a score >= this
   const ignoreMatchesAboveThisScore = 12;
