@@ -97,7 +97,7 @@ exports.getMatches = (
   targetPriceHistories, // an array of priceHistories to compare against the sourcePriceHistory
   targetPriceHistorySymbols,
   significantBars,
-  maxPatternMatchingScore
+  ignoreMatchesAboveThisScore
 ) => {
   const endIndex = startIndex + numberOfBars;
   const barsToMatch = sourcePriceHistory.slice(startIndex, endIndex);
@@ -145,7 +145,7 @@ exports.getMatches = (
     }
     scores = _.orderBy(nonCrossOvers, (s) => s.score);
 
-    scores = scores.filter((s) => s.score <= maxPatternMatchingScore); // higher scores are poorer matches, so "MAX SCORE" is actually a bad score
+    scores = scores.filter((s) => s.score <= ignoreMatchesAboveThisScore); // higher scores are poorer matches, so "ignoreMatchesAboveThisScore" is actually a bad score
 
     for (const s of scores) {
       const lastBarIndex = s.index + numberOfBars - 1;

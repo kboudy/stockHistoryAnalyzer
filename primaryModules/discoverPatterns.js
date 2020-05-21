@@ -18,7 +18,7 @@ const {
 const discoverPatternsForSymbol = async (
   symbol,
   numberOfBars,
-  maxPatternMatchingScore,
+  ignoreMatchesAboveThisScore,
   significantBars
 ) => {
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
@@ -30,7 +30,7 @@ const discoverPatternsForSymbol = async (
   // PatternStatsJobRuns should be unique per these fields
   let jobRun = await PatternStatsJobRun.findOne({
     numberOfBars,
-    maxPatternMatchingScore,
+    ignoreMatchesAboveThisScore,
     sourceSymbol: symbol,
     targetSymbols: [symbol],
   });
@@ -49,7 +49,7 @@ const discoverPatternsForSymbol = async (
       created: moment.utc(),
       numberOfBars,
       significantBars,
-      maxPatternMatchingScore,
+      ignoreMatchesAboveThisScore,
       sourceSymbol: symbol,
       targetSymbols: [symbol],
     });
@@ -92,7 +92,7 @@ const discoverPatternsForSymbol = async (
       [symbol], // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
       significantBars,
-      maxPatternMatchingScore
+      ignoreMatchesAboveThisScore
     );
 
     const patternStat = {};
@@ -258,7 +258,7 @@ const dropPatternCollections = async () => {
   await mongoApi.connectMongoose();
 
   // ignore any pattern matches that have a score >= this
-  const maxPatternMatchingScore = 12;
+  const ignoreMatchesAboveThisScore = 12;
   const numberOfBars = 20;
 
   let symbols = await getAvailableSymbolNames();
@@ -269,7 +269,7 @@ const dropPatternCollections = async () => {
     await discoverPatternsForSymbol(
       symbol,
       numberOfBars,
-      maxPatternMatchingScore,
+      ignoreMatchesAboveThisScore,
       constants.significantBars
     );
   }

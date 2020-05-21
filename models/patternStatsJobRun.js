@@ -6,7 +6,7 @@ const PatternStatsJobRunSchema = new Schema({
   created: { type: Date },
   updated: { type: Date },
   numberOfBars: Number,
-  maxPatternMatchingScore: Number,
+  ignoreMatchesAboveThisScore: Number,
   significantBars: { type: Schema.Types.Mixed },
   sourceSymbol: { type: Schema.Types.String },
   targetSymbols: { type: [Schema.Types.String] },

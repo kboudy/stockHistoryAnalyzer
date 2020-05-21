@@ -64,7 +64,7 @@ const splitIntoSteps = (minMaxVals, numberOfSteps, isMax) => {
 const getValueStepsForCriteria = async (
   symbol,
   numberOfBars,
-  maxPatternMatchingScore,
+  ignoreMatchesAboveThisScore,
   significantBar,
   patternStatsFieldName,
   isMax
@@ -72,7 +72,7 @@ const getValueStepsForCriteria = async (
   const jobRun = await PatternStatsJobRun.findOne({
     sourceSymbol: symbol,
     numberOfBars,
-    maxPatternMatchingScore,
+    ignoreMatchesAboveThisScore,
   });
 
   const minMaxValues = await getMinMaxValues(
@@ -133,8 +133,8 @@ const resultsFromPreviousRun = (tradeSimulationRunCriteria, morePermissive) => {
   if (morePermissive) {
     const relevantPastResults_morePermissive = relevantPastResults.filter(
       (c) => {
-        tradeSimulationRunCriteria.maxPatternMatchingScore >=
-          c.maxPatternMatchingScore &&
+        tradeSimulationRunCriteria.ignoreMatchesAboveThisScore >=
+          c.ignoreMatchesAboveThisScore &&
           morePermissiveCheck(
             tradeSimulationRunCriteria,
             c,
@@ -191,8 +191,8 @@ const resultsFromPreviousRun = (tradeSimulationRunCriteria, morePermissive) => {
     // lessPermissive
     const relevantPastResults_lessPermissive = relevantPastResults.filter(
       (c) => {
-        tradeSimulationRunCriteria.maxPatternMatchingScore <=
-          c.maxPatternMatchingScore &&
+        tradeSimulationRunCriteria.ignoreMatchesAboveThisScore <=
+          c.ignoreMatchesAboveThisScore &&
           lessPermissiveCheck(
             tradeSimulationRunCriteria,
             c,
@@ -294,7 +294,7 @@ const dropTradeSimulationCollection = async () => {
 
 (async () => {
   const numberOfBars = 20;
-  const maxPatternMatchingScore = 12;
+  const ignoreMatchesAboveThisScore = 12;
   const significantBars = [1, 5, 10];
 
   await mongoApi.connectMongoose();
@@ -311,9 +311,8 @@ const dropTradeSimulationCollection = async () => {
   }; */
 
   const valuesToBruteForceTest = {
-    max_avgScore: [11, 12],
-    min_percentProfitable_atBarX: [{ 1: 70, 5: 70, 10: 70 }],
-    min_percentProfitable_by_1_percent_atBarX: [{ 1: 70, 5: 70, 10: 70 }],
+    max_avgScore: [10],
+    min_percentProfitable_atBarX: [{ 1: 70 }],
   };
   const configCombinations = getAllPossibleCombinations(valuesToBruteForceTest);
   console.log('Running trade simulations:');
@@ -326,7 +325,7 @@ const dropTradeSimulationCollection = async () => {
         const tradeSimulationRunCriteria = {
           symbol,
           numberOfBars,
-          maxPatternMatchingScore,
+          ignoreMatchesAboveThisScore,
           significantBar,
           config,
         };
@@ -336,7 +335,7 @@ const dropTradeSimulationCollection = async () => {
         const results = await runTradeSimulation(
           symbol,
           numberOfBars,
-          maxPatternMatchingScore,
+          ignoreMatchesAboveThisScore,
           significantBar,
           config
         );

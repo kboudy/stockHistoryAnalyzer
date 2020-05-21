@@ -30,20 +30,20 @@ const cachedHistoricalData = {};
 const runTradeSimulation = async (
   symbol,
   numberOfBars,
-  maxPatternMatchingScore,
+  ignoreMatchesAboveThisScore,
   significantBar,
   config
 ) => {
   const jobRuns = await PatternStatsJobRun.find({
     sourceSymbol: symbol,
     numberOfBars,
-    maxPatternMatchingScore,
+    ignoreMatchesAboveThisScore,
   });
   if (jobRuns.length === 0) {
-    throw `No job runs found for the combination: { sourceSsymbol: ${symbol}, numberOfBars: ${numberOfBars}, maxPatternMatchingScore: ${maxPatternMatchingScore} }`;
+    throw `No job runs found for the combination: { sourceSsymbol: ${symbol}, numberOfBars: ${numberOfBars}, ignoreMatchesAboveThisScore: ${ignoreMatchesAboveThisScore} }`;
   }
   if (jobRuns.length > 1) {
-    throw 'should be unique per (symbol + numberOfBars + maxPatternMatchingScore). Make sure the job run "find" criteria is restrictive enough';
+    throw 'should be unique per (symbol + numberOfBars + ignoreMatchesAboveThisScore). Make sure the job run "find" criteria is restrictive enough';
   }
   const jobRun = jobRuns[0];
 
