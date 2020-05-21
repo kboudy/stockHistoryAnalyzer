@@ -2,6 +2,7 @@ const axios = require('axios'),
   moment = require('moment'),
   _ = require('lodash'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
+  { isCrypto } = require('../helpers/symbolData'),
   { sleep } = require('../helpers/miscMethods'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
@@ -80,8 +81,9 @@ const downloadEquityData = async (symbol, startDate, endDate) => {
 
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
+    //await Candle.deleteMany({ symbol });
     console.log(`Downloading ${symbol}`);
-    const isCrypto = symbol === 'BTCUSD' || symbol === 'ETHUSD';
+    const symbolIsCrypto = isCrypto(symbol);
     let existingMaxDate = null;
     let currentYear = 1960;
 
@@ -97,7 +99,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
 
     const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
 
-    if (isCrypto) {
+    if (symbolIsCrypto) {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
       const endDate = yesterday;
 
@@ -110,7 +112,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       let historicalData = await downloadCryptoData(symbol, startDate, endDate);
       await Candle.insertMany(historicalData);
     } else {
-      // for equities, we'll request it from TDAmeritrade in 4-year chunks
+      // for equities, we'll request it from TDAmeritrade in 5-year chunks
       while (true) {
         let startDate = existingMaxDate
           ? existingMaxDate

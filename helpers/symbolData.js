@@ -22,3 +22,7 @@ exports.getAvailableSymbolNames = async () => {
   const symbols = await Candle.find({}).lean().distinct('symbol');
   return symbols.sort();
 };
+
+exports.isCrypto = (symbol) => {
+  return symbol === 'BTCUSD' || symbol === 'ETHUSD';
+};
