@@ -48,11 +48,11 @@ const useStyles = makeStyles((theme) => ({
 function MainPage(props) {
   const classes = useStyles();
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
+  const [symbols, setSymbols] = React.useState([]);
 
   useEffect(() => {
     (async () => {
-      const symbols = (await nodeServer.get('availableSymbols')).data;
-      debugger;
+      setSymbols((await nodeServer.get('availableSymbols')).data);
     })();
   }, []);
 
@@ -89,6 +89,7 @@ function MainPage(props) {
         </Toolbar>
       </AppBar>
       <div className={classes.appBarSpacer} />
+      {symbols.join(',')}
     </div>
   );
 }

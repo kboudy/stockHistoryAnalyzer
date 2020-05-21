@@ -6,7 +6,7 @@ const {
   } = require('../helpers/symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
-  constants = require('../helpers/constants'),
+  { significantBars } = require('../helpers/constants'),
   { toTwoDecimals } = require('../helpers/miscMethods'),
   moment = require('moment'),
   mongoApi = require('../helpers/mongoApi'),
@@ -18,8 +18,7 @@ const {
 const discoverPatternsForSymbol = async (
   symbol,
   numberOfBars,
-  ignoreMatchesAboveThisScore,
-  significantBars
+  ignoreMatchesAboveThisScore
 ) => {
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
   let lastLoggedPercentComplete = 0;
@@ -256,6 +255,7 @@ const dropPatternCollections = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
+  await dropPatternCollections();
 
   // ignore any pattern matches that have a score >= this
   const ignoreMatchesAboveThisScore = 12;
@@ -269,8 +269,7 @@ const dropPatternCollections = async () => {
     await discoverPatternsForSymbol(
       symbol,
       numberOfBars,
-      ignoreMatchesAboveThisScore,
-      constants.significantBars
+      ignoreMatchesAboveThisScore
     );
   }
   await mongoApi.disconnectMongoose();
