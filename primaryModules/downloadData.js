@@ -7,7 +7,7 @@ const axios = require('axios'),
   mongoApi = require('../helpers/mongoApi'),
   Candle = require('../models/candle');
 
-const extractCryptoData = async (symbol, startDate, endDate) => {
+const downloadCryptoData = async (symbol, startDate, endDate) => {
   const endDateYear = parseInt(endDate.split('-')[0]);
   if (endDateYear < 2014) {
     return [];
@@ -46,7 +46,7 @@ const extractCryptoData = async (symbol, startDate, endDate) => {
   return _.orderBy(filtered, (c) => c.date);
 };
 
-const extractEquityData = async (symbol, startDate, endDate) => {
+const downloadEquityData = async (symbol, startDate, endDate) => {
   const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
@@ -78,16 +78,10 @@ const extractEquityData = async (symbol, startDate, endDate) => {
   return _.orderBy(candles, (c) => c.date);
 };
 
-const getHistoricalDataForSymbol = async (symbol, startDate, endDate) => {
-  const isCrypto = symbol === 'BTCUSD' || symbol === 'ETHUSD';
-  return isCrypto
-    ? extractCryptoData(symbol, startDate, endDate)
-    : extractEquityData(symbol, startDate, endDate);
-};
-
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
     console.log(`Downloading ${symbol}`);
+    const isCrypto = symbol === 'BTCUSD' || symbol === 'ETHUSD';
     let existingMaxDate = null;
     let currentYear = 1960;
 
@@ -96,39 +90,59 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       .limit(1);
 
     if (candleWithMaxDate) {
-      //note: i'm always wiping & re-requesting the last candle
-      await candleWithMaxDate.remove();
+      //note: i'm always re-requesting the last candle
       currentYear = parseInt(candleWithMaxDate.date.split('-')[0]);
       existingMaxDate = candleWithMaxDate.date;
     }
 
     const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
-    while (true) {
-      let startDate = existingMaxDate
-        ? existingMaxDate
-        : `${currentYear}-01-01`;
-      candleWithMaxDate = null;
-      let endDate = `${currentYear + 4}-12-31`;
-      if (startDate > yesterday) {
-        startDate = yesterday;
-      }
-      if (endDate > yesterday) {
-        endDate = yesterday;
-      }
-      const historicalData = await getHistoricalDataForSymbol(
+
+    if (isCrypto) {
+      const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
+      const endDate = yesterday;
+
+      // for crypto, it's downloaded in 1 csv file
+      await Candle.deleteMany({
+        // probably not necessary to clear the range first, but it'll ensure no dupes
         symbol,
-        startDate,
-        endDate
-      );
+        date: { $gte: startDate, $lte: endDate },
+      });
+      let historicalData = await downloadCryptoData(symbol, startDate, endDate);
+      await Candle.insertMany(historicalData);
+    } else {
+      // for equities, we'll request it from TDAmeritrade in 4-year chunks
+      while (true) {
+        let startDate = existingMaxDate
+          ? existingMaxDate
+          : `${currentYear}-01-01`;
+        candleWithMaxDate = null;
+        let endDate = `${currentYear + 4}-12-31`;
+        if (startDate > yesterday) {
+          startDate = yesterday;
+        }
+        if (endDate > yesterday) {
+          endDate = yesterday;
+        }
 
-      if (historicalData.length) {
-        await Candle.insertMany(historicalData);
-      }
+        await Candle.deleteMany({
+          symbol,
+          date: { $gte: startDate, $lte: endDate },
+        });
+        let historicalData = await downloadEquityData(
+          symbol,
+          startDate,
+          endDate
+        );
 
-      if (endDate === yesterday) {
-        break;
+        if (historicalData.length) {
+          await Candle.insertMany(historicalData);
+        }
+
+        if (endDate === yesterday) {
+          break;
+        }
+        currentYear += 5;
       }
-      currentYear += 5;
     }
   }
 };
