@@ -20,7 +20,7 @@ import queryString from 'query-string';
 
 import _ from 'lodash';
 import Grid from '@material-ui/core/Grid';
-import axios from 'axios';
+import nodeServer from '../helpers/nodeServer';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -47,44 +47,14 @@ const useStyles = makeStyles((theme) => ({
 
 function MainPage(props) {
   const classes = useStyles();
-  const [regions, setRegions] = useState(null);
-  const clipboardTextAreaRef = useRef(null);
-  const [statusMessage, setStatusMessage] = useState(null);
-  const [dataSourceDialogOpen, setDataSourceDialogOpen] = useState(false);
-  const [currentChartId, setCurrentChartId] = useState(0);
-  const [windowDimensions, setWindowDimensions] = useState(null);
-  const [chartList, setChartList] = useState([]);
-  const [addChartAnchorEl, setAddChartAnchorEl] = React.useState(null);
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
 
   useEffect(() => {
-    /*     (async () => {
-      const regionUrl = `${getBaseNodeServerUrl(window)}/data/regions`;
-      const regionResponse = await axios.get(regionUrl);
-      setRegions(regionResponse.data);
+    (async () => {
+      const symbols = (await nodeServer.get('availableSymbols')).data;
+      debugger;
     })();
- */
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    return () => {
-      // componentWillUnmount
-      window.removeEventListener('resize', handleResize);
-    };
   }, []);
-
-  const handleResize = () => {
-    if (
-      !windowDimensions ||
-      windowDimensions.width !== window.innerWidth ||
-      windowDimensions.height !== window.innerHeight
-    ) {
-      setWindowDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-  };
 
   return (
     <div className={classes.root}>
@@ -109,7 +79,6 @@ function MainPage(props) {
                 <MenuItem
                   onClick={() => {
                     setInfoAnchorEl(null);
-                    setDataSourceDialogOpen(true);
                   }}
                 >
                   Data sources
