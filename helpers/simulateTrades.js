@@ -40,7 +40,7 @@ const runTradeSimulation = async (
     ignoreMatchesAboveThisScore,
   });
   if (jobRuns.length === 0) {
-    throw `No job runs found for the combination: { sourceSsymbol: ${symbol}, numberOfBars: ${numberOfBars}, ignoreMatchesAboveThisScore: ${ignoreMatchesAboveThisScore} }`;
+    throw `No job runs found for the combination: { sourceSymbol: ${symbol}, numberOfBars: ${numberOfBars}, ignoreMatchesAboveThisScore: ${ignoreMatchesAboveThisScore} }`;
   }
   if (jobRuns.length > 1) {
     throw 'should be unique per (symbol + numberOfBars + ignoreMatchesAboveThisScore). Make sure the job run "find" criteria is restrictive enough';
@@ -136,8 +136,11 @@ const runTradeSimulation = async (
     (ps) =>
       !isNullOrUndefined(ps.actualProfitLossPercent_atBarX[significantBar])
   );
-  const listedProfitLossPercents = patternStats.map(
+  const listedActualProfitLossPercents = patternStats.map(
     (p) => p.actualProfitLossPercent_atBarX[significantBar]
+  );
+  const listedActualProfitLossSellDates = patternStats.map(
+    (p) => p.actualProfitLossSellDate_atBarX[significantBar]
   );
 
   const tradeCount = patternStats.length;
@@ -165,7 +168,8 @@ const runTradeSimulation = async (
 
   const tradeResults = {
     avgProfitLossPercent,
-    listedProfitLossPercents,
+    listedProfitLossPercents: listedActualProfitLossPercents,
+    listedProfitLossSellDates: listedActualProfitLossSellDates,
     percentProfitable,
     tradeCount,
     daysEvaluatedCount,

@@ -98,6 +98,7 @@ const discoverPatternsForSymbol = async (
     patternStat.jobRun = jobRun.id;
     patternStat.sourceDate = sourcePriceHistory[i].date;
     patternStat.actualProfitLossPercent_atBarX = {};
+    patternStat.actualProfitLossSellDate_atBarX = {};
     patternStat.avg_maxUpsidePercent_byBarX = {};
     patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
@@ -220,8 +221,11 @@ const discoverPatternsForSymbol = async (
             (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
               1000
           ) / 10;
+        patternStat.actualProfitLossSellDate_atBarX[sb] =
+          actualTradeSellCandle.date;
       } else {
         patternStat.actualProfitLossPercent_atBarX[sb] = null;
+        patternStat.actualProfitLossSellDate_atBarX[sb] = null;
       }
       //------------------------------------------------------------------------------------
     }

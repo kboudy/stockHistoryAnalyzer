@@ -17,6 +17,7 @@ import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import queryString from 'query-string';
+import Chart from './Chart';
 
 import _ from 'lodash';
 import Grid from '@material-ui/core/Grid';
@@ -42,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
   title: { flexGrow: 1 },
   appBarSpacer: theme.mixins.toolbar,
   addChartGrid: { padding: theme.spacing(3) },
-  chartGridWrapper: { padding: theme.spacing(2) },
+  chartGridWrapper: { padding: theme.spacing(5) },
 }));
 
 function MainPage(props) {
@@ -50,12 +51,14 @@ function MainPage(props) {
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [symbols, setSymbols] = React.useState([]);
 
+  const [chartData, setChartData] = React.useState([]);
+
   useEffect(() => {
     (async () => {
       const tradeSimulationResults = await nodeServer.post(
         'runTradeSimulation',
         {
-          symbol: 'TSLA',
+          symbol: 'AAPL',
           numberOfBars: 20,
           ignoreMatchesAboveThisScore: 12,
           significantBar: 1,
@@ -65,7 +68,13 @@ function MainPage(props) {
           },
         }
       );
-      debugger;
+      const cData = [];
+      const plps = tradeSimulationResults.data.listedProfitLossPercents;
+      const plds = tradeSimulationResults.data.listedProfitLossSellDates;
+      for (let i = 0; i < plps.length; i++) {
+        cData.push({ name: plds[i], ['profit/loss %']: plps[i] });
+      }
+      setChartData(cData);
       setSymbols((await nodeServer.get('availableSymbols')).data);
     })();
   }, []);
@@ -103,7 +112,11 @@ function MainPage(props) {
         </Toolbar>
       </AppBar>
       <div className={classes.appBarSpacer} />
-      {symbols.join(',')}
+      <Grid container className={classes.chartGridWrapper}>
+        <Grid item>
+          <Chart width={1000} height={500} data={chartData} />
+        </Grid>
+      </Grid>
     </div>
   );
 }

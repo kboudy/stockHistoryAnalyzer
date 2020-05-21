@@ -15,6 +15,9 @@ const PatternStatsSchema = new Schema({
   actualProfitLossPercent_atBarX: {
     type: Schema.Types.Mixed,
   },
+  actualProfitLossSellDate_atBarX: {
+    type: Schema.Types.Mixed,
+  },
   upsideDownsideRatio_byBarX: {
     type: Schema.Types.Mixed,
   },
