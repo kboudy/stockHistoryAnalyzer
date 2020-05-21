@@ -65,3 +65,13 @@
   - a **trade** is:
     - **purchased** at the last-candle-in-block (**bar 0**)
     - **sold** at `significantBar` (input param of `runTradeSimulation`)
+
+---
+
+# Charting (React) application
+
+- to launch:
+
+  ```sh
+  npm run charting
+  ```

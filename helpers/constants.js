@@ -19,3 +19,5 @@ exports.symbolsToDownload = [
   'SPY',
   'TSLA',
 ];
+
+exports.nodeServerPort = 3059;
