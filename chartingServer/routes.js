@@ -5,4 +5,5 @@ module.exports = (app) => {
   app.get('/availableSymbols', controllers.getAvailableSymbolNames);
   app.get('/patternStatsJobRuns', controllers.getPatternStatsJobRuns);
   app.get('/patternStats', controllers.getPatternStats);
+  app.post('/runTradeSimulation', controllers.runTradeSimulation);
 };

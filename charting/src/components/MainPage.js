@@ -52,6 +52,20 @@ function MainPage(props) {
 
   useEffect(() => {
     (async () => {
+      const tradeSimulationResults = await nodeServer.post(
+        'runTradeSimulation',
+        {
+          symbol: 'TSLA',
+          numberOfBars: 20,
+          ignoreMatchesAboveThisScore: 12,
+          significantBar: 1,
+          patternStatsConfig: {
+            max_avgScore: 10,
+            min_percentProfitable_atBarX: { 1: 70 },
+          },
+        }
+      );
+      debugger;
       setSymbols((await nodeServer.get('availableSymbols')).data);
     })();
   }, []);

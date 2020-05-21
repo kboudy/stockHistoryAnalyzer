@@ -3,6 +3,7 @@ const _ = require('lodash'),
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
+  { runTradeSimulation } = require('../helpers/simulateTrades'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
@@ -63,6 +64,29 @@ exports.getPatternStats = async (req, res, next) => {
     const { jobRunId } = req.query;
 
     const results = await PatternStats.find({ jobRun: jobRunId }).lean();
+    res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.runTradeSimulation = async (req, res, next) => {
+  try {
+    const {
+      symbol,
+      numberOfBars,
+      ignoreMatchesAboveThisScore,
+      significantBar,
+      patternStatsConfig,
+    } = req.body;
+
+    const results = await runTradeSimulation(
+      symbol,
+      numberOfBars,
+      ignoreMatchesAboveThisScore,
+      significantBar,
+      patternStatsConfig
+    );
     res.json(results);
   } catch (error) {
     return next(error);
