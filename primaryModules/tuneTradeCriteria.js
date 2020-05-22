@@ -134,9 +134,6 @@ const runBruteForceTradeSimulationAndSaveResults = async (
     for (const significantBar of significantBarsArray) {
       for (const numberOfBars of numberOfBarsArray) {
         for (const includeOtherSymbolsTargets of includeOtherSymbolsTargetsArray) {
-          console.log(
-            `    - significantBar: ${significantBar}, numberOfBars: ${numberOfBars}, includeOtherSymbolsTargets: ${includeOtherSymbolsTargets} `
-          );
           for (const config of configCombinations) {
             const tradeSimulationRunCriteria = {
               symbol,
