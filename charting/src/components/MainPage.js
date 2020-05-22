@@ -110,10 +110,7 @@ function MainPage(props) {
         'results.avgProfitLossPercent': { $gte: 0.1 },
       });
 
-      debugger;
-      setTradeSimulationRunQueryResults(
-        tsrQuertyResults.data.map((d) => d.results)
-      );
+      setTradeSimulationRunQueryResults(tsrQuertyResults.data);
 
       window.addEventListener('resize', handleResize);
       handleResize();
