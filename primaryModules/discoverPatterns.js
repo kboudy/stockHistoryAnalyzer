@@ -271,23 +271,70 @@ const dropPatternCollections = async () => {
   } catch (err) {}
 };
 
+const argOptions = {
+  dropCollection: {
+    alias: 'd',
+    type: 'boolean',
+    description: `at the start, drop the PatternStats & PatternStatsJobRuns collections`,
+  },
+  symbols: {
+    alias: 's',
+    type: 'array',
+    description: `symbol(s) to loop through`,
+  },
+  numberOfBars: {
+    alias: 'n',
+    type: 'array',
+    description: `numberOfBars(s) to loop through`,
+  },
+  includeOtherPriceHistories: {
+    alias: 'i',
+    description: `include other symbols' price histories as target matches`,
+    choices: ['true', 'false', 'both'],
+  },
+};
+
+const { argv } = require('yargs')
+  .alias('help', 'h')
+  .version(false)
+  .options(argOptions);
+
 (async () => {
   await mongoApi.connectMongoose();
+  if (argv.dropCollection) {
+    console.log('dropping PatternStats & PatternStatsJobRuns collections');
+    await dropPatternCollections();
+  }
 
-  const useAllSymbolsAsTargetPriceHistories = [true, false];
-  const numberOfBars = [5, 10, 15, 20, 30];
+  let includeOtherPriceHistoriesAsTargets;
+  if (argv.includeOtherPriceHistories) {
+    if (argv.includeOtherPriceHistories.toLowerCase() === 'true') {
+      includeOtherPriceHistoriesAsTargets = [true];
+    } else if (argv.includeOtherPriceHistories.toLowerCase() === 'false') {
+      includeOtherPriceHistoriesAsTargets = [false];
+    } else {
+      includeOtherPriceHistoriesAsTargets = [true, false];
+    }
+  } else {
+    includeOtherPriceHistoriesAsTargets = [true, false];
+  }
+
+  const numberOfBars = argv.numberOfBars
+    ? argv.numberOfBars
+    : [5, 10, 15, 20, 30];
+
+  const allSymbols = await getAvailableSymbolNames();
+  const equitySymbols = symbols.filter((s) => !isCrypto(s));
+  const cryptoSymbols = symbols.filter((s) => isCrypto(s));
+
   for (const nb of numberOfBars) {
-    for (const useAllSymbols of useAllSymbolsAsTargetPriceHistories) {
+    for (const includeOtherPriceHistories of includeOtherPriceHistoriesAsTargets) {
       // ignore any pattern matches that have a score >= this
       const ignoreMatchesAboveThisScore = 12;
 
-      const symbols = await getAvailableSymbolNames();
-      const equitySymbols = symbols.filter((s) => !isCrypto(s));
-      const cryptoSymbols = symbols.filter((s) => isCrypto(s));
-
-      for (const symbol of symbols) {
+      for (const symbol of argv.symbols ? argv.symbols : allSymbols) {
         let targetPriceHistorySymbols = [symbol];
-        if (useAllSymbols) {
+        if (includeOtherPriceHistories) {
           //convention: the targetPriceHistory symbols should always start with the source symbol
           targetPriceHistorySymbols = isCrypto(symbol)
             ? cryptoSymbols
@@ -299,9 +346,9 @@ const dropPatternCollections = async () => {
         }
 
         console.log(
-          `${symbol} [${nb},${useAllSymbols}] (${symbols.indexOf(symbol) + 1}/${
-            symbols.length
-          })`
+          `${symbol} [${nb},${includeOtherPriceHistories}] (${
+            symbols.indexOf(symbol) + 1
+          }/${symbols.length})`
         );
         process.stdout.write('  ');
         await discoverPatternsForSymbol(
