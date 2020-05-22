@@ -14,9 +14,6 @@ import {
 const gradientOffset = (props) => {
   const dataMax = Math.max(...props.data.map((d) => d[props.dataKeyName]));
   const dataMin = Math.min(...props.data.map((d) => d[props.dataKeyName]));
-  if (props.data.length) {
-    debugger;
-  }
 
   if (dataMax <= 0) {
     return 0;
@@ -30,7 +27,6 @@ const gradientOffset = (props) => {
 
 const getTicks = (props) => {
   const allTicks = props.data.map((n) => n.name);
-  debugger;
   if (props.maxTicks) {
     const interval = Math.round(allTicks.length / props.maxTicks);
     const filteredTicks = allTicks.filter(

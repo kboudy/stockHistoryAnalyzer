@@ -21,9 +21,14 @@ import Paper from '@material-ui/core/Paper';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Chart from './Chart';
+import SimulationResultsTable from './SimulationResultsTable';
 
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
+
+const { isNullOrUndefined } = require('../helpers/miscMethods');
+
+const NONE = '-none-';
 
 const StyledTableCell = withStyles((theme) => ({
   head: {
@@ -65,18 +70,22 @@ function MainPage(props) {
   const [symbols, setSymbols] = React.useState([]);
   const [availableNumberOfBars, setAvailableNumberOfBars] = React.useState([]);
   const [significantBars, setSignificantBars] = React.useState([]);
+  const [
+    tradeSimulationRunQueryResults,
+    setTradeSimulationRunQueryResults,
+  ] = React.useState([]);
 
   const [windowDimensions, setWindowDimensions] = useState(null);
 
   const [chartParams, setChartParams] = React.useState({
-    symbol: null,
+    symbol: '',
     significantBar: 1,
     numberOfBars: 10,
     max_avgScore: 10,
     min_scoreCount: 10,
     min_percentProfitable_atBarX: 70,
-    min_upsideDownsideRatio_byBarX: null,
-    min_avg_maxUpsidePercent_byBarX: null,
+    min_upsideDownsideRatio_byBarX: '',
+    min_avg_maxUpsidePercent_byBarX: '',
     includeOtherSymbolsTargets: false,
   });
   const [chartData, setChartData] = React.useState([]);
@@ -92,6 +101,19 @@ function MainPage(props) {
         )
       );
       setSignificantBars((await nodeServer.get('significantBars')).data);
+
+      const tsrQuertyResults = await nodeServer.post('tradeSimulationRuns', {
+        'criteria.symbol': 'TSLA',
+        'criteria.numberOfBars': 10,
+        'criteria.significantBar': 5,
+        'criteria.includeOtherSymbolsTargets': true,
+        'results.avgProfitLossPercent': { $gte: 0.1 },
+      });
+
+      debugger;
+      setTradeSimulationRunQueryResults(
+        tsrQuertyResults.data.map((d) => d.results)
+      );
 
       window.addEventListener('resize', handleResize);
       handleResize();
@@ -151,7 +173,7 @@ function MainPage(props) {
       { name: ['trade count'], value: data.tradeCount },
       { name: ['trade count per year'], value: data.tradeCountPerYear },
     ]);
-    debugger;
+
     const cData = [];
     const plps = tradeSimulationResults.data.listedProfitLossPercents;
     const plds = tradeSimulationResults.data.listedProfitLossSellDates;
@@ -280,7 +302,7 @@ function MainPage(props) {
               >
                 {availableNumberOfBars.map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
+                    {isNullOrUndefined(val) ? NONE : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -301,7 +323,7 @@ function MainPage(props) {
                 {[null, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(
                   (val, index) => (
                     <MenuItem key={index} value={val}>
-                      {val !== 0 && !val ? '--' : val}
+                      {isNullOrUndefined(val) ? NONE : val}
                     </MenuItem>
                   )
                 )}
@@ -320,7 +342,7 @@ function MainPage(props) {
               >
                 {[null, 1, 2, 5, 10, 15, 20].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
+                    {isNullOrUndefined(val) ? NONE : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -339,7 +361,7 @@ function MainPage(props) {
               >
                 {[null, 50, 60, 70, 80].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
+                    {isNullOrUndefined(val) ? NONE : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -358,7 +380,7 @@ function MainPage(props) {
               >
                 {[null, 0.25, 0.5, 1, 1.5, 2, 2.5].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
+                    {isNullOrUndefined(val) ? NONE : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -377,7 +399,7 @@ function MainPage(props) {
               >
                 {[null, 1, 2, 5].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
+                    {isNullOrUndefined(val) ? NONE : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -431,6 +453,12 @@ function MainPage(props) {
         ) : (
           <></>
         )}
+        <Grid item xs={12}>
+          <SimulationResultsTable
+            height={400}
+            data={tradeSimulationRunQueryResults}
+          />
+        </Grid>
       </Grid>
     </div>
   );
