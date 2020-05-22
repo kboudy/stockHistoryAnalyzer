@@ -61,6 +61,7 @@ function MainPage(props) {
   const classes = useStyles();
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [symbols, setSymbols] = React.useState([]);
+  const [availableNumberOfBars, setAvailableNumberOfBars] = React.useState([]);
   const [significantBars, setSignificantBars] = React.useState([]);
 
   const [windowDimensions, setWindowDimensions] = useState(null);
@@ -68,6 +69,7 @@ function MainPage(props) {
   const [chartParams, setChartParams] = React.useState({
     symbol: null,
     significantBar: 1,
+    numberOfBars: 10,
     max_avgScore: 10,
     min_scoreCount: 10,
     min_percentProfitable_atBarX: 70,
@@ -80,6 +82,12 @@ function MainPage(props) {
   useEffect(() => {
     (async () => {
       setSymbols((await nodeServer.get('availableSymbols')).data);
+      setAvailableNumberOfBars(
+        _.orderBy(
+          (await nodeServer.get('availableNumberOfBars')).data,
+          (nb) => nb
+        )
+      );
       setSignificantBars((await nodeServer.get('significantBars')).data);
 
       window.addEventListener('resize', handleResize);
@@ -98,7 +106,7 @@ function MainPage(props) {
     }
     const tradeSimulationResults = await nodeServer.post('runTradeSimulation', {
       symbol: chartParams.symbol,
-      numberOfBars: 20,
+      numberOfBars: chartParams.numberOfBars,
       ignoreMatchesAboveThisScore: 12,
       significantBar: chartParams.significantBar,
       patternStatsConfig: {
@@ -258,6 +266,24 @@ function MainPage(props) {
             </FormControl>
             <FormControl className={classes.formControl}>
               <Select
+                value={chartParams.numberOfBars}
+                onChange={(e) => {
+                  setChartParams({
+                    ...chartParams,
+                    numberOfBars: e.target.value,
+                  });
+                }}
+              >
+                {availableNumberOfBars.map((val, index) => (
+                  <MenuItem key={index} value={val}>
+                    {val !== 0 && !val ? '--' : val}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText># of bars</FormHelperText>
+            </FormControl>
+            <FormControl className={classes.formControl}>
+              <Select
                 labelId="lblMaxAvgScore"
                 id="cboMaxAvgScore"
                 value={chartParams.max_avgScore}
@@ -268,7 +294,7 @@ function MainPage(props) {
                   });
                 }}
               >
-                {[null, 10, 11, 12].map((val, index) => (
+                {[null, 6, 7, 8, 9, 10, 11, 12].map((val, index) => (
                   <MenuItem key={index} value={val}>
                     {val !== 0 && !val ? '--' : val}
                   </MenuItem>

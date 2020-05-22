@@ -17,6 +17,17 @@ exports.getSymbolNames = async (req, res, next) => {
   }
 };
 
+exports.getAvailableNumberOfBars = async (req, res, next) => {
+  try {
+    const numberOfBars = await PatternStatsJobRun.find({})
+      .lean()
+      .distinct('numberOfBars');
+    res.json(numberOfBars);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.getSignificantBars = async (req, res, next) => {
   try {
     res.json(significantBars);
