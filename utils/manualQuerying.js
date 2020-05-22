@@ -10,7 +10,8 @@ const _ = require('lodash'),
   { significantBars } = require('../helpers/constants'),
   Candle = require('../models/candle'),
   PatternStats = require('../models/patternStats'),
-  PatternStatsJobRun = require('../models/patternStatsJobRun');
+  PatternStatsJobRun = require('../models/patternStatsJobRun'),
+  TradeSimulationRun = require('../models/tradeSimulationRun');
 
 const findMinSourceDate = async () => {
   const minSourceDate = (
@@ -94,42 +95,47 @@ const validateCandleDates = async () => {
 };
 
 const createIndexes = async () => {
-  //note: this is not necessary to run, since they're now defined in the schema
-  const patternStatsCollection = await mongoose.connection.db.collection(
-    'patternstats'
+  const tradeSimulationRunsCollection = await mongoose.connection.db.collection(
+    'tradesimulationruns'
   );
-  const existingIndexes = await PatternStats.collection.getIndexes();
+  const existingIndexes = await TradeSimulationRun.collection.getIndexes();
   for (const idxName of Object.keys(existingIndexes)) {
     if (idxName !== '_id_') {
-      await patternStatsCollection.dropIndex(idxName);
+      await tradeSimulationRunsCollection.dropIndex(idxName);
     }
   }
-
-  const fieldNames = Object.keys(PatternStats.schema.obj);
-  for (const fieldName of fieldNames) {
-    if (['scoreDates'].includes(fieldName)) {
-      continue;
-    }
-    if (
-      fieldName.toLowerCase().includes('_atbarx') ||
-      fieldName.toLowerCase().includes('_bybarx')
-    ) {
-      continue;
-      /*       for (const sb of significantBars) {
-        const fieldNameWithBar = `${fieldName}.${sb}`;
-        await patternStatsCollection.createIndex(
-          { [fieldNameWithBar]: 1 },
-          { sparse: true }
-        ); // sparse will not index documents without this field
-      } */
-    } else {
-      console.log(`creating index for ${fieldName}`);
-      await patternStatsCollection.createIndex(
-        { [fieldName]: 1 },
-        { sparse: true }
-      ); // sparse will not index documents without this field
-    }
-  }
+  await tradeSimulationRunsCollection.createIndex(
+    { 'criteria.symbol': 1 },
+    { sparse: true }
+  ); // sparse will not index documents without this field
+  await tradeSimulationRunsCollection.createIndex(
+    { 'criteria.includeOtherSymbolsTargets': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'criteria.numberOfBars': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'criteria.significantBar': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'results.avgProfitLossPercent': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'results.percentProfitable': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'results.tradeCount': 1 },
+    { sparse: true }
+  );
+  await tradeSimulationRunsCollection.createIndex(
+    { 'results.tradeCountPerYear': 1 },
+    { sparse: true }
+  );
 };
 
 (async () => {
