@@ -28,6 +28,23 @@ const gradientOffset = (props) => {
   return dataMax / (dataMax - dataMin);
 };
 
+const getTicks = (props) => {
+  const allTicks = props.data.map((n) => n.name);
+  debugger;
+  if (props.maxTicks) {
+    const interval = Math.round(allTicks.length / props.maxTicks);
+    const filteredTicks = allTicks.filter(
+      (tick, index) => index % interval === 0
+    );
+    const lastTick = allTicks[allTicks.length - 1];
+    if (!filteredTicks.includes(lastTick)) {
+      filteredTicks.push(lastTick);
+    }
+    return filteredTicks;
+  }
+  return null;
+};
+
 const Chart = (props) => {
   return (
     <AreaChart
@@ -42,7 +59,7 @@ const Chart = (props) => {
       }}
     >
       <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="name" />
+      <XAxis dataKey="name" ticks={getTicks(props)} />
       <YAxis />
       <Tooltip />
       <Legend />

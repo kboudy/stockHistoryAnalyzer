@@ -126,6 +126,7 @@ const runTradeSimulation = async (
   addToQueryFilter('min_scoreCount', 'scoreCount', '$gte', false);
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
+  console.log(JSON.stringify(queryFilter));
   //----------------------------
 
   const patternStats = (
@@ -134,6 +135,7 @@ const runTradeSimulation = async (
     })
   ).filter(
     (ps) =>
+      !isNullOrUndefined(ps.actualProfitLossPercent_atBarX) &&
       !isNullOrUndefined(ps.actualProfitLossPercent_atBarX[significantBar])
   );
   const listedActualProfitLossPercents = patternStats.map(

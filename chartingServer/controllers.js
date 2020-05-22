@@ -3,14 +3,23 @@ const _ = require('lodash'),
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
+  { significantBars } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
-exports.getAvailableSymbolNames = async (req, res, next) => {
+exports.getSymbolNames = async (req, res, next) => {
   try {
     res.json(await getAvailableSymbolNames());
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getSignificantBars = async (req, res, next) => {
+  try {
+    res.json(significantBars);
   } catch (error) {
     return next(error);
   }

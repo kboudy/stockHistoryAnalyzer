@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { withStyles, makeStyles } from '@material-ui/core/styles';
 
 import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
@@ -22,6 +22,13 @@ import Chart from './Chart';
 
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
+
+const StyledTableCell = withStyles((theme) => ({
+  head: {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+  },
+}))(TableCell);
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -54,6 +61,7 @@ function MainPage(props) {
   const classes = useStyles();
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [symbols, setSymbols] = React.useState([]);
+  const [significantBars, setSignificantBars] = React.useState([]);
 
   const [windowDimensions, setWindowDimensions] = useState(null);
 
@@ -61,7 +69,10 @@ function MainPage(props) {
     symbol: null,
     significantBar: 1,
     max_avgScore: 10,
-    min_percentProfitable_atBarX: { 1: 70 },
+    min_scoreCount: 10,
+    min_percentProfitable_atBarX: 70,
+    min_upsideDownsideRatio_byBarX: null,
+    min_avg_maxUpsidePercent_byBarX: null,
   });
   const [chartData, setChartData] = React.useState([]);
   const [aggregatedResultRows, setAggregatedResultRows] = React.useState([]);
@@ -69,6 +80,7 @@ function MainPage(props) {
   useEffect(() => {
     (async () => {
       setSymbols((await nodeServer.get('availableSymbols')).data);
+      setSignificantBars((await nodeServer.get('significantBars')).data);
 
       window.addEventListener('resize', handleResize);
       handleResize();
@@ -91,10 +103,30 @@ function MainPage(props) {
       significantBar: chartParams.significantBar,
       patternStatsConfig: {
         max_avgScore: chartParams.max_avgScore,
-        min_percentProfitable_atBarX: chartParams.min_percentProfitable_atBarX,
+        min_scoreCount: chartParams.min_scoreCount,
+        min_percentProfitable_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_percentProfitable_atBarX,
+        },
+        min_upsideDownsideRatio_byBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_upsideDownsideRatio_byBarX,
+        },
+        min_avg_maxUpsidePercent_byBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_avg_maxUpsidePercent_byBarX,
+        },
       },
     });
 
+    /*    
+    max_avg_maxDownsidePercent_byBarX: null,
+    min_avg_profitLossPercent_atBarX: null,    
+    min_percentProfitable_by_1_percent_atBarX: null,
+    min_percentProfitable_by_2_percent_atBarX: null,
+    min_percentProfitable_by_5_percent_atBarX: null,
+    min_percentProfitable_by_10_percent_atBarX: null,
+ */
     const { data } = tradeSimulationResults;
 
     setAggregatedResultRows([
@@ -178,6 +210,7 @@ function MainPage(props) {
             height={Math.round(windowDimensions.width * 0.9 * 0.25)}
             data={chartData}
             dataKeyName={'p/l %'}
+            maxTicks={5}
           />
         </Grid>
         <Grid item>
@@ -215,7 +248,7 @@ function MainPage(props) {
                   });
                 }}
               >
-                {[1, 5, 10].map((val, index) => (
+                {significantBars.map((val, index) => (
                   <MenuItem key={index} value={val}>
                     {val}
                   </MenuItem>
@@ -235,9 +268,9 @@ function MainPage(props) {
                   });
                 }}
               >
-                {[10, 11, 12].map((val, index) => (
+                {[null, 10, 11, 12].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val}
+                    {val !== 0 && !val ? '--' : val}
                   </MenuItem>
                 ))}
               </Select>
@@ -245,57 +278,112 @@ function MainPage(props) {
             </FormControl>
             <FormControl className={classes.formControl}>
               <Select
-                labelId="lblMinPercentProfitable"
-                id="cboMinPercentProfitable"
-                value={
-                  chartParams.min_percentProfitable_atBarX[
-                    chartParams.significantBar
-                  ]
-                }
+                value={chartParams.min_scoreCount}
                 onChange={(e) => {
                   setChartParams({
                     ...chartParams,
-                    min_percentProfitable_atBarX: {
-                      [chartParams.significantBar]: e.target.value,
-                    },
+                    min_scoreCount: e.target.value,
                   });
                 }}
               >
-                {[50, 60, 70, 80].map((val, index) => (
+                {[null, 1, 2, 5, 10, 15, 20].map((val, index) => (
                   <MenuItem key={index} value={val}>
-                    {val}
+                    {val !== 0 && !val ? '--' : val}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>min score count</FormHelperText>
+            </FormControl>
+
+            <FormControl className={classes.formControl}>
+              <Select
+                value={chartParams.min_percentProfitable_atBarX}
+                onChange={(e) => {
+                  setChartParams({
+                    ...chartParams,
+                    min_percentProfitable_atBarX: e.target.value,
+                  });
+                }}
+              >
+                {[null, 50, 60, 70, 80].map((val, index) => (
+                  <MenuItem key={index} value={val}>
+                    {val !== 0 && !val ? '--' : val}
                   </MenuItem>
                 ))}
               </Select>
               <FormHelperText>min percentProfitable at bar</FormHelperText>
             </FormControl>
+
+            <FormControl className={classes.formControl}>
+              <Select
+                value={chartParams.min_upsideDownsideRatio_byBarX}
+                onChange={(e) => {
+                  setChartParams({
+                    ...chartParams,
+                    min_upsideDownsideRatio_byBarX: e.target.value,
+                  });
+                }}
+              >
+                {[null, 0.25, 0.5, 1, 1.5, 2, 2.5].map((val, index) => (
+                  <MenuItem key={index} value={val}>
+                    {val !== 0 && !val ? '--' : val}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>min upsideDownsideRatio by bar</FormHelperText>
+            </FormControl>
+
+            <FormControl className={classes.formControl}>
+              <Select
+                value={chartParams.min_avg_maxUpsidePercent_byBarX}
+                onChange={(e) => {
+                  setChartParams({
+                    ...chartParams,
+                    min_avg_maxUpsidePercent_byBarX: e.target.value,
+                  });
+                }}
+              >
+                {[null, 1, 2, 5].map((val, index) => (
+                  <MenuItem key={index} value={val}>
+                    {val !== 0 && !val ? '--' : val}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>min avg max-upside-% by bar</FormHelperText>
+            </FormControl>
           </Paper>
         </Grid>
-        <Grid item>
-          <TableContainer
-            component={Paper}
-            className={classes.formControlWrapper}
-          >
-            <Table className={classes.table} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Aggregated Result</TableCell>
-                  <TableCell align="right">Value</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {aggregatedResultRows.map((row) => (
-                  <TableRow key={row.name}>
-                    <TableCell component="th" scope="row">
-                      {row.name}
-                    </TableCell>
-                    <TableCell align="right">{row.value}</TableCell>
+        {aggregatedResultRows.length ? (
+          <Grid item>
+            <TableContainer
+              component={Paper}
+              className={classes.formControlWrapper}
+            >
+              <Table className={classes.table} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell>Aggregated Result</StyledTableCell>
+                    <StyledTableCell align="right">Value</StyledTableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
+                </TableHead>
+                <TableBody>
+                  {aggregatedResultRows.map((row) => (
+                    <TableRow key={row.name}>
+                      <StyledTableCell component="th" scope="row">
+                        {row.name}
+                      </StyledTableCell>
+                      <StyledTableCell align="right">
+                        {row.value}
+                      </StyledTableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        ) : (
+          <></>
+        )}
       </Grid>
     </div>
   );
