@@ -3,6 +3,7 @@
 const {
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
+    isCrypto,
   } = require('../helpers/symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
@@ -17,6 +18,7 @@ const {
 
 const discoverPatternsForSymbol = async (
   symbol,
+  targetSymbols,
   numberOfBars,
   ignoreMatchesAboveThisScore
 ) => {
@@ -31,7 +33,7 @@ const discoverPatternsForSymbol = async (
     numberOfBars,
     ignoreMatchesAboveThisScore,
     sourceSymbol: symbol,
-    targetSymbols: [symbol],
+    targetSymbols,
   });
   if (jobRun) {
     // get the current max date
@@ -50,7 +52,7 @@ const discoverPatternsForSymbol = async (
       significantBars,
       ignoreMatchesAboveThisScore,
       sourceSymbol: symbol,
-      targetSymbols: [symbol],
+      targetSymbols,
     });
   }
 
@@ -81,14 +83,21 @@ const discoverPatternsForSymbol = async (
       continue;
     }
 
-    const targetPriceHistories = [sourcePriceHistory.slice(0, i)];
+    const sourceDate = sourcePriceHistory[i].date;
+    const targetPriceHistories = [];
+    for (const targetSymbol of targetSymbols) {
+      const tph = (await loadHistoricalDataForSymbol(targetSymbol)).filter(
+        (t) => t.date < sourceDate
+      );
+      targetPriceHistories.push(tph);
+    }
 
-    const scores = patternMatching.getMatches(
+    const { scores, scoresByTargetSymbol } = patternMatching.getMatches(
       sourcePriceHistory,
       i,
       numberOfBars,
       targetPriceHistories,
-      [symbol], // the list of symbols which matches targetPriceHistories'
+      targetSymbols, // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
       significantBars,
       ignoreMatchesAboveThisScore
@@ -105,7 +114,6 @@ const discoverPatternsForSymbol = async (
     patternStat.stdDev_maxDownsidePercent_byBarX = {};
     patternStat.upsideDownsideRatio_byBarX = {};
     patternStat.avg_profitLossPercent_atBarX = {};
-    patternStat.listed_profitLossPercent_atBarX = {};
     patternStat.percentProfitable_atBarX = {};
     patternStat.percentProfitable_by_1_percent_atBarX = {};
     patternStat.percentProfitable_by_2_percent_atBarX = {};
@@ -115,7 +123,7 @@ const discoverPatternsForSymbol = async (
 
     if (scores.length === 0) {
       patternStat.avgScore = null;
-      patternStat.scoreDates = [];
+      patternStat.scoreDates = {};
       patternStat.scoreCount = 0;
       await PatternStats.create(patternStat);
       continue;
@@ -179,7 +187,6 @@ const discoverPatternsForSymbol = async (
         patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
           plp_at.reduce((a, b) => a + b) / plp_at.length
         );
-        patternStat.listed_profitLossPercent_atBarX[sb] = plp_at;
         patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
           (plp_at.filter((a) => a > 0).length * 100) / plp_at.length
         );
@@ -200,7 +207,6 @@ const discoverPatternsForSymbol = async (
         );
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
-        patternStat.listed_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_atBarX[sb] = null;
         patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_by_1_percent_atBarX[sb] = null;
@@ -232,10 +238,17 @@ const discoverPatternsForSymbol = async (
     patternStat.avgScore = toTwoDecimals(
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
-    patternStat.scoreDates = _.orderBy(
-      scores.map((s) => s.startDate),
-      (d) => d
-    );
+
+    patternStat.scoreDates = {};
+    for (const tphSymbol of targetSymbols) {
+      if (scoresByTargetSymbol[tphSymbol]) {
+        patternStat.scoreDates[tphSymbol] = _.orderBy(
+          scoresByTargetSymbol[tphSymbol].map((s) => s.startDate),
+          (d) => d
+        );
+      }
+    }
+
     patternStat.scoreCount = scores.length;
 
     await PatternStats.create(patternStat);
@@ -264,13 +277,25 @@ const dropPatternCollections = async () => {
   const ignoreMatchesAboveThisScore = 12;
   const numberOfBars = 20;
 
-  let symbols = await getAvailableSymbolNames();
+  const symbols = await getAvailableSymbolNames();
+  const equitySymbols = symbols.filter((s) => !isCrypto(s));
+  const cryptoSymbols = symbols.filter((s) => isCrypto(s));
 
   for (const symbol of symbols) {
+    //convention: the targetPriceHistory symbols should always start with the source symbol
+    let targetPriceHistorySymbols = isCrypto(symbol)
+      ? cryptoSymbols
+      : equitySymbols;
+    targetPriceHistorySymbols = targetPriceHistorySymbols.filter(
+      (s) => s !== symbol
+    );
+    targetPriceHistorySymbols = [symbol, ...targetPriceHistorySymbols];
+
     console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);
     process.stdout.write('  ');
     await discoverPatternsForSymbol(
       symbol,
+      targetPriceHistorySymbols,
       numberOfBars,
       ignoreMatchesAboveThisScore
     );

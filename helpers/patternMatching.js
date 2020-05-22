@@ -102,6 +102,7 @@ exports.getMatches = (
   const endIndex = startIndex + numberOfBars;
   const barsToMatch = sourcePriceHistory.slice(startIndex, endIndex);
   const scoresWithMaxMin = [];
+  const scoresWithMaxMin_groupedBySymbol = [];
   for (const targetPriceHistory of targetPriceHistories) {
     let scores = _.orderBy(
       matchPattern(barsToMatch, targetPriceHistory),
@@ -231,15 +232,23 @@ exports.getMatches = (
           targetPriceHistories.indexOf(targetPriceHistory)
         ];
 
-      scoresWithMaxMin.push({
+      const score = {
         ...s,
         maxUpsidePercent_byBarX,
         maxDownsidePercent_byBarX,
         profitLossPercent_atBarX,
         symbol: tphSymbol,
-      });
+      };
+      scoresWithMaxMin.push(score);
+      if (!scoresWithMaxMin_groupedBySymbol[tphSymbol]) {
+        scoresWithMaxMin_groupedBySymbol[tphSymbol] = [];
+      }
+      scoresWithMaxMin_groupedBySymbol[tphSymbol].push(score);
     }
   }
 
-  return scoresWithMaxMin;
+  return {
+    scores: scoresWithMaxMin,
+    scoresByTargetSymbol: scoresWithMaxMin_groupedBySymbol,
+  };
 };

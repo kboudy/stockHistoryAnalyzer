@@ -31,7 +31,7 @@
     - `avgScore`
       - the average matching score. higher = weaker match, 0 = perfect match
     - `scoreDates`
-      - a list of all matching-blocks' dates
+      - a list of all matching-blocks' dates (grouped by target symbol)
         - a matching date is the **beginning** of the block (of `numberOfBars` candles)
     - `scoreCount`
       - number of matches
@@ -45,7 +45,6 @@
     - `stdDev_maxDownsidePercent_byBarX`
     - `upsideDownsideRatio_byBarX`
     - `avg_profitLossPercent_atBarX`
-    - `listed_profitLossPercent_atBarX`
     - `percentProfitable_atBarX`
     - `percentProfitable_by_1_percent_atBarX`
       - like `percentProfitable_atBarX`, but they must have a profit of at least 1%
