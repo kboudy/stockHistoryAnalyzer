@@ -165,7 +165,7 @@ function MainPage(props) {
 
     setAggregatedResultRows([
       {
-        name: ['Avg Profit/Loss %'],
+        name: ['avg pl %'],
         value: data.avgProfitLossPercent,
       },
       { name: ['% profitable'], value: data.percentProfitable },

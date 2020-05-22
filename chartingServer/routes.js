@@ -8,4 +8,5 @@ module.exports = (app) => {
   app.get('/patternStatsJobRuns', controllers.getPatternStatsJobRuns);
   app.get('/patternStats', controllers.getPatternStats);
   app.post('/runTradeSimulation', controllers.runTradeSimulation);
+  app.post('/tradeSimulationRuns', controllers.queryTradeSimulationRuns);
 };

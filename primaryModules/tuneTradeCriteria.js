@@ -178,7 +178,11 @@ const runBruteForceTradeSimulationAndSaveResults = async (
               (100 * simulationsRun) / simulationsToRunCount
             );
             if (percentComplete - lastLoggedPercentComplete === 1) {
-              console.log(chalk.green(`    * % complete: ${percentComplete}%`));
+              console.log(
+                chalk.green(
+                  `    ${chalk.white('*')} % complete: ${percentComplete}%`
+                )
+              );
               lastLoggedPercentComplete = percentComplete;
             }
           }

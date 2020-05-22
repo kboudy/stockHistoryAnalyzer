@@ -58,7 +58,6 @@ const Chart = (props) => {
       <XAxis dataKey="name" ticks={getTicks(props)} />
       <YAxis />
       <Tooltip />
-      <Legend />
       <defs>
         <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
           <stop

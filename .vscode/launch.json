@@ -52,6 +52,13 @@
       "name": "manualQuerying",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/manualQuerying.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "node charting server",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/chartingServer/index.js"
     }
   ]
 }

@@ -90,6 +90,18 @@ exports.getPatternStats = async (req, res, next) => {
   }
 };
 
+exports.queryTradeSimulationRuns = async (req, res, next) => {
+  try {
+    const queryParams = req.body;
+
+    const results = await TradeSimulationRun.find(queryParams);
+
+    res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.runTradeSimulation = async (req, res, next) => {
   try {
     const {
@@ -101,7 +113,6 @@ exports.runTradeSimulation = async (req, res, next) => {
       patternStatsConfig,
     } = req.body;
 
-    debugger;
     if (!symbol) {
       return;
     }
