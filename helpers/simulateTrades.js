@@ -29,12 +29,14 @@ const cachedHistoricalData = {};
 
 const runTradeSimulation = async (
   symbol,
+  includeOtherSymbolsTargets,
   numberOfBars,
   ignoreMatchesAboveThisScore,
   significantBar,
-  config
+  config,
+  logToConsole
 ) => {
-  const jobRuns = await PatternStatsJobRun.find({
+  let jobRuns = await PatternStatsJobRun.find({
     sourceSymbol: symbol,
     numberOfBars,
     ignoreMatchesAboveThisScore,
@@ -42,8 +44,14 @@ const runTradeSimulation = async (
   if (jobRuns.length === 0) {
     throw `No job runs found for the combination: { sourceSymbol: ${symbol}, numberOfBars: ${numberOfBars}, ignoreMatchesAboveThisScore: ${ignoreMatchesAboveThisScore} }`;
   }
+  jobRuns = jobRuns.filter((jr) =>
+    includeOtherSymbolsTargets
+      ? jr.targetSymbols.length > 1
+      : jr.targetSymbols.length === 1
+  );
   if (jobRuns.length > 1) {
-    throw 'should be unique per (symbol + numberOfBars + ignoreMatchesAboveThisScore). Make sure the job run "find" criteria is restrictive enough';
+    console.log(jobRuns.length);
+    throw 'should be unique per (symbol + numberOfBars + ignoreMatchesAboveThisScore + [includeOtherSymbolsTargets]). Make sure the job run "find" criteria is restrictive enough';
   }
   const jobRun = jobRuns[0];
 
@@ -126,7 +134,9 @@ const runTradeSimulation = async (
   addToQueryFilter('min_scoreCount', 'scoreCount', '$gte', false);
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
-  console.log(JSON.stringify(queryFilter));
+  if (logToConsole) {
+    console.log(JSON.stringify(queryFilter));
+  }
   //----------------------------
 
   const patternStats = (

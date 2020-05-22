@@ -7,6 +7,7 @@ const { getAvailableSymbolNames } = require('../helpers/symbolData'),
   mongoose = require('mongoose'),
   mongoApi = require('../helpers/mongoApi'),
   { isNullOrUndefined } = require('../helpers/miscMethods'),
+  constants = require('../helpers/constants'),
   TradeSimulationRun = require('../models/tradeSimulationRun'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
@@ -89,89 +90,128 @@ const dropTradeSimulationCollection = async () => {
   } catch (err) {}
 };
 
-exports.runBruteForceTradeSimulationAndSaveResults = async (
-  numberOfBars,
+const isObject = (obj) => {
+  Object.prototype.toString.call(obj) === '[object Object]';
+};
+
+const addBarsToConfig = (config, significantBar) => {
+  // for config values that use significant bar,
+  // & where significantBar hasn't been defined,
+  // add it
+  for (const k in config) {
+    if (
+      k.toLowerCase().includes('_atbar') ||
+      k.toLowerCase().includes('_bybar')
+    ) {
+      const configVal = config[k];
+      if (!isObject(configVal)) {
+        config[k] = { [significantBar]: configVal };
+      }
+    }
+  }
+  return config;
+};
+
+const runBruteForceTradeSimulationAndSaveResults = async (
+  symbols,
+  numberOfBarsArray,
+  significantBarsArray,
+  includeOtherSymbolsTargetsArray,
   ignoreMatchesAboveThisScore,
-  significantBars
+  bruteForceValsConfig
 ) => {
-  const symbols = await getAvailableSymbolNames();
-
-  /*   const valuesToBruteForceTest = {
-    max_avgScore: [10, 11, 12],
-    min_percentProfitable_atBarX: [null, 60, 70, 80, 90],
-    min_percentProfitable_by_1_percent_atBarX: [null, 60, 70, 80, 90],
-    min_percentProfitable_by_2_percent_atBarX: [null, 60, 70, 80, 90],
-    min_percentProfitable_by_5_percent_atBarX: [null, 60, 70, 80, 90],
-    min_upsideDownsideRatio_byBarX: [null, 1, 2, 5],
-  }; */
-
-  const valuesToBruteForceTest = {
-    max_avgScore: [10],
-    min_percentProfitable_atBarX: [{ 1: 70 }],
-  };
-  const configCombinations = getAllPossibleCombinations(valuesToBruteForceTest);
+  const configCombinations = getAllPossibleCombinations(bruteForceValsConfig);
   console.log('Running trade simulations:');
   for (const symbol of symbols) {
-    console.log(`  - ${symbol}`);
+    const simulationsToRunCount =
+      significantBarsArray.length *
+      numberOfBarsArray.length *
+      includeOtherSymbolsTargetsArray.length *
+      configCombinations.length;
+    console.log(`  - ${symbol} (simulations to run: ${simulationsToRunCount})`);
     let lastLoggedPercentComplete = 0;
-    for (const significantBar of significantBars) {
-      process.stdout.write(`    - significantBar: ${significantBar}  `);
-      for (const config of configCombinations) {
-        const tradeSimulationRunCriteria = {
-          symbol,
-          numberOfBars,
-          ignoreMatchesAboveThisScore,
-          significantBar,
-          config,
-        };
-        const results = await runTradeSimulation(
-          symbol,
-          numberOfBars,
-          ignoreMatchesAboveThisScore,
-          significantBar,
-          config
-        );
+    let simulationsRun = 0;
+    for (const significantBar of significantBarsArray) {
+      for (const numberOfBars of numberOfBarsArray) {
+        for (const includeOtherSymbolsTargets of includeOtherSymbolsTargetsArray) {
+          console.log(
+            `    - significantBar: ${significantBar}, numberOfBars: ${numberOfBars}, includeOtherSymbolsTargets: ${includeOtherSymbolsTargets} `
+          );
+          for (const config of configCombinations) {
+            const tradeSimulationRunCriteria = {
+              symbol,
+              includeOtherSymbolsTargets,
+              numberOfBars,
+              ignoreMatchesAboveThisScore,
+              significantBar,
+              config: addBarsToConfig(config, significantBar),
+            };
+            const results = await runTradeSimulation(
+              symbol,
+              includeOtherSymbolsTargets,
+              numberOfBars,
+              ignoreMatchesAboveThisScore,
+              significantBar,
+              config,
+              false
+            );
 
-        // runTradeSimulation allows for multiple symbols & significantBars, but we're only passing in one
-        // so we'll adjust the results accordingly
-        // it also provides the entire profitLossCollection, which will be to bloaty to store
-        delete results.profitLossCollection;
+            // these are used by the charting website, but they'd bloat the db size too much to store
+            delete results.listedProfitLossPercents;
+            delete results.listedProfitLossSellDates;
 
-        criteriaAndTradeCountsThatHaveRun.push({
-          criteria: tradeSimulationRunCriteria,
-          tradeCountPerYear: results.tradeCountPerYear,
-        });
+            criteriaAndTradeCountsThatHaveRun.push({
+              criteria: tradeSimulationRunCriteria,
+              tradeCountPerYear: results.tradeCountPerYear,
+            });
 
-        await TradeSimulationRun.create({
-          created: moment.utc(),
-          criteria: tradeSimulationRunCriteria,
-          results,
-        });
+            await TradeSimulationRun.create({
+              created: moment.utc(),
+              criteria: tradeSimulationRunCriteria,
+              results,
+            });
 
-        const runningCount = configCombinations.indexOf(config) + 1;
-        const totalCount = configCombinations.length;
-        const percentComplete = Math.round((100 * runningCount) / totalCount);
-        if (percentComplete - lastLoggedPercentComplete === 5) {
-          process.stdout.write(`${percentComplete}%`);
-          if (percentComplete !== 100) {
-            process.stdout.write('...');
+            simulationsRun++;
+            const percentComplete = Math.round(
+              (100 * simulationsRun) / simulationsToRunCount
+            );
+            if (percentComplete - lastLoggedPercentComplete === 1) {
+              console.log(`  * % complete: ${percentComplete}%`);
+              lastLoggedPercentComplete = percentComplete;
+            }
           }
-          lastLoggedPercentComplete = percentComplete;
         }
       }
-      console.log();
     }
   }
 };
 
-/* (async () => {
+const argOptions = {
+  dropCollection: {
+    alias: 'd',
+    type: 'boolean',
+    description: `at the start, drop the TradeSimulationRuns collection`,
+  },
+  symbols: {
+    alias: 's',
+    type: 'array',
+    description: `symbol(s) to loop through`,
+  },
+};
+
+const { argv } = require('yargs')
+  .alias('help', 'h')
+  .version(false)
+  .options(argOptions);
+
+(async () => {
   await mongoApi.connectMongoose();
 
-  debugger;
+  if (argv.dropCollection) {
+    await dropTradeSimulationCollection();
+  }
 
-  //await dropTradeSimulationCollection();
-
-  const patternStatsConfig = {
+  /*   const patternStatsConfig = {
     min_upsideDownsideRatio_byBarX: null,
     min_avg_maxUpsidePercent_byBarX: null,
     max_avg_maxDownsidePercent_byBarX: null,
@@ -183,8 +223,28 @@ exports.runBruteForceTradeSimulationAndSaveResults = async (
     min_percentProfitable_by_10_percent_atBarX: null,
     max_avgScore: null,
     min_scoreCount: 10,
+  }; */
+  const includeOtherSymbolsTargetsArray = [true, false];
+  const numberOfBarsArray = [5, 10, 15, 20, 30];
+  const symbols = argv.symbols ? argv.symbols : await getAvailableSymbolNames();
+  const ignoreMatchesAboveThisScore = 12;
+  const bruteForceValsConfig = {
+    max_avgScore: [10, 11, 12],
+    min_percentProfitable_atBarX: [null, 60, 70, 80, 90],
+    min_percentProfitable_by_1_percent_atBarX: [null, 60, 70, 80],
+    min_percentProfitable_by_2_percent_atBarX: [null, 60, 70, 80],
+    min_percentProfitable_by_5_percent_atBarX: [null, 60, 70, 80],
+    min_upsideDownsideRatio_byBarX: [null, 1, 2],
   };
+
+  await runBruteForceTradeSimulationAndSaveResults(
+    symbols,
+    numberOfBarsArray,
+    constants.significantBars,
+    includeOtherSymbolsTargetsArray,
+    ignoreMatchesAboveThisScore,
+    bruteForceValsConfig
+  );
 
   await mongoApi.disconnectMongoose();
 })();
- */

@@ -94,6 +94,7 @@ exports.runTradeSimulation = async (req, res, next) => {
   try {
     const {
       symbol,
+      includeOtherSymbolsTargets,
       numberOfBars,
       ignoreMatchesAboveThisScore,
       significantBar,
@@ -107,10 +108,12 @@ exports.runTradeSimulation = async (req, res, next) => {
 
     const results = await runTradeSimulation(
       symbol,
+      includeOtherSymbolsTargets,
       numberOfBars,
       ignoreMatchesAboveThisScore,
       significantBar,
-      patternStatsConfig
+      patternStatsConfig,
+      true
     );
     res.json(results);
   } catch (error) {

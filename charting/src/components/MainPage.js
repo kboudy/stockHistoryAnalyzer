@@ -5,6 +5,8 @@ import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Checkbox from '@material-ui/core/Checkbox';
 import Select from '@material-ui/core/Select';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Grid from '@material-ui/core/Grid';
@@ -75,6 +77,7 @@ function MainPage(props) {
     min_percentProfitable_atBarX: 70,
     min_upsideDownsideRatio_byBarX: null,
     min_avg_maxUpsidePercent_byBarX: null,
+    includeOtherSymbolsTargets: false,
   });
   const [chartData, setChartData] = React.useState([]);
   const [aggregatedResultRows, setAggregatedResultRows] = React.useState([]);
@@ -109,6 +112,7 @@ function MainPage(props) {
       numberOfBars: chartParams.numberOfBars,
       ignoreMatchesAboveThisScore: 12,
       significantBar: chartParams.significantBar,
+      includeOtherSymbolsTargets: chartParams.includeOtherSymbolsTargets,
       patternStatsConfig: {
         max_avgScore: chartParams.max_avgScore,
         min_scoreCount: chartParams.min_scoreCount,
@@ -379,6 +383,21 @@ function MainPage(props) {
               </Select>
               <FormHelperText>min avg max-upside-% by bar</FormHelperText>
             </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={chartParams.includeOtherSymbolsTargets}
+                  onChange={(e) => {
+                    setChartParams({
+                      ...chartParams,
+                      includeOtherSymbolsTargets: e.target.checked,
+                    });
+                  }}
+                  name="includeOtherSymbolsTargets"
+                />
+              }
+              label="Use other symbols' price histories"
+            />
           </Paper>
         </Grid>
         {aggregatedResultRows.length ? (
