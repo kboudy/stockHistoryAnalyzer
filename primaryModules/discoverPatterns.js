@@ -273,7 +273,6 @@ const dropPatternCollections = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await dropPatternCollections();
 
   const useAllSymbolsAsTargetPriceHistories = [true, false];
   const numberOfBars = [5, 10, 15, 20, 30];
