@@ -319,20 +319,22 @@ const { argv } = require('yargs')
     includeOtherPriceHistoriesAsTargets = [true, false];
   }
 
+  const ignoreMatchesAboveThisScore = 12;
   const numberOfBars = argv.numberOfBars
     ? argv.numberOfBars
     : [5, 10, 15, 20, 30];
 
   const allSymbols = await getAvailableSymbolNames();
-  const equitySymbols = symbols.filter((s) => !isCrypto(s));
-  const cryptoSymbols = symbols.filter((s) => isCrypto(s));
+  const equitySymbols = allSymbols.filter((s) => !isCrypto(s));
+  const cryptoSymbols = allSymbols.filter((s) => isCrypto(s));
+  const symbolsToLoop = argv.symbols ? argv.symbols : allSymbols;
 
-  for (const nb of numberOfBars) {
-    for (const includeOtherPriceHistories of includeOtherPriceHistoriesAsTargets) {
-      // ignore any pattern matches that have a score >= this
-      const ignoreMatchesAboveThisScore = 12;
-
-      for (const symbol of argv.symbols ? argv.symbols : allSymbols) {
+  for (const symbol of symbolsToLoop) {
+    console.log(
+      `${symbol} (${symbolsToLoop.indexOf(symbol) + 1}/${symbolsToLoop.length})`
+    );
+    for (const nb of numberOfBars) {
+      for (const includeOtherPriceHistories of includeOtherPriceHistoriesAsTargets) {
         let targetPriceHistorySymbols = [symbol];
         if (includeOtherPriceHistories) {
           //convention: the targetPriceHistory symbols should always start with the source symbol
@@ -346,11 +348,9 @@ const { argv } = require('yargs')
         }
 
         console.log(
-          `${symbol} [${nb},${includeOtherPriceHistories}] (${
-            symbols.indexOf(symbol) + 1
-          }/${symbols.length})`
+          `  [numberOfBars: ${nb}, includeOtherPriceHistories: ${includeOtherPriceHistories}]`
         );
-        process.stdout.write('  ');
+        process.stdout.write('    ');
         await discoverPatternsForSymbol(
           symbol,
           targetPriceHistorySymbols,
