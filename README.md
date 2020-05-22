@@ -31,6 +31,7 @@
     - `avgScore`
       - the average matching score. higher = weaker match, 0 = perfect match
     - `scoreDates`
+      - just used for debugging, and takes up a bunch of space in the db, so the associated code is currently commented out
       - a list of all matching-blocks' dates (grouped by target symbol)
         - a matching date is the **beginning** of the block (of `numberOfBars` candles)
     - `scoreCount`

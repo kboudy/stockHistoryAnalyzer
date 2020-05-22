@@ -1,11 +1,13 @@
 const _ = require('lodash'),
   moment = require('moment'),
   mongoApi = require('../helpers/mongoApi'),
-  { isCrypto } = require('../helpers/symbolData'),
+  mongoose = require('mongoose'),
   {
     getAvailableSymbolNames,
+    isCrypto,
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
+  { significantBars } = require('../helpers/constants'),
   Candle = require('../models/candle'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
@@ -91,8 +93,47 @@ const validateCandleDates = async () => {
   }
 };
 
+const createIndexes = async () => {
+  //note: this is not necessary to run, since they're now defined in the schema
+  const patternStatsCollection = await mongoose.connection.db.collection(
+    'patternstats'
+  );
+  const existingIndexes = await PatternStats.collection.getIndexes();
+  for (const idxName of Object.keys(existingIndexes)) {
+    if (idxName !== '_id_') {
+      await patternStatsCollection.dropIndex(idxName);
+    }
+  }
+
+  const fieldNames = Object.keys(PatternStats.schema.obj);
+  for (const fieldName of fieldNames) {
+    if (['scoreDates'].includes(fieldName)) {
+      continue;
+    }
+    if (
+      fieldName.toLowerCase().includes('_atbarx') ||
+      fieldName.toLowerCase().includes('_bybarx')
+    ) {
+      continue;
+      /*       for (const sb of significantBars) {
+        const fieldNameWithBar = `${fieldName}.${sb}`;
+        await patternStatsCollection.createIndex(
+          { [fieldNameWithBar]: 1 },
+          { sparse: true }
+        ); // sparse will not index documents without this field
+      } */
+    } else {
+      console.log(`creating index for ${fieldName}`);
+      await patternStatsCollection.createIndex(
+        { [fieldName]: 1 },
+        { sparse: true }
+      ); // sparse will not index documents without this field
+    }
+  }
+};
+
 (async () => {
   await mongoApi.connectMongoose();
-  await validateCandleDates();
+  await createIndexes();
   await mongoApi.disconnectMongoose();
 })();

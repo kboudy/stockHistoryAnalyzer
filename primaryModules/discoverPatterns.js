@@ -122,10 +122,6 @@ const discoverPatternsForSymbol = async (
     patternStat.stdDev_profitLossPercent_atBarX = {};
 
     if (scores.length === 0) {
-      patternStat.avgScore = null;
-      patternStat.scoreDates = {};
-      patternStat.scoreCount = 0;
-      await PatternStats.create(patternStat);
       continue;
     }
 
@@ -239,6 +235,10 @@ const discoverPatternsForSymbol = async (
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
 
+    /* 
+    // patternStat.scoreDates is just used for debugging, and takes up a bunch of space in the db
+    // uncomment if needed
+
     patternStat.scoreDates = {};
     for (const tphSymbol of targetSymbols) {
       if (scoresByTargetSymbol[tphSymbol]) {
@@ -248,6 +248,7 @@ const discoverPatternsForSymbol = async (
         );
       }
     }
+    */
 
     patternStat.scoreCount = scores.length;
 
@@ -272,33 +273,46 @@ const dropPatternCollections = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
+  await dropPatternCollections();
 
-  // ignore any pattern matches that have a score >= this
-  const ignoreMatchesAboveThisScore = 12;
-  const numberOfBars = 20;
+  const useAllSymbolsAsTargetPriceHistories = [true, false];
+  const numberOfBars = [5, 10, 15, 20, 30];
+  for (const nb of numberOfBars) {
+    for (const useAllSymbols of useAllSymbolsAsTargetPriceHistories) {
+      // ignore any pattern matches that have a score >= this
+      const ignoreMatchesAboveThisScore = 12;
 
-  const symbols = await getAvailableSymbolNames();
-  const equitySymbols = symbols.filter((s) => !isCrypto(s));
-  const cryptoSymbols = symbols.filter((s) => isCrypto(s));
+      const symbols = await getAvailableSymbolNames();
+      const equitySymbols = symbols.filter((s) => !isCrypto(s));
+      const cryptoSymbols = symbols.filter((s) => isCrypto(s));
 
-  for (const symbol of symbols) {
-    //convention: the targetPriceHistory symbols should always start with the source symbol
-    let targetPriceHistorySymbols = isCrypto(symbol)
-      ? cryptoSymbols
-      : equitySymbols;
-    targetPriceHistorySymbols = targetPriceHistorySymbols.filter(
-      (s) => s !== symbol
-    );
-    targetPriceHistorySymbols = [symbol, ...targetPriceHistorySymbols];
+      for (const symbol of symbols) {
+        let targetPriceHistorySymbols = [symbol];
+        if (useAllSymbols) {
+          //convention: the targetPriceHistory symbols should always start with the source symbol
+          targetPriceHistorySymbols = isCrypto(symbol)
+            ? cryptoSymbols
+            : equitySymbols;
+          targetPriceHistorySymbols = targetPriceHistorySymbols.filter(
+            (s) => s !== symbol
+          );
+          targetPriceHistorySymbols = [symbol, ...targetPriceHistorySymbols];
+        }
 
-    console.log(`${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`);
-    process.stdout.write('  ');
-    await discoverPatternsForSymbol(
-      symbol,
-      targetPriceHistorySymbols,
-      numberOfBars,
-      ignoreMatchesAboveThisScore
-    );
+        console.log(
+          `${symbol} [${nb},${useAllSymbols}] (${symbols.indexOf(symbol) + 1}/${
+            symbols.length
+          })`
+        );
+        process.stdout.write('  ');
+        await discoverPatternsForSymbol(
+          symbol,
+          targetPriceHistorySymbols,
+          nb,
+          ignoreMatchesAboveThisScore
+        );
+      }
+    }
   }
   await mongoApi.disconnectMongoose();
 })();

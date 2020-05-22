@@ -6,9 +6,11 @@ const PatternStatsSchema = new Schema({
   jobRun: {
     type: Schema.Types.ObjectId,
     ref: 'PatternStatsJobRun',
+    sparse: true,
   },
   sourceDate: {
     type: Schema.Types.String,
+    sparse: true,
   },
   // actualProfitLossPercent_atBarX is the "real" result, based on the source price history
   // (for running trade simulations, not pattern discovery)
@@ -53,15 +55,18 @@ const PatternStatsSchema = new Schema({
   },
   scoreDates: {
     type: Schema.Types.Mixed,
+    sparse: true,
   },
   stdDev_profitLossPercent_atBarX: {
     type: Schema.Types.Mixed,
   },
   avgScore: {
     type: Number,
+    sparse: true,
   },
   scoreCount: {
     type: Number,
+    sparse: true,
   },
 });
 

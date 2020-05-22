@@ -294,11 +294,13 @@ function MainPage(props) {
                   });
                 }}
               >
-                {[null, 6, 7, 8, 9, 10, 11, 12].map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {val !== 0 && !val ? '--' : val}
-                  </MenuItem>
-                ))}
+                {[null, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(
+                  (val, index) => (
+                    <MenuItem key={index} value={val}>
+                      {val !== 0 && !val ? '--' : val}
+                    </MenuItem>
+                  )
+                )}
               </Select>
               <FormHelperText>max avg score</FormHelperText>
             </FormControl>

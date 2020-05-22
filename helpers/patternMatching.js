@@ -112,39 +112,7 @@ exports.getMatches = (
     if (scores.length > 0 && scores[0].score === 0) {
       scores = scores.slice(1); // the first score will be the match bars (perfect === 0)
     }
-    const nonCrossOvers = [];
-
-    // loop through matches & eliminate any that cross over with others (so the matches are all completely unique blocks of bars)
-    for (const score of scores) {
-      const isCrossOverWithTestCase = isCrossOver(
-        score.index,
-        startIndex,
-        numberOfBars
-      );
-      if (isCrossOverWithTestCase) {
-        continue;
-      }
-      let isCrossOverWithOtherMatches = false;
-      for (const subScore of nonCrossOvers) {
-        if (subScore === score) {
-          continue;
-        }
-        //TODO: don't arbitrarily skip all crossovers.  choose the one with the lowest score
-        isCrossOverWithOtherMatches = isCrossOver(
-          score.index,
-          subScore.index,
-          numberOfBars
-        );
-        if (isCrossOverWithOtherMatches) {
-          break;
-        }
-      }
-      if (isCrossOverWithOtherMatches) {
-        continue;
-      }
-      nonCrossOvers.push(score);
-    }
-    scores = _.orderBy(nonCrossOvers, (s) => s.score);
+    scores = _.orderBy(scores, (s) => s.score);
 
     scores = scores.filter((s) => s.score <= ignoreMatchesAboveThisScore); // higher scores are poorer matches, so "ignoreMatchesAboveThisScore" is actually a bad score
 
