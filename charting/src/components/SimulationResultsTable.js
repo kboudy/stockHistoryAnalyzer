@@ -6,12 +6,12 @@ import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
 
-class SimulationResultsTable extends React.Component {
-  numberFormatter(params) {
+const SimulationResultsTable = (props) => {
+  const numberFormatter = (params) => {
     return params.value;
-  }
+  };
 
-  getColumnDefs = () => {
+  const getColumnDefs = () => {
     return [
       {
         headerName: 'Criteria (past)',
@@ -53,7 +53,7 @@ class SimulationResultsTable extends React.Component {
             headerName: 'max avg score',
             field: 'criteria.config.max_avgScore',
             filter: 'agNumberColumnFilter',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             headerClass: 'criteria-config-grid-header',
             width: 140,
           },
@@ -61,7 +61,7 @@ class SimulationResultsTable extends React.Component {
             headerName: 'min % p at bar',
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_percentProfitable_atBarX',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             headerClass: 'criteria-config-grid-header',
             width: 140,
           },
@@ -69,7 +69,7 @@ class SimulationResultsTable extends React.Component {
             headerName: 'min % p by 1% by bar',
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_percentProfitable_by_1_percent_atBarX',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             headerClass: 'criteria-config-grid-header',
             width: 165,
           },
@@ -78,7 +78,7 @@ class SimulationResultsTable extends React.Component {
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_percentProfitable_by_2_percent_atBarX',
             headerClass: 'criteria-config-grid-header',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             width: 165,
           },
           {
@@ -86,7 +86,7 @@ class SimulationResultsTable extends React.Component {
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_percentProfitable_by_5_percent_atBarX',
             headerClass: 'criteria-config-grid-header',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             width: 165,
           },
           {
@@ -94,7 +94,7 @@ class SimulationResultsTable extends React.Component {
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_upsideDownsideRatio_byBarX',
             headerClass: 'criteria-config-grid-header',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             width: 140,
           },
         ],
@@ -109,14 +109,14 @@ class SimulationResultsTable extends React.Component {
             headerName: 'avg pl %',
             field: 'results.avgProfitLossPercent',
             filter: 'agNumberColumnFilter',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             headerClass: 'results-grid-header',
           },
           {
             headerName: '% profitable',
             filter: 'agNumberColumnFilter',
             field: 'results.percentProfitable',
-            valueFormatter: this.numberFormatter,
+            valueFormatter: numberFormatter,
             headerClass: 'results-grid-header',
           },
           {
@@ -144,7 +144,7 @@ class SimulationResultsTable extends React.Component {
     ];
   };
 
-  handleSelectionChanged = (e) => {
+  const handleSelectionChanged = (e) => {
     if (
       e.type !== 'selectionChanged' ||
       e.api.getSelectedNodes().length === 0
@@ -157,20 +157,18 @@ class SimulationResultsTable extends React.Component {
     // this.props.onSelectionChanged(thisRow.data.sourceIndex);
   };
 
-  render() {
-    return (
-      <div className="ag-theme-balham" style={{ height: this.props.height }}>
-        <AgGridReact
-          defaultColDef={{ sortable: true, resizable: true, width: 120 }}
-          columnDefs={this.getColumnDefs()}
-          rowData={this.props.data}
-          sortingOrder={['asc', 'desc']}
-          onSelectionChanged={this.handleSelectionChanged}
-          rowSelection="single"
-        ></AgGridReact>
-      </div>
-    );
-  }
-}
+  return (
+    <div className="ag-theme-balham" style={{ height: props.height }}>
+      <AgGridReact
+        defaultColDef={{ sortable: true, resizable: true, width: 120 }}
+        columnDefs={getColumnDefs()}
+        rowData={props.data}
+        sortingOrder={['asc', 'desc']}
+        onSelectionChanged={handleSelectionChanged}
+        rowSelection="single"
+      ></AgGridReact>
+    </div>
+  );
+};
 
 export default SimulationResultsTable;
