@@ -3,6 +3,7 @@
 const { getAvailableSymbolNames } = require('../helpers/symbolData'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   { getAllPossibleCombinations } = require('../helpers/cartesian'),
+  chalk = require('chalk'),
   moment = require('moment'),
   mongoose = require('mongoose'),
   mongoApi = require('../helpers/mongoApi'),
@@ -128,7 +129,11 @@ const runBruteForceTradeSimulationAndSaveResults = async (
       numberOfBarsArray.length *
       includeOtherSymbolsTargetsArray.length *
       configCombinations.length;
-    console.log(`  - ${symbol} (simulations to run: ${simulationsToRunCount})`);
+    console.log(
+      chalk.yellowBright(
+        `  - ${symbol} (simulations to run: ${simulationsToRunCount})`
+      )
+    );
     let lastLoggedPercentComplete = 0;
     let simulationsRun = 0;
     for (const significantBar of significantBarsArray) {
@@ -173,7 +178,7 @@ const runBruteForceTradeSimulationAndSaveResults = async (
               (100 * simulationsRun) / simulationsToRunCount
             );
             if (percentComplete - lastLoggedPercentComplete === 1) {
-              console.log(`  * % complete: ${percentComplete}%`);
+              console.log(chalk.green(`    * % complete: ${percentComplete}%`));
               lastLoggedPercentComplete = percentComplete;
             }
           }

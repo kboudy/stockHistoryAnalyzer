@@ -2,6 +2,7 @@
 
 const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
+  chalk = require('chalk'),
   moment = require('moment'),
   { isNullOrUndefined } = require('./miscMethods'),
   PatternStats = require('../models/patternStats'),
@@ -135,7 +136,7 @@ const runTradeSimulation = async (
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
   if (logToConsole) {
-    console.log(JSON.stringify(queryFilter));
+    console.log(chalk.blueBright(JSON.stringify(queryFilter)));
   }
   //----------------------------
 
