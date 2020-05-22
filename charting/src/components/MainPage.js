@@ -70,10 +70,6 @@ function MainPage(props) {
   const [symbols, setSymbols] = React.useState([]);
   const [availableNumberOfBars, setAvailableNumberOfBars] = React.useState([]);
   const [significantBars, setSignificantBars] = React.useState([]);
-  const [
-    tradeSimulationRunQueryResults,
-    setTradeSimulationRunQueryResults,
-  ] = React.useState([]);
 
   const [windowDimensions, setWindowDimensions] = useState(null);
 
@@ -101,16 +97,6 @@ function MainPage(props) {
         )
       );
       setSignificantBars((await nodeServer.get('significantBars')).data);
-
-      const tsrQuertyResults = await nodeServer.post('tradeSimulationRuns', {
-        'criteria.symbol': 'TSLA',
-        'criteria.numberOfBars': 10,
-        'criteria.significantBar': 5,
-        'criteria.includeOtherSymbolsTargets': true,
-        'results.avgProfitLossPercent': { $gte: 0.1 },
-      });
-
-      setTradeSimulationRunQueryResults(tsrQuertyResults.data);
 
       window.addEventListener('resize', handleResize);
       handleResize();
@@ -451,10 +437,7 @@ function MainPage(props) {
           <></>
         )}
         <Grid item xs={12}>
-          <SimulationResultsTable
-            height={400}
-            data={tradeSimulationRunQueryResults}
-          />
+          <SimulationResultsTable height={400} />
         </Grid>
       </Grid>
     </div>

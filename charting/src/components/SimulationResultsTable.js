@@ -2,6 +2,9 @@ import React from 'react';
 import moment from 'moment';
 import { AgGridReact } from 'ag-grid-react';
 
+import _ from 'lodash';
+import nodeServer from '../helpers/nodeServer';
+
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
@@ -40,6 +43,7 @@ const SimulationResultsTable = (props) => {
             filter: 'agNumberColumnFilter',
             field: 'criteria.significantBar',
             headerClass: 'criteria-grid-header',
+            width: 140,
           },
         ],
       },
@@ -144,6 +148,22 @@ const SimulationResultsTable = (props) => {
     ];
   };
 
+  const gridDataSource = {
+    rowCount: null,
+    getRows: async (params) => {
+      const { startRow, endRow } = params;
+      const tsrQuertyResults = await nodeServer.post('tradeSimulationRuns', {
+        'criteria.symbol': 'TSLA',
+        'criteria.numberOfBars': 10,
+        'criteria.significantBar': 5,
+        'criteria.includeOtherSymbolsTargets': true,
+        'results.avgProfitLossPercent': { $gte: 0.1 },
+      });
+
+      params.successCallback(tsrQuertyResults.data, 3);
+    },
+  };
+
   const handleSelectionChanged = (e) => {
     if (
       e.type !== 'selectionChanged' ||
@@ -162,6 +182,7 @@ const SimulationResultsTable = (props) => {
       <AgGridReact
         defaultColDef={{ sortable: true, resizable: true, width: 120 }}
         columnDefs={getColumnDefs()}
+        gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
         rowData={props.data}
         sortingOrder={['asc', 'desc']}
         onSelectionChanged={handleSelectionChanged}
