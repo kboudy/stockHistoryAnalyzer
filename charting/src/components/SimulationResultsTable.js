@@ -153,14 +153,23 @@ const SimulationResultsTable = (props) => {
     getRows: async (params) => {
       const { startRow, endRow } = params;
       const tsrQuertyResults = await nodeServer.post('tradeSimulationRuns', {
-        'criteria.symbol': 'TSLA',
-        'criteria.numberOfBars': 10,
-        'criteria.significantBar': 5,
-        'criteria.includeOtherSymbolsTargets': true,
-        'results.avgProfitLossPercent': { $gte: 0.1 },
+        queryParams: {
+          //'criteria.numberOfBars': 10,
+          'criteria.significantBar': { $lte: 10 },
+          //'criteria.includeOtherSymbolsTargets': true,
+          'results.avgProfitLossPercent': { $gte: 0.1 },
+          'results.tradeCountPerYear': { $gte: 2 },
+        },
+        startRow,
+        endRow,
       });
 
-      params.successCallback(tsrQuertyResults.data, 3);
+      const { results, isLastSet } = tsrQuertyResults.data;
+      let lastRow = null;
+      if (isLastSet) {
+        lastRow = startRow + results.length;
+      }
+      params.successCallback(results, lastRow);
     },
   };
 
