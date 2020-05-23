@@ -134,9 +134,11 @@ const SimulationResultsTable = (props) => {
       return;
     }
 
-    // const { rowIndex } = e.api.getSelectedNodes()[0];
-    // const thisRow = e.api.getDisplayedRowAtIndex(rowIndex);
-    // this.props.onSelectionChanged(thisRow.data.sourceIndex);
+    const { rowIndex } = e.api.getSelectedNodes()[0];
+    const thisRow = e.api.getDisplayedRowAtIndex(rowIndex);
+    if (props.selectionChanged) {
+      props.selectionChanged(thisRow.data);
+    }
   };
 
   const handleColumnVisibleToggle = (col) => {

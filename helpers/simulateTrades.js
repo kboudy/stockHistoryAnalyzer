@@ -76,9 +76,14 @@ const runTradeSimulation = async (
       (!useSignificantBar || config[configKey][significantBar])
     ) {
       if (useSignificantBar) {
-        queryFilter[`${patternStatFieldName}.${significantBar}`] = {
-          [operator]: config[configKey][significantBar],
-        };
+        if (
+          config[configKey][significantBar] !== '' &&
+          config[configKey][significantBar] !== null
+        ) {
+          queryFilter[`${patternStatFieldName}.${significantBar}`] = {
+            [operator]: config[configKey][significantBar],
+          };
+        }
       } else {
         queryFilter[patternStatFieldName] = {
           [operator]: config[configKey],
@@ -136,7 +141,10 @@ const runTradeSimulation = async (
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
   if (logToConsole) {
-    console.log(chalk.blueBright(JSON.stringify(queryFilter)));
+    console.log(`config: ${chalk.yellowBright(JSON.stringify(config))}`);
+    console.log(
+      `queryFilter: ${chalk.blueBright(JSON.stringify(queryFilter))}`
+    );
   }
   //----------------------------
 

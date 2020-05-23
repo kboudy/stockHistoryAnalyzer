@@ -27,7 +27,7 @@ import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
 import { getSimulationColDefs } from '../helpers/constants';
 
-const { isNullOrUndefined } = require('../helpers/miscMethods');
+const { isNullOrUndefined, isObject } = require('../helpers/miscMethods');
 
 const NONE = '-none-';
 
@@ -79,6 +79,13 @@ function MainPage(props) {
     min_percentProfitable_atBarX: 70,
     min_upsideDownsideRatio_byBarX: '',
     min_avg_maxUpsidePercent_byBarX: '',
+    max_avg_maxDownsidePercent_byBarX: '',
+    min_avg_profitLossPercent_atBarX: '',
+    min_percentProfitable_by_1_percent_atBarX: '',
+    min_percentProfitable_by_2_percent_atBarX: '',
+    min_percentProfitable_by_5_percent_atBarX: '',
+    min_percentProfitable_by_10_percent_atBarX: '',
+
     includeOtherSymbolsTargets: false,
   });
   const [chartData, setChartData] = React.useState([]);
@@ -105,10 +112,7 @@ function MainPage(props) {
   }, []);
 
   const reloadChartData = async () => {
-    if (!chartParams.symbol) {
-      return;
-    }
-    const tradeSimulationResults = await nodeServer.post('runTradeSimulation', {
+    const queryFilter = {
       symbol: chartParams.symbol,
       numberOfBars: chartParams.numberOfBars,
       ignoreMatchesAboveThisScore: 12,
@@ -129,17 +133,39 @@ function MainPage(props) {
           [chartParams.significantBar]:
             chartParams.min_avg_maxUpsidePercent_byBarX,
         },
-      },
-    });
 
-    /*    
-    max_avg_maxDownsidePercent_byBarX: null,
-    min_avg_profitLossPercent_atBarX: null,    
-    min_percentProfitable_by_1_percent_atBarX: null,
-    min_percentProfitable_by_2_percent_atBarX: null,
-    min_percentProfitable_by_5_percent_atBarX: null,
-    min_percentProfitable_by_10_percent_atBarX: null,
- */
+        max_avg_maxDownsidePercent_byBarX: {
+          [chartParams.significantBar]:
+            chartParams.max_avg_maxDownsidePercent_byBarX,
+        },
+        min_avg_profitLossPercent_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_avg_profitLossPercent_atBarX,
+        },
+
+        min_percentProfitable_by_1_percent_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_percentProfitable_by_1_percent_atBarX,
+        },
+        min_percentProfitable_by_2_percent_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_percentProfitable_by_2_percent_atBarX,
+        },
+        min_percentProfitable_by_5_percent_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_percentProfitable_by_5_percent_atBarX,
+        },
+        min_percentProfitable_by_10_percent_atBarX: {
+          [chartParams.significantBar]:
+            chartParams.min_percentProfitable_by_10_percent_atBarX,
+        },
+      },
+    };
+    const tradeSimulationResults = await nodeServer.post(
+      'runTradeSimulation',
+      queryFilter
+    );
+
     const { data } = tradeSimulationResults;
 
     setAggregatedResultRows([
@@ -160,6 +186,27 @@ function MainPage(props) {
       cData.push({ name: plds[i], ['p/l %']: plps[i] }); // that "p/l %" string is what shows as the x-axis name in the chart hover
     }
     setChartData(cData);
+  };
+
+  const handleSimulationTableSelectionChanged = (e) => {
+    let updatedParams = { ...e.criteria };
+    delete updatedParams.config;
+    updatedParams = { ...updatedParams, ...e.criteria.config };
+
+    // flatten any bar object params
+    for (const p in updatedParams) {
+      if (
+        p.toLowerCase().includes('_atbar') ||
+        p.toLowerCase().includes('_bybar')
+      ) {
+        if (isObject(updatedParams[p])) {
+          const firstKey = Object.keys(updatedParams[p]);
+          debugger;
+          updatedParams[p] = updatedParams[p][firstKey];
+        }
+      }
+    }
+    setChartParams(updatedParams);
   };
 
   useEffect(() => {
@@ -231,12 +278,14 @@ function MainPage(props) {
             {flattenedColDefs.map((fd) => (
               <FormControl key={fd.field} className={classes.formControl}>
                 <Select
-                  value={chartParams[fd.field]}
+                  value={chartParams[fd.flatField]}
                   onChange={(e) => {
-                    setChartParams({
+                    const fieldName = fd.flatField;
+                    const updatedChartParams = {
                       ...chartParams,
-                      [fd.field]: e.target.value,
-                    });
+                      [fieldName]: e.target.value,
+                    };
+                    setChartParams(updatedChartParams);
                   }}
                 >
                   {fd.choices.map((val, index) => (
@@ -298,7 +347,10 @@ function MainPage(props) {
           <></>
         )}
         <Grid item xs={12}>
-          <SimulationResultsTable height={400} />
+          <SimulationResultsTable
+            height={400}
+            selectionChanged={handleSimulationTableSelectionChanged}
+          />
         </Grid>
       </Grid>
     </div>

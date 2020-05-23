@@ -226,6 +226,7 @@ const { argv } = require('yargs')
     min_avg_profitLossPercent_atBarX: [null],
     min_percentProfitable_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_1_percent_atBarX: [null, 60, 70, 80],
+    min_percentProfitable_by_2_percent_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_5_percent_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_10_percent_atBarX: [null],
     min_scoreCount: [10],
