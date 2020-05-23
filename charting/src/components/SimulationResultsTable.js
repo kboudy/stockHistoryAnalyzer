@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import moment from 'moment';
 import { AgGridReact } from 'ag-grid-react';
+import { isObject } from '../helpers/miscMethods';
 
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
@@ -8,11 +9,19 @@ import nodeServer from '../helpers/nodeServer';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
+import { mongo } from 'mongoose';
 
 const SimulationResultsTable = (props) => {
   const numberFormatter = (params) => {
-    return params.value;
+    if (isObject(params.value)) {
+      const firstKey = Object.keys(params.value)[0];
+      return params.value[firstKey];
+    } else {
+      return params.value;
+    }
   };
+
+  const [mongoFilter, setMongoFilter] = useState({});
 
   const getColumnDefs = () => {
     return [
@@ -148,22 +157,74 @@ const SimulationResultsTable = (props) => {
     ];
   };
 
+  const transformSortToMongo = (sortModel) => {
+    /*
+    change this:
+
+    {"colId":"criteria.significantBar","sort":"asc"}
+
+    to this:
+
+    {"criteria.significantBar":1}
+    */
+    if (sortModel.length === 0) {
+      return null;
+    }
+    const fieldName = sortModel[0]['colId'];
+    return { [fieldName]: sortModel[0]['sort'] === 'asc' ? 1 : -1 };
+  };
+
+  const transformFilterToMongo = (filterModel) => {
+    /*
+    change this:
+
+    {"criteria.significantBar":{"filterType":"number","type":"equals","filter":3,"filterTo":null}}
+
+    to this:
+
+    {"criteria.significantBar":3}
+    */
+
+    const mongoFilter = {};
+    for (const fieldName in filterModel) {
+      const { type } = filterModel[fieldName];
+      const fieldValue = filterModel[fieldName].filter;
+      switch (type) {
+        case 'equals':
+          mongoFilter[fieldName] = fieldValue;
+          break;
+        case 'greaterThan':
+          mongoFilter[fieldName] = { $gt: fieldValue };
+          break;
+        case 'greaterThanOrEqual':
+          mongoFilter[fieldName] = { $gte: fieldValue };
+          break;
+        case 'lessThan':
+          mongoFilter[fieldName] = { $lt: fieldValue };
+          break;
+        case 'lessThanOrEqual':
+          mongoFilter[fieldName] = { $lte: fieldValue };
+          break;
+        default:
+          console.log(type);
+      }
+    }
+    return mongoFilter;
+  };
+
   const gridDataSource = {
     rowCount: null,
     getRows: async (params) => {
+      const mongoFilter = transformFilterToMongo(params.filterModel);
+      const mongoSort = transformSortToMongo(params.sortModel);
+
       const { startRow, endRow } = params;
       const tsrQuertyResults = await nodeServer.post('tradeSimulationRuns', {
-        queryParams: {
-          //'criteria.numberOfBars': 10,
-          'criteria.significantBar': { $lte: 10 },
-          //'criteria.includeOtherSymbolsTargets': true,
-          'results.avgProfitLossPercent': { $gte: 0.1 },
-          'results.tradeCountPerYear': { $gte: 2 },
-        },
+        queryParams: mongoFilter,
+        querySort: mongoSort,
         startRow,
         endRow,
       });
-
       const { results, isLastSet } = tsrQuertyResults.data;
       let lastRow = null;
       if (isLastSet) {
@@ -171,6 +232,15 @@ const SimulationResultsTable = (props) => {
       }
       params.successCallback(results, lastRow);
     },
+  };
+
+  const handleFilterChanged = (e) => {
+    // force infinite row model to reset, and call for rows 0-100
+    e.api.setDatasource(gridDataSource);
+  };
+
+  const handleSortChanged = (e) => {
+    e.api.setDatasource(gridDataSource);
   };
 
   const handleSelectionChanged = (e) => {
@@ -194,7 +264,9 @@ const SimulationResultsTable = (props) => {
         gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
         rowData={props.data}
         sortingOrder={['asc', 'desc']}
+        onFilterChanged={handleFilterChanged}
         onSelectionChanged={handleSelectionChanged}
+        onSortChanged={handleSortChanged}
         rowSelection="single"
       ></AgGridReact>
     </div>

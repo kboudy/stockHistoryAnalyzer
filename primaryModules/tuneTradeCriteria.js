@@ -7,7 +7,7 @@ const { getAvailableSymbolNames } = require('../helpers/symbolData'),
   moment = require('moment'),
   mongoose = require('mongoose'),
   mongoApi = require('../helpers/mongoApi'),
-  { isNullOrUndefined } = require('../helpers/miscMethods'),
+  { isObject } = require('../helpers/miscMethods'),
   constants = require('../helpers/constants'),
   TradeSimulationRun = require('../models/tradeSimulationRun'),
   PatternStats = require('../models/patternStats'),
@@ -89,10 +89,6 @@ const dropTradeSimulationCollection = async () => {
   try {
     await mongoose.connection.db.dropCollection('tradesimulationruns');
   } catch (err) {}
-};
-
-const isObject = (obj) => {
-  Object.prototype.toString.call(obj) === '[object Object]';
 };
 
 const addBarsToConfig = (config, significantBar) => {

@@ -92,11 +92,19 @@ exports.getPatternStats = async (req, res, next) => {
 
 exports.queryTradeSimulationRuns = async (req, res, next) => {
   try {
-    const { queryParams, startRow, endRow } = req.body;
+    const { queryParams, querySort, startRow, endRow } = req.body;
+
+    if (!queryParams['results.tradeCount']) {
+      queryParams['results.tradeCount'] = { $gt: 0 };
+    }
 
     const requestedSetSize = endRow - startRow;
+    const defaultSort = {
+      'results.avgProfitLossPercent': -1,
+    };
+    console.log(JSON.stringify(queryParams));
     const results = await TradeSimulationRun.find(queryParams)
-      .sort({ 'results.avgProfitLossPercent': -1 })
+      .sort(querySort ? querySort : defaultSort)
       .skip(startRow)
       .limit(requestedSetSize + 1); // getting 1 too many rows intentionally - so we can tell if it's the last set
 
