@@ -4,7 +4,7 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   chalk = require('chalk'),
   moment = require('moment'),
-  { isNullOrUndefined, isEmptyObject } = require('./miscMethods'),
+  { isNullOrUndefined, isObject, isEmptyObject } = require('./miscMethods'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
 
@@ -49,27 +49,27 @@ const runTradeSimulation = async (
     useSignificantBar = true
   ) => {
     if (
-      config[configKey] &&
-      (!useSignificantBar || config[configKey][significantBar])
+      isNullOrUndefined(config[configKey]) ||
+      isEmptyObject(config[configKey])
     ) {
-      if (useSignificantBar) {
-        if (
-          config[configKey][significantBar] !== '' &&
-          config[configKey][significantBar] !== null
-        ) {
-          if (!isEmptyObject(config[configKey][significantBar])) {
-            queryFilter[`${patternStatFieldName}.${significantBar}`] = {
-              [operator]: config[configKey][significantBar],
-            };
-          }
-        }
+      return;
+    }
+    if (useSignificantBar) {
+      // make sure config field is written in the {significantBar: value} format (as opposed to a literal)
+      if (isObject(config[configKey])) {
+        const firstKey = Object.keys(config[configKey])[0];
+        queryFilter[`${patternStatFieldName}.${significantBar}`] = {
+          [operator]: config[configKey][firstKey],
+        };
       } else {
-        if (!isEmptyObject(config[configKey])) {
-          queryFilter[patternStatFieldName] = {
-            [operator]: config[configKey],
-          };
-        }
+        queryFilter[`${patternStatFieldName}.${significantBar}`] = {
+          [operator]: config[configKey],
+        };
       }
+    } else {
+      queryFilter[patternStatFieldName] = {
+        [operator]: config[configKey],
+      };
     }
   };
 
