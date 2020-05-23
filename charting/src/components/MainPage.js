@@ -201,7 +201,6 @@ function MainPage(props) {
       ) {
         if (isObject(updatedParams[p])) {
           const firstKey = Object.keys(updatedParams[p]);
-          debugger;
           updatedParams[p] = updatedParams[p][firstKey];
         }
       }

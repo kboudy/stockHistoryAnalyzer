@@ -17,6 +17,7 @@ import { getSimulationColDefs } from '../helpers/constants';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
+import { isEmptyObject } from '../helpers/miscMethods';
 
 const useStyles = makeStyles((theme) => ({
   columnChooserButton: { marginTop: theme.spacing(1) },
@@ -32,6 +33,7 @@ const SimulationResultsTable = (props) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [columnDefs, setColumnDefs] = useState([]);
+
   useEffect(() => {
     (async () => {
       setColumnDefs(await getSimulationColDefs());
@@ -96,6 +98,7 @@ const SimulationResultsTable = (props) => {
   const gridDataSource = {
     rowCount: null,
     getRows: async (params) => {
+      //await restoreFilterModelIfNecessary();
       const mongoFilter = transformFilterToMongo(params.filterModel);
       const mongoSort = transformSortToMongo(params.sortModel);
 
@@ -115,17 +118,34 @@ const SimulationResultsTable = (props) => {
     },
   };
 
-  const handleFilterChanged = (e) => {
+  /*   const handleFilterChanged = (e) => {
+    const fm = e.api.getFilterModel();
+    if (fm) {
+      if (!isEmptyObject(fm)) {
+        localStorage.setItem('simulationGridFilter', JSON.stringify(fm));
+      }
+    }
     // force infinite row model to reset, and call for rows 0-100
     e.api.setDatasource(gridDataSource);
-  };
+  }; */
 
   const handleSortChanged = (e) => {
     e.api.setDatasource(gridDataSource);
   };
 
-  const toggleColumnChooseMenu = (e) => {};
+  /*   const handleGridReady = async (e) => {
+    // try to restore the filter model from local storage
+    const strSGF = localStorage.getItem('simulationGridFilter');
+    if (strSGF) {
+      const restoredFilterModel = JSON.parse(strSGF);
+      let fm = e.api.getFilterModel();
+      fm = { ...fm, ...restoredFilterModel };
 
+      e.api.setFilterModel(fm);
+      e.api.onFilterChanged();
+    }
+  };
+ */
   const handleSelectionChanged = (e) => {
     if (
       e.type !== 'selectionChanged' ||
@@ -210,7 +230,6 @@ const SimulationResultsTable = (props) => {
           gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
           rowData={props.data}
           sortingOrder={['asc', 'desc']}
-          onFilterChanged={handleFilterChanged}
           onSelectionChanged={handleSelectionChanged}
           onSortChanged={handleSortChanged}
           rowSelection="single"

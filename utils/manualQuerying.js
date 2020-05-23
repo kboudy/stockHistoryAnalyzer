@@ -146,8 +146,6 @@ const misc = async () => {
     scoreCount: { $gte: 10 },
     avgScore: { $lte: 10 },
   });
-
-  debugger;
 };
 
 (async () => {
