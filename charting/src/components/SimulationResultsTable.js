@@ -36,16 +36,10 @@ const SimulationResultsTable = (props) => {
             headerClass: 'criteria-grid-header',
           },
           {
-            headerName: 'other symbols',
-            field: 'criteria.includeOtherSymbolsTargets',
-            headerClass: 'criteria-grid-header',
-          },
-          {
-            headerName: 'number of bars',
+            headerName: '# of bars',
             filter: 'agNumberColumnFilter',
             field: 'criteria.numberOfBars',
             headerClass: 'criteria-grid-header',
-            width: 140,
           },
           {
             headerName: 'significant bar',
@@ -53,6 +47,11 @@ const SimulationResultsTable = (props) => {
             field: 'criteria.significantBar',
             headerClass: 'criteria-grid-header',
             width: 140,
+          },
+          {
+            headerName: 'other symbols',
+            field: 'criteria.includeOtherSymbolsTargets',
+            headerClass: 'criteria-grid-header',
           },
         ],
       },
@@ -65,6 +64,14 @@ const SimulationResultsTable = (props) => {
           {
             headerName: 'max avg score',
             field: 'criteria.config.max_avgScore',
+            filter: 'agNumberColumnFilter',
+            valueFormatter: numberFormatter,
+            headerClass: 'criteria-config-grid-header',
+            width: 140,
+          },
+          {
+            headerName: 'min score count',
+            field: 'criteria.config.min_scoreCount',
             filter: 'agNumberColumnFilter',
             valueFormatter: numberFormatter,
             headerClass: 'criteria-config-grid-header',
@@ -103,12 +110,20 @@ const SimulationResultsTable = (props) => {
             width: 165,
           },
           {
-            headerName: 'up/down by bar',
+            headerName: 'min up/down by bar',
             filter: 'agNumberColumnFilter',
             field: 'criteria.config.min_upsideDownsideRatio_byBarX',
             headerClass: 'criteria-config-grid-header',
             valueFormatter: numberFormatter,
-            width: 140,
+            width: 160,
+          },
+          {
+            headerName: 'min avg max-up-% by bar',
+            filter: 'agNumberColumnFilter',
+            field: 'criteria.config.min_avg_maxUpsidePercent_byBarX',
+            headerClass: 'criteria-config-grid-header',
+            valueFormatter: numberFormatter,
+            width: 190,
           },
         ],
       },
@@ -159,7 +174,7 @@ const SimulationResultsTable = (props) => {
 
   const transformSortToMongo = (sortModel) => {
     /*
-    change this:
+    changes this:
 
     {"colId":"criteria.significantBar","sort":"asc"}
 
@@ -176,7 +191,7 @@ const SimulationResultsTable = (props) => {
 
   const transformFilterToMongo = (filterModel) => {
     /*
-    change this:
+    changes this:
 
     {"criteria.significantBar":{"filterType":"number","type":"equals","filter":3,"filterTo":null}}
 

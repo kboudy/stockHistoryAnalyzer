@@ -25,8 +25,8 @@ into an exhaustive cartesian array of objects:
 ]
 */
 
-const increment = (state, aa, colIdx = 0) => {
-  if (state[colIdx] + 1 < aa[colIdx].length) {
+const increment = (state, arrayOfArrays, colIdx = 0) => {
+  if (state[colIdx] + 1 < arrayOfArrays[colIdx].length) {
     state[colIdx]++;
     return state;
   }
@@ -35,25 +35,30 @@ const increment = (state, aa, colIdx = 0) => {
   if (colIdx === state.length) {
     return null;
   }
-  return increment(state, aa, colIdx);
+  return increment(state, arrayOfArrays, colIdx);
 };
 
 exports.getAllPossibleCombinations = (objWithArrays) => {
   const keys = Object.keys(objWithArrays);
-  const aa = keys.map((k) => objWithArrays[k]);
+
+  // if a field isn't an array, we'll make it an array of 1
+  let arrayOfArrays = keys.map((k) =>
+    Array.isArray(objWithArrays[k]) ? objWithArrays[k] : [objWithArrays[k]]
+  );
+
   let state = keys.map((k) => 0);
 
   const result = [];
   do {
     const r = keys.reduce((reduced, currentField, currentIndex) => {
-      const val = aa[currentIndex][state[currentIndex]];
+      const val = arrayOfArrays[currentIndex][state[currentIndex]];
       if (val !== null) {
         reduced[currentField] = val;
       }
       return reduced;
     }, {});
     result.push(r);
-    state = increment(state, aa);
+    state = increment(state, arrayOfArrays);
   } while (state);
   return result;
 };

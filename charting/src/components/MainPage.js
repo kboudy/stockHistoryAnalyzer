@@ -255,6 +255,25 @@ function MainPage(props) {
 
             <FormControl className={classes.formControl}>
               <Select
+                value={chartParams.numberOfBars}
+                onChange={(e) => {
+                  setChartParams({
+                    ...chartParams,
+                    numberOfBars: e.target.value,
+                  });
+                }}
+              >
+                {availableNumberOfBars.map((val, index) => (
+                  <MenuItem key={index} value={val}>
+                    {isNullOrUndefined(val) ? NONE : val}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText># of bars</FormHelperText>
+            </FormControl>
+
+            <FormControl className={classes.formControl}>
+              <Select
                 labelId="lblSignificantBar"
                 id="cboSignificantBar"
                 value={chartParams.significantBar}
@@ -273,24 +292,7 @@ function MainPage(props) {
               </Select>
               <FormHelperText>significant bar</FormHelperText>
             </FormControl>
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.numberOfBars}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    numberOfBars: e.target.value,
-                  });
-                }}
-              >
-                {availableNumberOfBars.map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText># of bars</FormHelperText>
-            </FormControl>
+
             <FormControl className={classes.formControl}>
               <Select
                 labelId="lblMaxAvgScore"
@@ -348,7 +350,7 @@ function MainPage(props) {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>min percentProfitable at bar</FormHelperText>
+              <FormHelperText>min % p at bar</FormHelperText>
             </FormControl>
 
             <FormControl className={classes.formControl}>
@@ -367,7 +369,7 @@ function MainPage(props) {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>min upsideDownsideRatio by bar</FormHelperText>
+              <FormHelperText>min up/down by bar</FormHelperText>
             </FormControl>
 
             <FormControl className={classes.formControl}>
@@ -386,7 +388,7 @@ function MainPage(props) {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>min avg max-upside-% by bar</FormHelperText>
+              <FormHelperText>min avg max-up-% by bar</FormHelperText>
             </FormControl>
             <FormControlLabel
               control={

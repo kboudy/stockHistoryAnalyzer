@@ -173,10 +173,12 @@ const runBruteForceTradeSimulationAndSaveResults = async (
             const percentComplete = Math.round(
               (100 * simulationsRun) / simulationsToRunCount
             );
-            if (percentComplete - lastLoggedPercentComplete === 1) {
+            if (percentComplete - lastLoggedPercentComplete === 5) {
               console.log(
                 chalk.green(
-                  `    ${chalk.white('*')} % complete: ${percentComplete}%`
+                  `    ${chalk.white(
+                    '*'
+                  )} ${symbol} % complete: ${percentComplete}%`
                 )
               );
               lastLoggedPercentComplete = percentComplete;
@@ -213,29 +215,20 @@ const { argv } = require('yargs')
     await dropTradeSimulationCollection();
   }
 
-  /*   const patternStatsConfig = {
-    min_upsideDownsideRatio_byBarX: null,
-    min_avg_maxUpsidePercent_byBarX: null,
-    max_avg_maxDownsidePercent_byBarX: null,
-    min_avg_profitLossPercent_atBarX: null,
-    min_percentProfitable_atBarX: { 1: 70, 5: 70, 10: 70 },
-    min_percentProfitable_by_1_percent_atBarX: null,
-    min_percentProfitable_by_2_percent_atBarX: null,
-    min_percentProfitable_by_5_percent_atBarX: null,
-    min_percentProfitable_by_10_percent_atBarX: null,
-    max_avgScore: null,
-    min_scoreCount: 10,
-  }; */
   const includeOtherSymbolsTargetsArray = [true, false];
   const numberOfBarsArray = [5, 10, 15, 20, 30];
   const symbols = argv.symbols ? argv.symbols : await getAvailableSymbolNames();
   const ignoreMatchesAboveThisScore = 12;
   const bruteForceValsConfig = {
     max_avgScore: [10, 11, 12],
-    min_percentProfitable_atBarX: [null, 60, 70, 80, 90],
+    max_avg_maxDownsidePercent_byBarX: [null],
+    min_avg_maxUpsidePercent_byBarX: [null, 1, 5],
+    min_avg_profitLossPercent_atBarX: [null],
+    min_percentProfitable_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_1_percent_atBarX: [null, 60, 70, 80],
-    min_percentProfitable_by_2_percent_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_5_percent_atBarX: [null, 60, 70, 80],
+    min_percentProfitable_by_10_percent_atBarX: [null],
+    min_scoreCount: [10],
     min_upsideDownsideRatio_byBarX: [null, 1, 2],
   };
 
