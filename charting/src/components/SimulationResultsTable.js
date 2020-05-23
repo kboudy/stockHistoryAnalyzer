@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { withStyles, makeStyles } from '@material-ui/core/styles';
-import moment from 'moment';
+import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
-import { isObject } from '../helpers/miscMethods';
 import ViewColumnIcon from '@material-ui/icons/ViewColumn';
 import Button from '@material-ui/core/Button';
 import Popper from '@material-ui/core/Popper';
@@ -12,15 +10,13 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
-
-import CheckboxCellRenderer from './cellRenderers/checkboxCellRenderer';
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
+import { getSimulationColDefs } from '../helpers/constants';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
-import { mongo } from 'mongoose';
 
 const useStyles = makeStyles((theme) => ({
   columnChooserButton: { marginTop: theme.spacing(1) },
@@ -34,164 +30,13 @@ const useStyles = makeStyles((theme) => ({
 
 const SimulationResultsTable = (props) => {
   const classes = useStyles();
-  const numberFormatter = (params) => {
-    if (isObject(params.value)) {
-      const firstKey = Object.keys(params.value)[0];
-      return params.value[firstKey];
-    } else {
-      return params.value;
-    }
-  };
-
   const [anchorEl, setAnchorEl] = useState(null);
-  const [columnDefs, setColumnDefs] = useState([
-    {
-      headerName: 'Criteria (past)',
-      marryChildren: true,
-      children: [
-        {
-          headerName: 'symbol',
-          filter: 'agTextColumnFilter',
-          field: 'criteria.symbol',
-          headerClass: 'criteria-grid-header',
-        },
-        {
-          headerName: '# of bars',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.numberOfBars',
-          headerClass: 'criteria-grid-header',
-        },
-        {
-          headerName: 'significant bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.significantBar',
-          headerClass: 'criteria-grid-header',
-          width: 140,
-        },
-        {
-          headerName: 'other symbols',
-          field: 'criteria.includeOtherSymbolsTargets',
-          headerClass: 'criteria-grid-header',
-          editable: false,
-          cellRendererFramework: CheckboxCellRenderer,
-        },
-      ],
-    },
-
-    {
-      headerName: 'Config (past)',
-      headerClass: 'criteria-config-grid-header-group',
-      marryChildren: true,
-      children: [
-        {
-          headerName: 'max avg score',
-          field: 'criteria.config.max_avgScore',
-          filter: 'agNumberColumnFilter',
-          valueFormatter: numberFormatter,
-          headerClass: 'criteria-config-grid-header',
-          width: 140,
-        },
-        {
-          headerName: 'min score count',
-          field: 'criteria.config.min_scoreCount',
-          filter: 'agNumberColumnFilter',
-          valueFormatter: numberFormatter,
-          headerClass: 'criteria-config-grid-header',
-          width: 140,
-        },
-        {
-          headerName: 'min % p at bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_percentProfitable_atBarX',
-          valueFormatter: numberFormatter,
-          headerClass: 'criteria-config-grid-header',
-          width: 140,
-        },
-        {
-          headerName: 'min % p by 1% by bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_percentProfitable_by_1_percent_atBarX',
-          valueFormatter: numberFormatter,
-          headerClass: 'criteria-config-grid-header',
-          width: 165,
-        },
-        {
-          headerName: 'min % p by 2% by bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_percentProfitable_by_2_percent_atBarX',
-          headerClass: 'criteria-config-grid-header',
-          valueFormatter: numberFormatter,
-          width: 165,
-        },
-        {
-          headerName: 'min % p by 5% by bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_percentProfitable_by_5_percent_atBarX',
-          headerClass: 'criteria-config-grid-header',
-          valueFormatter: numberFormatter,
-          width: 165,
-        },
-        {
-          headerName: 'min up/down by bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_upsideDownsideRatio_byBarX',
-          headerClass: 'criteria-config-grid-header',
-          valueFormatter: numberFormatter,
-          width: 160,
-        },
-        {
-          headerName: 'min avg max-up-% by bar',
-          filter: 'agNumberColumnFilter',
-          field: 'criteria.config.min_avg_maxUpsidePercent_byBarX',
-          headerClass: 'criteria-config-grid-header',
-          valueFormatter: numberFormatter,
-          width: 190,
-        },
-      ],
-    },
-
-    {
-      headerName: 'Results (future)',
-      headerClass: 'results-grid-header-group',
-      marryChildren: true,
-      children: [
-        {
-          headerName: 'avg pl %',
-          field: 'results.avgProfitLossPercent',
-          filter: 'agNumberColumnFilter',
-          valueFormatter: numberFormatter,
-          headerClass: 'results-grid-header',
-        },
-        {
-          headerName: '% profitable',
-          filter: 'agNumberColumnFilter',
-          field: 'results.percentProfitable',
-          valueFormatter: numberFormatter,
-          headerClass: 'results-grid-header',
-        },
-        {
-          headerName: 'trade count',
-          filter: 'agNumberColumnFilter',
-          field: 'results.tradeCount',
-          headerClass: 'results-grid-header',
-        },
-        {
-          headerName: 'days evaluated',
-          filter: 'agNumberColumnFilter',
-          field: 'results.daysEvaluatedCount',
-          headerClass: 'results-grid-header',
-          width: 140,
-        },
-        {
-          headerName: 'trade count/yr',
-          filter: 'agNumberColumnFilter',
-          field: 'results.tradeCountPerYear',
-          headerClass: 'results-grid-header',
-          width: 140,
-        },
-      ],
-    },
-  ]);
+  const [columnDefs, setColumnDefs] = useState([]);
+  useEffect(() => {
+    (async () => {
+      setColumnDefs(await getSimulationColDefs());
+    })();
+  }, []);
 
   const transformSortToMongo = (sortModel) => {
     /*

@@ -25,6 +25,7 @@ import SimulationResultsTable from './SimulationResultsTable';
 
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
+import { getSimulationColDefs } from '../helpers/constants';
 
 const { isNullOrUndefined } = require('../helpers/miscMethods');
 
@@ -67,10 +68,6 @@ const useStyles = makeStyles((theme) => ({
 function MainPage(props) {
   const classes = useStyles();
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
-  const [symbols, setSymbols] = React.useState([]);
-  const [availableNumberOfBars, setAvailableNumberOfBars] = React.useState([]);
-  const [significantBars, setSignificantBars] = React.useState([]);
-
   const [windowDimensions, setWindowDimensions] = useState(null);
 
   const [chartParams, setChartParams] = React.useState({
@@ -86,20 +83,19 @@ function MainPage(props) {
   });
   const [chartData, setChartData] = React.useState([]);
   const [aggregatedResultRows, setAggregatedResultRows] = React.useState([]);
+  const [flattenedColDefs, setFlattenedColDefs] = React.useState([]);
 
   useEffect(() => {
     (async () => {
-      setSymbols((await nodeServer.get('availableSymbols')).data);
-      setAvailableNumberOfBars(
-        _.orderBy(
-          (await nodeServer.get('availableNumberOfBars')).data,
-          (nb) => nb
-        )
-      );
-      setSignificantBars((await nodeServer.get('significantBars')).data);
-
       window.addEventListener('resize', handleResize);
       handleResize();
+
+      const origColDefs = await getSimulationColDefs();
+      setFlattenedColDefs(
+        [...origColDefs[0].children, ...origColDefs[1].children].filter(
+          (h) => h.field !== 'criteria.includeOtherSymbolsTargets'
+        )
+      );
 
       return () => {
         // componentWillUnmount
@@ -232,164 +228,27 @@ function MainPage(props) {
         </Grid>
         <Grid item>
           <Paper className={classes.formControlWrapper}>
-            <FormControl className={classes.formControl}>
-              <Select
-                labelId="lblSymbol"
-                id="cboSymbol"
-                value={chartParams.symbol}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    symbol: e.target.value,
-                  });
-                }}
-              >
-                {symbols.map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>symbol</FormHelperText>
-            </FormControl>
-
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.numberOfBars}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    numberOfBars: e.target.value,
-                  });
-                }}
-              >
-                {availableNumberOfBars.map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText># of bars</FormHelperText>
-            </FormControl>
-
-            <FormControl className={classes.formControl}>
-              <Select
-                labelId="lblSignificantBar"
-                id="cboSignificantBar"
-                value={chartParams.significantBar}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    significantBar: e.target.value,
-                  });
-                }}
-              >
-                {significantBars.map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>significant bar</FormHelperText>
-            </FormControl>
-
-            <FormControl className={classes.formControl}>
-              <Select
-                labelId="lblMaxAvgScore"
-                id="cboMaxAvgScore"
-                value={chartParams.max_avgScore}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    max_avgScore: e.target.value,
-                  });
-                }}
-              >
-                {[null, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(
-                  (val, index) => (
+            {flattenedColDefs.map((fd) => (
+              <FormControl key={fd.field} className={classes.formControl}>
+                <Select
+                  value={chartParams[fd.field]}
+                  onChange={(e) => {
+                    setChartParams({
+                      ...chartParams,
+                      [fd.field]: e.target.value,
+                    });
+                  }}
+                >
+                  {fd.choices.map((val, index) => (
                     <MenuItem key={index} value={val}>
                       {isNullOrUndefined(val) ? NONE : val}
                     </MenuItem>
-                  )
-                )}
-              </Select>
-              <FormHelperText>max avg score</FormHelperText>
-            </FormControl>
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.min_scoreCount}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    min_scoreCount: e.target.value,
-                  });
-                }}
-              >
-                {[null, 1, 2, 5, 10, 15, 20].map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>min score count</FormHelperText>
-            </FormControl>
+                  ))}
+                </Select>
+                <FormHelperText>{fd.headerName}</FormHelperText>
+              </FormControl>
+            ))}
 
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.min_percentProfitable_atBarX}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    min_percentProfitable_atBarX: e.target.value,
-                  });
-                }}
-              >
-                {[null, 50, 60, 70, 80].map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>min % p at bar</FormHelperText>
-            </FormControl>
-
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.min_upsideDownsideRatio_byBarX}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    min_upsideDownsideRatio_byBarX: e.target.value,
-                  });
-                }}
-              >
-                {[null, 0.25, 0.5, 1, 1.5, 2, 2.5].map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>min up/down by bar</FormHelperText>
-            </FormControl>
-
-            <FormControl className={classes.formControl}>
-              <Select
-                value={chartParams.min_avg_maxUpsidePercent_byBarX}
-                onChange={(e) => {
-                  setChartParams({
-                    ...chartParams,
-                    min_avg_maxUpsidePercent_byBarX: e.target.value,
-                  });
-                }}
-              >
-                {[null, 1, 2, 5].map((val, index) => (
-                  <MenuItem key={index} value={val}>
-                    {isNullOrUndefined(val) ? NONE : val}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>min avg max-up-% by bar</FormHelperText>
-            </FormControl>
             <FormControlLabel
               control={
                 <Checkbox
