@@ -215,6 +215,7 @@ const { argv } = require('yargs')
   await mongoApi.connectMongoose();
 
   if (argv.dropCollection) {
+    console.log(chalk.red('Dropping TradeSimulationRuns collection'));
     await dropTradeSimulationCollection();
   }
 
