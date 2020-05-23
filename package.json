@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "charting": "concurrently \"cd charting;BROWSER='brave-browser' npm start\" \"cd chartingServer;node index.js\" "
+    "charting": "concurrently \"cd charting;BROWSER='brave-browser' npm start\" \"cd chartingServer;node index.js\" ",
+    "react": "cd charting;BROWSER='brave-browser' npm start"
   },
   "repository": {
     "type": "git",

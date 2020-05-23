@@ -13,12 +13,6 @@ const _ = require('lodash'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
-const findMinSourceDate = async () => {
-  const minSourceDate = (
-    await PatternStats.findOne({}).sort({ sourceDate: 1 }).limit(1)
-  ).sourceDate;
-};
-
 const confirmDaysBetweenShouldntExist = async (
   symbol,
   equitySymbols,
@@ -138,8 +132,26 @@ const createIndexes = async () => {
   );
 };
 
+const misc = async () => {
+  const psjr = await PatternStatsJobRun.findOne({
+    sourceSymbol: 'TSLA',
+    numberOfBars: 15,
+    targetSymbols: { $size: 12 },
+  });
+
+  const ps = await PatternStats.find({
+    jobRun: psjr.id,
+    'percentProfitable_atBarX.30': { $gte: 60 },
+    'avg_maxUpsidePercent_byBarX.30': { $gte: 1 },
+    scoreCount: { $gte: 10 },
+    avgScore: { $lte: 10 },
+  });
+
+  debugger;
+};
+
 (async () => {
   await mongoApi.connectMongoose();
-  await createIndexes();
+  await misc();
   await mongoApi.disconnectMongoose();
 })();

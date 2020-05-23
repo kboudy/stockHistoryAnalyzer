@@ -45,6 +45,7 @@ exports.getHistoricalDataForSymbol = async (req, res, next) => {
   }
 };
 
+// not yet used
 exports.getPatternStatsJobRuns = async (req, res, next) => {
   try {
     const {

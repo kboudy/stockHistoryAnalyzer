@@ -95,18 +95,19 @@ const addBarsToConfig = (config, significantBar) => {
   // for config values that use significant bar,
   // & where significantBar hasn't been defined,
   // add it
-  for (const k in config) {
+  const dereferencedConfig = { ...config };
+  for (const k in dereferencedConfig) {
     if (
       k.toLowerCase().includes('_atbar') ||
       k.toLowerCase().includes('_bybar')
     ) {
-      const configVal = config[k];
+      const configVal = dereferencedConfig[k];
       if (!isObject(configVal)) {
-        config[k] = { [significantBar]: configVal };
+        dereferencedConfig[k] = { [significantBar]: configVal };
       }
     }
   }
-  return config;
+  return dereferencedConfig;
 };
 
 const runBruteForceTradeSimulationAndSaveResults = async (

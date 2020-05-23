@@ -4,29 +4,9 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   chalk = require('chalk'),
   moment = require('moment'),
-  { isNullOrUndefined } = require('./miscMethods'),
+  { isNullOrUndefined, isEmptyObject } = require('./miscMethods'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
-
-/*
-example config:
-
-  const config = {
-    min_upsideDownsideRatio_byBarX: null,
-    min_avg_maxUpsidePercent_byBarX: null,
-    max_avg_maxDownsidePercent_byBarX: null,
-    min_avg_profitLossPercent_atBarX: null,
-    min_percentProfitable_atBarX: { 1: 70, 5: 70, 10: 70 },
-    min_percentProfitable_by_1_percent_atBarX: null,
-    min_percentProfitable_by_2_percent_atBarX: null,
-    min_percentProfitable_by_5_percent_atBarX: null,
-    min_percentProfitable_by_10_percent_atBarX: null,
-    max_avgScore: null,
-    min_scoreCount: 10,
-  };
-*/
-
-const cachedHistoricalData = {};
 
 const runTradeSimulation = async (
   symbol,
@@ -56,10 +36,7 @@ const runTradeSimulation = async (
   }
   const jobRun = jobRuns[0];
 
-  const candles = cachedHistoricalData[symbol]
-    ? cachedHistoricalData[symbol]
-    : await loadHistoricalDataForSymbol(symbol);
-  cachedHistoricalData[symbol] = candles;
+  const candles = await loadHistoricalDataForSymbol(symbol);
 
   //----------------------------
   const queryFilter = {
@@ -80,14 +57,18 @@ const runTradeSimulation = async (
           config[configKey][significantBar] !== '' &&
           config[configKey][significantBar] !== null
         ) {
-          queryFilter[`${patternStatFieldName}.${significantBar}`] = {
-            [operator]: config[configKey][significantBar],
-          };
+          if (!isEmptyObject(config[configKey][significantBar])) {
+            queryFilter[`${patternStatFieldName}.${significantBar}`] = {
+              [operator]: config[configKey][significantBar],
+            };
+          }
         }
       } else {
-        queryFilter[patternStatFieldName] = {
-          [operator]: config[configKey],
-        };
+        if (!isEmptyObject(config[configKey])) {
+          queryFilter[patternStatFieldName] = {
+            [operator]: config[configKey],
+          };
+        }
       }
     }
   };
