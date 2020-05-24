@@ -122,7 +122,6 @@ const runTradeSimulation = async (
   addToQueryFilter('max_avgScore', 'avgScore', '$lte', false);
 
   if (logToConsole) {
-    console.log(`config: ${chalk.yellowBright(JSON.stringify(config))}`);
     console.log(
       `queryFilter: ${chalk.blueBright(JSON.stringify(queryFilter))}`
     );

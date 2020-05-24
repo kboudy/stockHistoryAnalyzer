@@ -27,7 +27,11 @@ import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
 import { getSimulationColDefs } from '../helpers/constants';
 
-const { isNullOrUndefined, isObject } = require('../helpers/miscMethods');
+const {
+  isNullOrUndefined,
+  isNullOrEmptyString,
+  isObject,
+} = require('../helpers/miscMethods');
 
 const NONE = '-none-';
 
@@ -111,6 +115,34 @@ function MainPage(props) {
     })();
   }, []);
 
+  const removeNullValues = (queryFilter) => {
+    const strippedQF = { ...queryFilter };
+    const mainFieldNames = Object.keys(strippedQF);
+    for (const fn of mainFieldNames) {
+      if (strippedQF[fn] === null) {
+        delete strippedQF[fn];
+      }
+    }
+
+    const psFieldNames = Object.keys(queryFilter.patternStatsConfig);
+    for (const fn of psFieldNames) {
+      if (isNullOrEmptyString(strippedQF.patternStatsConfig[fn])) {
+        delete strippedQF.patternStatsConfig[fn];
+      } else {
+        if (strippedQF.patternStatsConfig[fn]) {
+          debugger;
+          const firstSubKey = Object.keys(strippedQF.patternStatsConfig[fn])[0];
+          if (
+            isNullOrEmptyString(strippedQF.patternStatsConfig[fn][firstSubKey])
+          ) {
+            delete strippedQF.patternStatsConfig[fn];
+          }
+        }
+      }
+    }
+    return strippedQF;
+  };
+
   const reloadChartData = async () => {
     const queryFilter = {
       symbol: chartParams.symbol,
@@ -161,9 +193,10 @@ function MainPage(props) {
         },
       },
     };
+    const cleanedQF = removeNullValues(queryFilter);
     const tradeSimulationResults = await nodeServer.post(
       'runTradeSimulation',
-      queryFilter
+      cleanedQF
     );
 
     const { data } = tradeSimulationResults;

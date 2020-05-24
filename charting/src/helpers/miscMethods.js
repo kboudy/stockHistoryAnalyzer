@@ -7,6 +7,10 @@ const isObject = (obj) => {
 };
 exports.isObject = isObject;
 
+exports.isNullOrEmptyString = (str) => {
+  return str === null || str === '';
+};
+
 // any fields on the object that are empty objects get removed
 exports.isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;

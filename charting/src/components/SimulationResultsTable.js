@@ -67,26 +67,41 @@ const SimulationResultsTable = (props) => {
 
     {"criteria.significantBar":3}
     */
+    // significantBar is needed for looking up the deeply-nested criteria.config.
+    // for now, I'll hack it in there
+    const significantBar = filterModel['criteria.significantBar']
+      ? filterModel['criteria.significantBar'].filter
+      : null;
 
     const mongoFilter = {};
     for (const fieldName in filterModel) {
+      // hack, continued
+      const correctedFieldName =
+        (significantBar && fieldName.toLowerCase().endsWith('_atbarx')) ||
+        fieldName.toLowerCase().endsWith('_bybarx')
+          ? `${fieldName}.${significantBar}`
+          : fieldName;
+
       const { type } = filterModel[fieldName];
       const fieldValue = filterModel[fieldName].filter;
+      if (fieldValue === null) {
+        continue;
+      }
       switch (type) {
         case 'equals':
-          mongoFilter[fieldName] = fieldValue;
+          mongoFilter[correctedFieldName] = fieldValue;
           break;
         case 'greaterThan':
-          mongoFilter[fieldName] = { $gt: fieldValue };
+          mongoFilter[correctedFieldName] = { $gt: fieldValue };
           break;
         case 'greaterThanOrEqual':
-          mongoFilter[fieldName] = { $gte: fieldValue };
+          mongoFilter[correctedFieldName] = { $gte: fieldValue };
           break;
         case 'lessThan':
-          mongoFilter[fieldName] = { $lt: fieldValue };
+          mongoFilter[correctedFieldName] = { $lt: fieldValue };
           break;
         case 'lessThanOrEqual':
-          mongoFilter[fieldName] = { $lte: fieldValue };
+          mongoFilter[correctedFieldName] = { $lte: fieldValue };
           break;
         default:
           console.log(type);
