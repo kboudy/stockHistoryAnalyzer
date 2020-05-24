@@ -1,15 +1,15 @@
 #!/bin/sh
 
-& node ~/keith_apps/stockHistoryAnalyzer -d -s AAPL
+node primaryModules/tuneTradeCriteria.js -d -s AAPL &
 sleep 1
-& node ~/keith_apps/stockHistoryAnalyzer -s AMZN
-& node ~/keith_apps/stockHistoryAnalyzer -s EEM
-& node ~/keith_apps/stockHistoryAnalyzer -s EFA
-& node ~/keith_apps/stockHistoryAnalyzer -s GLD
-& node ~/keith_apps/stockHistoryAnalyzer -s HPQ
-& node ~/keith_apps/stockHistoryAnalyzer -s HYG
-& node ~/keith_apps/stockHistoryAnalyzer -s IWM
-& node ~/keith_apps/stockHistoryAnalyzer -s QQQ
-& node ~/keith_apps/stockHistoryAnalyzer -s SLV
-& node ~/keith_apps/stockHistoryAnalyzer -s SPY
-& node ~/keith_apps/stockHistoryAnalyzer -s TSLA
+node primaryModules/tuneTradeCriteria.js -s AMZN &
+node primaryModules/tuneTradeCriteria.js -s EEM &
+node primaryModules/tuneTradeCriteria.js -s EFA &
+node primaryModules/tuneTradeCriteria.js -s GLD &
+node primaryModules/tuneTradeCriteria.js -s HPQ &
+node primaryModules/tuneTradeCriteria.js -s HYG &
+node primaryModules/tuneTradeCriteria.js -s IWM &
+node primaryModules/tuneTradeCriteria.js -s QQQ &
+node primaryModules/tuneTradeCriteria.js -s SLV &
+node primaryModules/tuneTradeCriteria.js -s SPY &
+node primaryModules/tuneTradeCriteria.js -s TSLA &
