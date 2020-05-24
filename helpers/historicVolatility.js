@@ -1,42 +1,25 @@
 const _ = require('lodash'),
   { loadHistoricalDataForSymbol } = require('../helpers/symbolData'),
   mongoApi = require('../helpers/mongoApi'),
-  PatternStats = require('../models/patternStats'),
-  PatternStatsJobRun = require('../models/patternStatsJobRun');
+  mathjs = require('mathjs');
 
 // assumes the oldest candles is first (index=0)
-const calculateHV = (candles, length = null) => {
-  let hvCandles = length
-    ? candles.slice(candles.length - length)
-    : [...candles];
+const calculateHV = (candles, length = candles.length) => {
+  let hvCandles = candles.slice(candles.length - length - 1);
 
-  let previousClose = null;
-  for (const c of hvCandles) {
-    if (previousClose !== null) {
-      c.log = Math.log(c.close / previousClose);
-    }
-    previousClose = c.close;
-  }
-  const logAvg = _.mean(hvCandles.map((c) => c.log));
-  for (const c of hvCandles) {
-    if (c.log === 0 || c.log) {
-      c.logMeanDiffSquared = Math.pow(c.log - logAvg, 2);
-    }
-    previousClose = c.close;
-  }
-
-  // removing oldest candle, as it won't have the diff-prev data
-  hvCandles = hvCandles.slice(1);
-
-  const sumLogMeanDiffSquared = _.sum(
-    hvCandles.map((c) => c.logMeanDiffSquared)
-  );
-  const safeLength = length ? length : 1;
-  const variance = sumLogMeanDiffSquared / hvCandles.length;
-
-  const varianceMultiple = variance * safeLength;
-  const historicVolatility = varianceMultiple * Math.sqrt(safeLength);
-  return historicVolatility;
+  const profitLosses = hvCandles
+    .map((c, idx) => {
+      if (idx === 0) {
+        return null;
+      }
+      const previousClose = hvCandles[idx - 1].close;
+      return (c.close - previousClose) / previousClose;
+    })
+    .filter((pl) => pl !== null);
+  const stdPl = mathjs.std(profitLosses);
+  const variance = Math.pow(stdPl, 2);
+  const annualizedVariance = Math.sqrt(variance * 250);
+  return annualizedVariance * 100;
 };
 
 (async () => {
@@ -49,7 +32,10 @@ const calculateHV = (candles, length = null) => {
   });
   await mongoApi.disconnectMongoose();
 
-  const hv = calculateHV(candles, 30);
+  // agrees with this site: https://www.ivolatility.com/options/SLV/NYSEArca/
+  const hv10 = calculateHV(candles, 10);
+  const hv20 = calculateHV(candles, 20);
+  const hv30 = calculateHV(candles, 30);
 
   debugger;
 })();
