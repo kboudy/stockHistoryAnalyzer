@@ -37,6 +37,8 @@ const numberFormatter = (params) => {
   }
 };
 
+const filterTest = {};
+
 export const getSimulationColDefs = async () => {
   return [
     {
@@ -74,6 +76,7 @@ export const getSimulationColDefs = async () => {
           flatField: 'includeOtherSymbolsTargets',
           headerClass: 'criteria-grid-header',
           editable: false,
+          filter: 'partialMatchFilter',
           cellRendererFramework: CheckboxCellRenderer,
           choices: [],
         },
