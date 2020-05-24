@@ -224,17 +224,17 @@ const { argv } = require('yargs')
   const symbols = argv.symbols ? argv.symbols : await getAvailableSymbolNames();
   const ignoreMatchesAboveThisScore = 12;
   const bruteForceValsConfig = {
-    max_avgScore: [10, 11, 12],
+    max_avgScore: [9, 10, 11, 12],
     max_avg_maxDownsidePercent_byBarX: [null],
-    min_avg_maxUpsidePercent_byBarX: [null, 1, 5],
-    min_avg_profitLossPercent_atBarX: [null],
+    min_avg_maxUpsidePercent_byBarX: [null, 1, 2, 5],
+    min_avg_profitLossPercent_atBarX: [null, 1, 2],
     min_percentProfitable_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_1_percent_atBarX: [null, 60, 70, 80],
     min_percentProfitable_by_2_percent_atBarX: [null, 60, 70],
     min_percentProfitable_by_5_percent_atBarX: [null, 60, 70],
     min_percentProfitable_by_10_percent_atBarX: [null],
     min_scoreCount: [10],
-    min_upsideDownsideRatio_byBarX: [null, 1, 2],
+    min_upsideDownsideRatio_byBarX: [null, 1, 1.5, 2],
   };
 
   await runBruteForceTradeSimulationAndSaveResults(

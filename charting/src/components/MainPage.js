@@ -62,7 +62,7 @@ const useStyles = makeStyles((theme) => ({
   title: { flexGrow: 1 },
   appBarSpacer: theme.mixins.toolbar,
   addChartGrid: { padding: theme.spacing(3) },
-  chartGridWrapper: { padding: theme.spacing(5) },
+  chartGridWrapper: { padding: theme.spacing(2) },
 }));
 
 function MainPage(props) {
@@ -265,13 +265,44 @@ function MainPage(props) {
       <Grid container className={classes.chartGridWrapper}>
         <Grid item>
           <Chart
-            width={Math.round(windowDimensions.width * 0.9)}
-            height={Math.round(windowDimensions.width * 0.9 * 0.25)}
+            width={Math.round(windowDimensions.width * 0.8)}
+            height={Math.round(windowDimensions.width * 0.8 * 0.25)}
             data={chartData}
             dataKeyName={'p/l %'}
             maxTicks={5}
           />
         </Grid>
+        {aggregatedResultRows.length ? (
+          <Grid item>
+            <TableContainer
+              component={Paper}
+              className={classes.formControlWrapper}
+            >
+              <Table className={classes.table} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell>Aggregated Result</StyledTableCell>
+                    <StyledTableCell align="right">Value</StyledTableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {aggregatedResultRows.map((row) => (
+                    <TableRow key={row.name}>
+                      <StyledTableCell component="th" scope="row">
+                        {row.name}
+                      </StyledTableCell>
+                      <StyledTableCell align="right">
+                        {row.value}
+                      </StyledTableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        ) : (
+          <></>
+        )}
         <Grid item>
           <Paper className={classes.formControlWrapper}>
             {flattenedColDefs.map((fd) => (
@@ -314,37 +345,6 @@ function MainPage(props) {
             />
           </Paper>
         </Grid>
-        {aggregatedResultRows.length ? (
-          <Grid item>
-            <TableContainer
-              component={Paper}
-              className={classes.formControlWrapper}
-            >
-              <Table className={classes.table} aria-label="simple table">
-                <TableHead>
-                  <TableRow>
-                    <StyledTableCell>Aggregated Result</StyledTableCell>
-                    <StyledTableCell align="right">Value</StyledTableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {aggregatedResultRows.map((row) => (
-                    <TableRow key={row.name}>
-                      <StyledTableCell component="th" scope="row">
-                        {row.name}
-                      </StyledTableCell>
-                      <StyledTableCell align="right">
-                        {row.value}
-                      </StyledTableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        ) : (
-          <></>
-        )}
         <Grid item xs={12}>
           <SimulationResultsTable
             height={400}
