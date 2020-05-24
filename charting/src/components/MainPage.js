@@ -130,7 +130,6 @@ function MainPage(props) {
         delete strippedQF.patternStatsConfig[fn];
       } else {
         if (strippedQF.patternStatsConfig[fn]) {
-          debugger;
           const firstSubKey = Object.keys(strippedQF.patternStatsConfig[fn])[0];
           if (
             isNullOrEmptyString(strippedQF.patternStatsConfig[fn][firstSubKey])

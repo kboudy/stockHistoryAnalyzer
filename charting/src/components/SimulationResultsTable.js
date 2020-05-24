@@ -19,6 +19,9 @@ import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
 import { isEmptyObject } from '../helpers/miscMethods';
 
+const simResKey_visibleColumns = 'simulation_results_table.visible_columns';
+const simResKey_columnFilters = 'simulation_results_table.column_filters';
+
 const useStyles = makeStyles((theme) => ({
   columnChooserButton: { marginTop: theme.spacing(1) },
   columnChoiceList: {
@@ -36,7 +39,21 @@ const SimulationResultsTable = (props) => {
 
   useEffect(() => {
     (async () => {
-      setColumnDefs(await getSimulationColDefs());
+      const colDefs = await getSimulationColDefs();
+
+      const strStoredVisibleColumns = localStorage.getItem(
+        simResKey_visibleColumns
+      );
+      if (strStoredVisibleColumns) {
+        const storedVisibleColumns = JSON.parse(strStoredVisibleColumns);
+        for (const colGroup of colDefs) {
+          for (const c of colGroup.children) {
+            c.hide = !storedVisibleColumns.includes(c.field);
+          }
+        }
+      }
+
+      setColumnDefs(colDefs);
     })();
   }, []);
 
@@ -177,6 +194,7 @@ const SimulationResultsTable = (props) => {
   };
 
   const handleColumnVisibleToggle = (col) => {
+    const visibleColumns = [];
     const updatedColumnDefs = [];
     for (const colGroup of columnDefs) {
       const g = { ...colGroup };
@@ -187,10 +205,17 @@ const SimulationResultsTable = (props) => {
         if (c.field === col.field) {
           uc.hide = !uc.hide;
         }
+        if (!uc.hide) {
+          visibleColumns.push(c.field);
+        }
         g.children.push(uc);
       }
     }
 
+    localStorage.setItem(
+      simResKey_visibleColumns,
+      JSON.stringify(visibleColumns)
+    );
     setColumnDefs(updatedColumnDefs);
   };
 
