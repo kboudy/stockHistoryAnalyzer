@@ -1,97 +1,77 @@
-import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import React, {
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+  useState,
+} from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import _ from 'lodash';
 
-export default class PartialMatchFilter extends Component {
-  constructor(props) {
-    super(props);
+const useStyles = makeStyles((theme) => ({
+  columnChoiceList: {
+    border: '2px solid #bbaae0',
+    backgroundColor: '#bbaae0',
+    borderRadius: '5px',
+  },
+}));
 
-    this.state = {
-      text: '',
-    };
+export default forwardRef((props, ref) => {
+  const classes = useStyles();
 
-    this.valueGetter = this.props.valueGetter;
+  const inputRef = useRef();
+  const shellRef = useRef();
 
-    this.onChange = this.onChange.bind(this);
-  }
+  const [filterText, setFilterText] = useState('');
 
-  isFilterActive() {
-    return this.state.text != null && this.state.text !== '';
-  }
+  const isValid = (text) => {
+    return text === 'suen';
+  };
+  useImperativeHandle(ref, () => ({
+    getModel: () => {
+      return { value: filterText };
+    },
 
-  doesFilterPass(params) {
-    return this.state.text
-      .toLowerCase()
-      .split(' ')
-      .every(
-        (filterWord) =>
-          this.valueGetter(params.node)
-            .toString()
-            .toLowerCase()
-            .indexOf(filterWord) >= 0
-      );
-  }
+    setModel: (model) => {
+      setFilterText(model ? model.value : '');
+    },
 
-  getModel() {
-    return { value: this.state.text };
-  }
+    doesFilterPass: (params) => isValid(filterText),
 
-  setModel(model) {
-    this.state.text = model ? model.value : '';
-  }
+    afterGuiAttached: (params) => {
+      shellRef.current.style.display = 'block';
+      inputRef.current.focus();
+    },
 
-  afterGuiAttached(params) {
-    this.focus();
-  }
+    isFilterActive: () => {
+      console.log('isFilterActive');
+      return isValid(filterText) && filterText !== '';
+    },
+  }));
 
-  focus() {
-    window.setTimeout(() => {
-      const container = ReactDOM.findDOMNode(this.refs.input);
+  const handleChange = (e) => {
+    setFilterText(e.target.value);
+    //props.filterModifiedCallback();
+  };
 
-      if (container) {
-        container.focus();
-      }
-    });
-  }
-
-  componentMethod(message) {
-    alert(`Alert from PartialMatchFilterComponent: ${message}`);
-  }
-
-  onChange(event) {
-    const newValue = event.target.value;
-
-    if (this.state.text !== newValue) {
-      this.setState(
-        {
-          text: newValue,
-        },
-        () => {
-          this.props.filterChangedCallback();
-        }
-      );
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && isValid(filterText)) {
+      props.filterChangedCallback();
+      shellRef.current.style.display = 'none'; // hack - I want the filter gone when I press enter
     }
-  }
+  };
 
-  render() {
-    const style = {
-      border: '2px solid #22ff22',
-      borderRadius: '5px',
-      backgroundColor: '#bbffbb',
-      width: '200px',
-      height: '50px',
-    };
-
-    return (
-      <div style={style}>
-        Filter:{' '}
-        <input
-          style={{ height: '20px' }}
-          ref="input"
-          value={this.state.text}
-          onChange={this.onChange}
-          className="form-control"
-        />
-      </div>
-    );
-  }
-}
+  return (
+    <div className={classes.columnChoiceList} ref={shellRef}>
+      <input
+        type="text"
+        ref={inputRef}
+        style={{ height: '20px' }}
+        onChange={handleChange}
+        onKeyPress={handleKeyPress}
+        className="form-control"
+        onBlur={() => (shellRef.current.style.display = 'none')}
+      />
+    </div>
+  );
+});

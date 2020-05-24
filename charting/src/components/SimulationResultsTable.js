@@ -37,6 +37,7 @@ const SimulationResultsTable = (props) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [columnDefs, setColumnDefs] = useState([]);
+  const [gridApi, setGridApi] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -131,7 +132,14 @@ const SimulationResultsTable = (props) => {
   const gridDataSource = {
     rowCount: null,
     getRows: async (params) => {
-      //await restoreFilterModelIfNecessary();
+      /*  
+      
+      params.filterModel sample:
+      
+      {"criteria.includeOtherSymbolsTargets":{"value":"suen"}}
+
+      */
+      console.log(JSON.stringify(params.filterModel));
       const mongoFilter = transformFilterToMongo(params.filterModel);
       const mongoSort = transformSortToMongo(params.sortModel);
 
@@ -151,18 +159,21 @@ const SimulationResultsTable = (props) => {
     },
   };
 
-  /*   const handleFilterChanged = (e) => {
+  const handleFilterChanged = (e) => {
     const fm = e.api.getFilterModel();
     if (fm) {
       if (!isEmptyObject(fm)) {
-        localStorage.setItem('simulationGridFilter', JSON.stringify(fm));
+        const strFm = JSON.stringify(fm);
+        console.log(strFm);
+        localStorage.setItem('simulationGridFilter', strFm);
       }
     }
     // force infinite row model to reset, and call for rows 0-100
-    e.api.setDatasource(gridDataSource);
-  }; */
+    // e.api.setDatasource(gridDataSource);
+  };
 
   const handleSortChanged = (e) => {
+    debugger;
     e.api.setDatasource(gridDataSource);
   };
 
@@ -179,6 +190,11 @@ const SimulationResultsTable = (props) => {
     }
   };
  */
+
+  const handleGridReady = (e) => {
+    setGridApi(e.api);
+  };
+
   const handleSelectionChanged = (e) => {
     if (
       e.type !== 'selectionChanged' ||
@@ -272,8 +288,10 @@ const SimulationResultsTable = (props) => {
           rowData={props.data}
           frameworkComponents={{ partialMatchFilter: PartialMatchFilter }}
           sortingOrder={['asc', 'desc']}
+          onGridReady={handleGridReady}
           onSelectionChanged={handleSelectionChanged}
           onSortChanged={handleSortChanged}
+          onFilterChanged={handleFilterChanged}
           rowSelection="single"
         ></AgGridReact>
       </div>
