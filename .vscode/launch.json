@@ -35,6 +35,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "historicVolatility",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/helpers/historicVolatility.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "discoverPatternsTest",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/discoverPatternsTest.js"
