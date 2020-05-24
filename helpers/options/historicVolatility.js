@@ -1,6 +1,6 @@
 const _ = require('lodash'),
-  { loadHistoricalDataForSymbol } = require('../helpers/symbolData'),
-  mongoApi = require('../helpers/mongoApi'),
+  { loadHistoricalDataForSymbol } = require('../symbolData'),
+  mongoApi = require('../mongoApi'),
   mathjs = require('mathjs');
 
 // assumes the oldest candles is first (index=0)

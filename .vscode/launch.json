@@ -42,9 +42,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "discoverPatternsTest",
+      "name": "optionsPricingTest",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/utils/discoverPatternsTest.js"
+      "program": "${workspaceFolder}/helpers/options/optionsPricingTest.js"
     },
     {
       "type": "node",

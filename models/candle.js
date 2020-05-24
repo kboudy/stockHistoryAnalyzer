@@ -21,9 +21,6 @@ const CandleSchema = new Schema({
   close: {
     type: Schema.Types.Decimal128,
   },
-  hv20: {
-    type: Schema.Types.Decimal128,
-  },
   volume: {
     type: Schema.Types.Number,
   },

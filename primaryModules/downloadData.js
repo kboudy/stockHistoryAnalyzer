@@ -4,7 +4,6 @@ const axios = require('axios'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { isCrypto } = require('../helpers/symbolData'),
   { sleep, isNullOrUndefined } = require('../helpers/miscMethods'),
-  { calculateHV } = require('../helpers/historicVolatility'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
   Candle = require('../models/candle');
@@ -155,22 +154,6 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           break;
         }
         currentYear += 5;
-      }
-    }
-
-    if (!symbolIsCrypto) {
-      // finally, add in historical volatility for any that don't have it
-      const candles = await Candle.find({ symbol: symbol }).sort({ date: 1 });
-      for (const c of candles) {
-        if (isNullOrUndefined(c.hv20)) {
-          const idx = candles.indexOf(c);
-          const croppedToThis = candles.slice(0, idx + 1);
-          const hv20 = calculateHV(croppedToThis, 20);
-          if (hv20) {
-            c.hv20 = Math.round(hv20 * 10) / 10;
-            await c.save();
-          }
-        }
       }
     }
   }
