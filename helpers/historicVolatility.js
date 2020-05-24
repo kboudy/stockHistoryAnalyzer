@@ -4,8 +4,11 @@ const _ = require('lodash'),
   mathjs = require('mathjs');
 
 // assumes the oldest candles is first (index=0)
-const calculateHV = (candles, length = candles.length) => {
-  let hvCandles = candles.slice(candles.length - length - 1);
+const calculateHV = (candles, hvLength = candles.length) => {
+  if (candles.length < hvLength + 1) {
+    return null;
+  }
+  let hvCandles = candles.slice(candles.length - hvLength - 1);
 
   const profitLosses = hvCandles
     .map((c, idx) => {
@@ -21,7 +24,8 @@ const calculateHV = (candles, length = candles.length) => {
   const annualizedVariance = Math.sqrt(variance * 250);
   return annualizedVariance * 100;
 };
-
+exports.calculateHV = calculateHV;
+/* 
 (async () => {
   await mongoApi.connectMongoose();
   let candles = (await loadHistoricalDataForSymbol('SLV')).map((c) => {
@@ -39,3 +43,4 @@ const calculateHV = (candles, length = candles.length) => {
 
   debugger;
 })();
+ */
