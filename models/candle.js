@@ -5,9 +5,11 @@ const Schema = mongoose.Schema;
 const CandleSchema = new Schema({
   symbol: {
     type: Schema.Types.String,
+    sparse: true,
   },
   date: {
     type: Schema.Types.String,
+    sparse: true,
   },
   open: {
     type: Schema.Types.Decimal128,

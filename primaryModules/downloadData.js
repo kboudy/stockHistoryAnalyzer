@@ -1,5 +1,6 @@
 const axios = require('axios'),
   moment = require('moment'),
+  chalk = require('chalk'),
   _ = require('lodash'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { isCrypto } = require('../helpers/symbolData'),
@@ -47,26 +48,50 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
   return _.orderBy(filtered, (c) => c.date);
 };
 
+let requestDateTimes_inLastMinute = [];
 const downloadEquityData = async (symbol, startDate, endDate) => {
   const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
 
   let res;
-  try {
-    const instance = axios.create({
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false,
-      }),
-    });
-    res = await instance.get(url);
-    await sleep(100); // to keep from getting a 429 - "too many requests", from TDAmeritrade
-  } catch (err) {
-    // forgive the error if the start & end dates are the same
-    if (startDate !== endDate) {
-      throw err;
-    } else {
-      return [];
+  let retryCount = 3;
+  while (retryCount > 0) {
+    try {
+      const instance = axios.create({
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false,
+        }),
+      });
+      res = await instance.get(url);
+      retryCount = 0;
+
+      // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
+      const currentDateTime = new Date().getTime();
+      requestDateTimes_inLastMinute = requestDateTimes_inLastMinute.filter(
+        (d) => d >= currentDateTime - 60000
+      );
+      requestDateTimes_inLastMinute.push(currentDateTime);
+      const throttle = requestDateTimes_inLastMinute.length > 95;
+      const sleepTime = throttle ? 1000 : 50;
+      await sleep(sleepTime);
+    } catch (err) {
+      retryCount--;
+      if (retryCount > 0 && err.response.status === 429) {
+        console.log(
+          chalk.red(
+            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last minute: ${requestDateTimes_inLastMinute.length}`
+          )
+        );
+        await sleep(1000);
+      } else {
+        // forgive the error if the start & end dates are the same
+        if (startDate !== endDate) {
+          throw err;
+        } else {
+          return [];
+        }
+      }
     }
   }
 
@@ -103,11 +128,11 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
       const endDate = yesterday;
 
-      console.log(
-        `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
-          .add(1, 'day')
-          .format('YYYY-MM-DD')}-${endDate}`
-      );
+      // console.log(
+      //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
+      //     .add(1, 'day')
+      //     .format('YYYY-MM-DD')}-${endDate}`
+      // );
       // for crypto, it's downloaded in 1 csv file
       await Candle.deleteMany({
         // probably not necessary to clear the range first, but it'll ensure no dupes
@@ -131,11 +156,11 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           endDate = yesterday;
         }
 
-        console.log(
-          `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
-            .add(1, 'day')
-            .format('YYYY-MM-DD')}-${endDate}`
-        );
+        // console.log(
+        //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
+        //     .add(1, 'day')
+        //     .format('YYYY-MM-DD')}-${endDate}`
+        // );
         await Candle.deleteMany({
           symbol,
           date: { $gte: startDate, $lte: endDate },
