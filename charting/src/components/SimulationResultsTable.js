@@ -13,7 +13,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
 import { getSimulationColDefs } from '../helpers/constants';
-import StringParseFilter from './agGridFilters/StringParseFilter';
+import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
@@ -252,11 +252,21 @@ const SimulationResultsTable = (props) => {
     <div>
       <div className="ag-theme-balham" style={{ height: props.height }}>
         <AgGridReact
-          defaultColDef={{ sortable: true, resizable: true, width: 120 }}
+          defaultColDef={{
+            floatingFilter: true,
+            floatingFilterComponent: 'stringParseFloatingFilter',
+            filter: 'agTextColumnFilter',
+            floatingFilterComponentParams: { suppressFilterButton: true },
+            sortable: true,
+            resizable: true,
+            width: 120,
+          }}
           columnDefs={columnDefs}
           gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
           rowData={props.data}
-          frameworkComponents={{ stringParseFilter: StringParseFilter }}
+          frameworkComponents={{
+            stringParseFloatingFilter: StringParseFloatingFilter,
+          }}
           sortingOrder={['asc', 'desc']}
           onGridReady={handleGridReady}
           onSelectionChanged={handleSelectionChanged}

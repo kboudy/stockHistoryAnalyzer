@@ -1,125 +1,76 @@
-exports.isNullOrUndefined = (obj) => {
+const isNullOrUndefined = (obj) => {
   return typeof obj === 'undefined' || obj === null;
 };
+exports.isNullOrUndefined = isNullOrUndefined;
 
 const isObject = (obj) => {
   return Object.prototype.toString.call(obj) === '[object Object]';
 };
 exports.isObject = isObject;
 
-exports.isNullOrEmptyString = (str) => {
+const isNullOrEmptyString = (str) => {
   return str === null || str === '';
 };
+exports.isNullOrEmptyString = isNullOrEmptyString;
 
 // any fields on the object that are empty objects get removed
 exports.isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;
 };
 
-exports.getMongoFilter = (stringFilterModel) => {
-  let fieldValue = stringFilterModel.filter;
-  if (fieldValue !== 0 && !fieldValue) {
-    return { valid: null };
+exports.getMongoFilter = (filterModel) => {
+  const { type, filter } = filterModel;
+
+  if (isNullOrEmptyString(filter) || isNullOrUndefined(filter)) {
+    return { valid: false };
   }
 
-  const strFieldValue = `${fieldValue}`;
-
-  if (strFieldValue.startsWith('!')) {
-    const cropped = strFieldValue.slice(1).trim();
+  let cropped = `${filter}`;
+  let operator = null;
+  if (cropped.startsWith('>=')) {
+    operator = '$gte';
+    cropped = cropped.slice(2).trim();
+  } else if (cropped.startsWith('<=')) {
+    operator = '$lte';
+    cropped = cropped.slice(2).trim();
+  } else if (cropped.startsWith('>')) {
+    operator = '$gt';
+    cropped = cropped.slice(1).trim();
+  } else if (cropped.startsWith('<')) {
+    operator = '$lt';
+    cropped = cropped.slice(1).trim();
+  } else if (cropped.startsWith('!')) {
+    cropped = cropped.slice(1).trim();
     if (cropped.includes(',')) {
-      return {
-        valid: true,
-        mongo: {
-          $nin: cropped
-            .split(',')
-            .map((c) => (isNaN(c.trim()) ? c.trim() : parseFloat(c.trim()))),
-        },
-      };
+      operator = '$nin';
     } else {
-      return {
-        valid: true,
-        mongo: {
-          $ne: isNaN(cropped) ? cropped : parseFloat(cropped),
-        },
-      };
+      operator = '$ne';
     }
+  } else if (cropped.includes(',')) {
+    operator = '$in';
   }
-
-  if (strFieldValue.includes(',')) {
+  if (operator === null) {
     return {
       valid: true,
-      mongo: {
-        $in: strFieldValue
-          .split(',')
-          .map((c) => (isNaN(c.trim()) ? c.trim() : parseFloat(c.trim()))),
-      },
+      mongo: cropped,
     };
   }
-
-  if (strFieldValue.startsWith('>=')) {
-    const cropped = strFieldValue.slice(2).trim();
-    return {
-      valid: true,
-      mongo: {
-        $gte: isNaN(cropped) ? cropped : parseFloat(cropped),
-      },
-    };
+  if (cropped === '') {
+    return { valid: false };
   }
 
-  if (strFieldValue.startsWith('<=')) {
-    const cropped = strFieldValue.slice(2).trim();
-    return {
-      valid: true,
-      mongo: {
-        $lte: isNaN(cropped) ? cropped : parseFloat(cropped),
-      },
-    };
+  let parsedValue;
+  if (cropped === 'true' || cropped === 'false') {
+    parsedValue = Boolean(cropped);
+  } else if (cropped.includes(',')) {
+    parsedValue = cropped.split(',').map((s) => (isNaN(s) ? s : parseFloat(s)));
+  } else {
+    parsedValue = isNaN(cropped) ? cropped : parseFloat(cropped);
   }
-
-  if (strFieldValue.startsWith('>')) {
-    const cropped = strFieldValue.slice(1).trim();
-    return {
-      valid: true,
-      mongo: {
-        $gt: isNaN(cropped) ? cropped : parseFloat(cropped),
-      },
-    };
-  }
-
-  if (strFieldValue.startsWith('<')) {
-    const cropped = strFieldValue.slice(1).trim();
-    return {
-      valid: true,
-      mongo: {
-        $lt: isNaN(cropped) ? cropped : parseFloat(cropped),
-      },
-    };
-  }
-
-  if (strFieldValue.startsWith('=')) {
-    const cropped = strFieldValue.slice(1).trim();
-    return {
-      valid: true,
-      mongo: isNaN(cropped) ? cropped : parseFloat(cropped),
-    };
-  }
-
-  if (strFieldValue.toLowerCase() === 'true') {
-    return {
-      valid: true,
-      mongo: true,
-    };
-  }
-
-  if (strFieldValue.toLowerCase() === 'false') {
-    return {
-      valid: true,
-      mongo: false,
-    };
-  }
-
   return {
     valid: true,
-    mongo: isNaN(fieldValue) ? fieldValue : parseFloat(fieldValue),
+    mongo: {
+      [operator]: parsedValue,
+    },
   };
 };

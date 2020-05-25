@@ -47,7 +47,6 @@ export const getSimulationColDefs = async () => {
       children: [
         {
           headerName: 'symbol',
-          filter: 'stringParseFilter',
           field: 'criteria.symbol',
           flatField: 'symbol',
           headerClass: 'criteria-grid-header',
@@ -55,7 +54,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: '# of bars',
-          filter: 'stringParseFilter',
           field: 'criteria.numberOfBars',
           flatField: 'numberOfBars',
           headerClass: 'criteria-grid-header',
@@ -63,7 +61,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'significant bar',
-          filter: 'stringParseFilter',
           field: 'criteria.significantBar',
           flatField: 'significantBar',
           headerClass: 'criteria-grid-header',
@@ -76,7 +73,6 @@ export const getSimulationColDefs = async () => {
           flatField: 'includeOtherSymbolsTargets',
           headerClass: 'criteria-grid-header',
           editable: false,
-          filter: 'stringParseFilter',
           cellRendererFramework: CheckboxCellRenderer,
           choices: [],
         },
@@ -92,7 +88,6 @@ export const getSimulationColDefs = async () => {
           headerName: 'max avg score',
           field: 'criteria.config.max_avgScore',
           flatField: 'max_avgScore',
-          filter: 'stringParseFilter',
           valueFormatter: numberFormatter,
           headerClass: 'criteria-config-grid-header',
           choices: [null, 6, 7, 8, 9, 10, 11, 12],
@@ -102,7 +97,6 @@ export const getSimulationColDefs = async () => {
           headerName: 'min score count',
           field: 'criteria.config.min_scoreCount',
           flatField: 'min_scoreCount',
-          filter: 'stringParseFilter',
           valueFormatter: numberFormatter,
           headerClass: 'criteria-config-grid-header',
           choices: [null, 1, 2, 5, 10, 15, 20],
@@ -110,7 +104,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min % p at bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_percentProfitable_atBarX',
           flatField: 'min_percentProfitable_atBarX',
           valueFormatter: numberFormatter,
@@ -120,7 +113,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min % p by 1% by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_percentProfitable_by_1_percent_atBarX',
           flatField: 'min_percentProfitable_by_1_percent_atBarX',
           valueFormatter: numberFormatter,
@@ -130,7 +122,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min % p by 2% by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_percentProfitable_by_2_percent_atBarX',
           flatField: 'min_percentProfitable_by_2_percent_atBarX',
           headerClass: 'criteria-config-grid-header',
@@ -140,7 +131,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min % p by 5% by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_percentProfitable_by_5_percent_atBarX',
           flatField: 'min_percentProfitable_by_5_percent_atBarX',
           headerClass: 'criteria-config-grid-header',
@@ -150,7 +140,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min % p by 10% by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_percentProfitable_by_10_percent_atBarX',
           flatField: 'min_percentProfitable_by_10_percent_atBarX',
           headerClass: 'criteria-config-grid-header',
@@ -160,7 +149,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min up/down by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_upsideDownsideRatio_byBarX',
           flatField: 'min_upsideDownsideRatio_byBarX',
           headerClass: 'criteria-config-grid-header',
@@ -170,7 +158,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min avg max-up-% by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_avg_maxUpsidePercent_byBarX',
           flatField: 'min_avg_maxUpsidePercent_byBarX',
           headerClass: 'criteria-config-grid-header',
@@ -180,7 +167,6 @@ export const getSimulationColDefs = async () => {
         },
         {
           headerName: 'min avg p by bar',
-          filter: 'stringParseFilter',
           field: 'criteria.config.min_avg_profitLossPercent_atBarX',
           flatField: 'min_avg_profitLossPercent_atBarX',
           headerClass: 'criteria-config-grid-header',
@@ -199,33 +185,28 @@ export const getSimulationColDefs = async () => {
         {
           headerName: 'avg pl %',
           field: 'results.avgProfitLossPercent',
-          filter: 'stringParseFilter',
           valueFormatter: numberFormatter,
           headerClass: 'results-grid-header',
         },
         {
           headerName: '% profitable',
-          filter: 'stringParseFilter',
           field: 'results.percentProfitable',
           valueFormatter: numberFormatter,
           headerClass: 'results-grid-header',
         },
         {
           headerName: 'trade count',
-          filter: 'stringParseFilter',
           field: 'results.tradeCount',
           headerClass: 'results-grid-header',
         },
         {
           headerName: 'days evaluated',
-          filter: 'stringParseFilter',
           field: 'results.daysEvaluatedCount',
           headerClass: 'results-grid-header',
           width: 140,
         },
         {
           headerName: 'trade count/yr',
-          filter: 'stringParseFilter',
           field: 'results.tradeCountPerYear',
           headerClass: 'results-grid-header',
           width: 140,

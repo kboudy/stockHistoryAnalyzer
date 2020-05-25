@@ -379,7 +379,7 @@ function Explore(props) {
         </Grid>
         <Grid item xs={12}>
           <SimulationResultsTable
-            height={400}
+            height={1000}
             selectionChanged={handleSimulationTableSelectionChanged}
           />
         </Grid>

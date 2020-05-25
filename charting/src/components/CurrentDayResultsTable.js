@@ -13,7 +13,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
 import { getSimulationColDefs } from '../helpers/constants';
-import StringParseFilter from './agGridFilters/StringParseFilter';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
@@ -256,7 +255,6 @@ const SimulationResultsTable = (props) => {
           columnDefs={columnDefs}
           gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
           rowData={props.data}
-          frameworkComponents={{ stringParseFilter: StringParseFilter }}
           sortingOrder={['asc', 'desc']}
           onGridReady={handleGridReady}
           onSelectionChanged={handleSelectionChanged}
