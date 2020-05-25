@@ -21,6 +21,18 @@ exports.isEmptyObject = (obj) => {
 exports.getMongoFilter = (filterModel) => {
   const { type, filter } = filterModel;
 
+  const parseValue = (v) => {
+    if (v === 'true') {
+      return true;
+    } else if (v === 'false') {
+      return false;
+    } else if (v.includes(',')) {
+      return v.split(',').map((s) => (isNaN(s) ? s : parseFloat(s)));
+    } else {
+      return isNaN(v) ? v : parseFloat(v);
+    }
+  };
+
   if (isNullOrEmptyString(filter) || isNullOrUndefined(filter)) {
     return { valid: false };
   }
@@ -52,25 +64,17 @@ exports.getMongoFilter = (filterModel) => {
   if (operator === null) {
     return {
       valid: true,
-      mongo: cropped,
+      mongo: parseValue(cropped),
     };
   }
   if (cropped === '') {
     return { valid: false };
   }
 
-  let parsedValue;
-  if (cropped === 'true' || cropped === 'false') {
-    parsedValue = Boolean(cropped);
-  } else if (cropped.includes(',')) {
-    parsedValue = cropped.split(',').map((s) => (isNaN(s) ? s : parseFloat(s)));
-  } else {
-    parsedValue = isNaN(cropped) ? cropped : parseFloat(cropped);
-  }
   return {
     valid: true,
     mongo: {
-      [operator]: parsedValue,
+      [operator]: parseValue(cropped),
     },
   };
 };
