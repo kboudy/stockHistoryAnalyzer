@@ -1,0 +1,1 @@
+- for tuneTradeCriteria, "% profitable by x% by bar x" aggregated result
