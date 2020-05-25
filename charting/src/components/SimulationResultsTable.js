@@ -102,30 +102,49 @@ const SimulationResultsTable = (props) => {
           : fieldName;
 
       const { type } = filterModel[fieldName];
-      const fieldValue = filterModel[fieldName].filter;
-      if (fieldValue === null) {
+      let fieldValue = filterModel[fieldName].filter;
+      if (fieldValue === null || fieldValue === '') {
         continue;
       }
-      switch (type) {
-        case 'equals':
-          mongoFilter[correctedFieldName] = fieldValue;
-          break;
-        case 'greaterThan':
-          mongoFilter[correctedFieldName] = { $gt: fieldValue };
-          break;
-        case 'greaterThanOrEqual':
-          mongoFilter[correctedFieldName] = { $gte: fieldValue };
-          break;
-        case 'lessThan':
-          mongoFilter[correctedFieldName] = { $lt: fieldValue };
-          break;
-        case 'lessThanOrEqual':
-          mongoFilter[correctedFieldName] = { $lte: fieldValue };
-          break;
-        default:
-          console.log(type);
+
+      const strFieldValue = `${fieldValue}`;
+
+      if (strFieldValue.startsWith('>=')) {
+        const cropped = strFieldValue.slice(2).trim();
+        mongoFilter[correctedFieldName] = {
+          $gte: isNaN(cropped) ? cropped : parseFloat(cropped),
+        };
+      } else if (strFieldValue.startsWith('<=')) {
+        const cropped = strFieldValue.slice(2).trim();
+        mongoFilter[correctedFieldName] = {
+          $lte: isNaN(cropped) ? cropped : parseFloat(cropped),
+        };
+      } else if (strFieldValue.startsWith('>')) {
+        const cropped = strFieldValue.slice(1).trim();
+        mongoFilter[correctedFieldName] = {
+          $gt: isNaN(cropped) ? cropped : parseFloat(cropped),
+        };
+      } else if (strFieldValue.startsWith('<')) {
+        const cropped = strFieldValue.slice(1).trim();
+        mongoFilter[correctedFieldName] = {
+          $lt: isNaN(cropped) ? cropped : parseFloat(cropped),
+        };
+      } else if (strFieldValue.startsWith('=')) {
+        const cropped = strFieldValue.slice(1).trim();
+        mongoFilter[correctedFieldName] = isNaN(cropped)
+          ? cropped
+          : parseFloat(cropped);
+      } else if (strFieldValue.toLowerCase() === 'true') {
+        mongoFilter[correctedFieldName] = true;
+      } else if (strFieldValue.toLowerCase() === 'false') {
+        mongoFilter[correctedFieldName] = false;
+      } else {
+        mongoFilter[correctedFieldName] = isNaN(fieldValue)
+          ? fieldValue
+          : parseFloat(fieldValue);
       }
     }
+    console.log(`mongoFilter: ${JSON.stringify(mongoFilter)}`);
     return mongoFilter;
   };
 
@@ -133,7 +152,7 @@ const SimulationResultsTable = (props) => {
     rowCount: null,
     getRows: async (params) => {
       /*  
-      
+
       params.filterModel sample:
       
       {"criteria.includeOtherSymbolsTargets":{"value":"suen"}}
@@ -162,38 +181,30 @@ const SimulationResultsTable = (props) => {
   const handleFilterChanged = (e) => {
     const fm = e.api.getFilterModel();
     if (fm) {
-      if (!isEmptyObject(fm)) {
-        const strFm = JSON.stringify(fm);
-        console.log(strFm);
-        localStorage.setItem('simulationGridFilter', strFm);
-      }
+      localStorage.setItem(simResKey_columnFilters, JSON.stringify(fm));
     }
-    // force infinite row model to reset, and call for rows 0-100
-    // e.api.setDatasource(gridDataSource);
   };
 
   const handleSortChanged = (e) => {
-    debugger;
     e.api.setDatasource(gridDataSource);
   };
 
-  /*   const handleGridReady = async (e) => {
-    // try to restore the filter model from local storage
-    const strSGF = localStorage.getItem('simulationGridFilter');
-    if (strSGF) {
-      const restoredFilterModel = JSON.parse(strSGF);
-      let fm = e.api.getFilterModel();
-      fm = { ...fm, ...restoredFilterModel };
-
-      e.api.setFilterModel(fm);
-      e.api.onFilterChanged();
-    }
-  };
- */
-
   const handleGridReady = (e) => {
     setGridApi(e.api);
+
+    setTimeout(() => {
+      const strStoredFilterModel = localStorage.getItem(
+        simResKey_columnFilters
+      );
+      if (strStoredFilterModel) {
+        const storedFilterModel = JSON.parse(strStoredFilterModel);
+        e.api.setFilterModel(storedFilterModel);
+        e.api.onFilterChanged();
+      }
+    }, 500);
   };
+
+  const restoreFilterModel = (e) => {};
 
   const handleSelectionChanged = (e) => {
     if (

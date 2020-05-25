@@ -25,15 +25,16 @@ export default forwardRef((props, ref) => {
   const [filterText, setFilterText] = useState('');
 
   const isValid = (text) => {
-    return text === 'suen';
+    return true;
   };
+
   useImperativeHandle(ref, () => ({
     getModel: () => {
-      return { value: filterText };
+      return { filter: filterText };
     },
 
     setModel: (model) => {
-      setFilterText(model ? model.value : '');
+      setFilterText(model ? model.filter : '');
     },
 
     doesFilterPass: (params) => isValid(filterText),
@@ -51,12 +52,12 @@ export default forwardRef((props, ref) => {
 
   const handleChange = (e) => {
     setFilterText(e.target.value);
-    //props.filterModifiedCallback();
   };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && isValid(filterText)) {
       props.filterChangedCallback();
+
       shellRef.current.style.display = 'none'; // hack - I want the filter gone when I press enter
     }
   };
@@ -67,6 +68,7 @@ export default forwardRef((props, ref) => {
         type="text"
         ref={inputRef}
         style={{ height: '20px' }}
+        value={filterText}
         onChange={handleChange}
         onKeyPress={handleKeyPress}
         className="form-control"
