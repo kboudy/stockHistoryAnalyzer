@@ -36,11 +36,13 @@ function Explore(props) {
         for (const numberOfBars in results[symbol]) {
           const instanceData = results[symbol][numberOfBars];
           /*     
-          
+
           [instanceData schema:]
 
           {
             "sourceDate": "2020-05-15",
+            "scoreCount": 56
+            "avgScore": 10.06,
             "avg_maxUpsidePercent_byBarX": {
               "1": 1.79,
               "2": 2.42,
@@ -62,8 +64,6 @@ function Explore(props) {
             "percentProfitable_by_5_percent_atBarX": {...}
             "percentProfitable_by_10_percent_atBarX": {...}
             "stdDev_profitLossPercent_atBarX": {...}
-            "avgScore": 10.06,
-            "scoreCount": 56
           }
 
           */

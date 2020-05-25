@@ -55,7 +55,6 @@ export default forwardRef((props, ref) => {
 
   const setBorderColorBasedOnFilter = (text) => {
     const mf = getMongoFilter({ filter: text });
-    debugger;
     if (mf.valid) {
       setBorder('2px solid #29c434');
     } else if (mf.valid === null) {

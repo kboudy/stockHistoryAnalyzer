@@ -41,6 +41,5 @@ exports.calculateHV = calculateHV;
   const hv20 = calculateHV(candles, 20);
   const hv30 = calculateHV(candles, 30);
 
-  debugger;
 })();
  */
