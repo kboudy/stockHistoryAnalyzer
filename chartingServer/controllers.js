@@ -107,6 +107,17 @@ exports.getPatternStats = async (req, res, next) => {
   }
 };
 
+exports.getPatternStatsJobRunSymbols = async (req, res, next) => {
+  try {
+    const symbols = await PatternStatsJobRun.find({})
+      .lean()
+      .distinct('sourceSymbol');
+    res.json(_.orderBy(symbols, (s) => s));
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.queryTradeSimulationRuns = async (req, res, next) => {
   try {
     const { queryParams, querySort, startRow, endRow } = req.body;

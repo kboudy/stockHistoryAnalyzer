@@ -12,6 +12,16 @@ export const getAvailableSymbols = async () => {
   return cachedSymbols;
 };
 
+let cachedAvailablePatternStatsJobSymbols = null;
+export const getAvailablePatternStatsJobRunSymbols = async () => {
+  if (!cachedAvailablePatternStatsJobSymbols) {
+    cachedAvailablePatternStatsJobSymbols = (
+      await nodeServer.get('patternStatsJobRunSymbols')
+    ).data;
+  }
+  return cachedAvailablePatternStatsJobSymbols;
+};
+
 let cachedAvailableBars = null;
 export const getAvailableNumberOfBars = async () => {
   if (!cachedAvailableBars) {
@@ -50,7 +60,7 @@ export const getSimulationColDefs = async () => {
           field: 'criteria.symbol',
           flatField: 'symbol',
           headerClass: 'criteria-grid-header',
-          choices: await getAvailableSymbols(),
+          choices: await getAvailablePatternStatsJobRunSymbols(),
         },
         {
           headerName: '# of bars',
