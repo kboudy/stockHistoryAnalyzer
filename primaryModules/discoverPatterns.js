@@ -6,6 +6,7 @@ const { getAvailableSymbolNames, isCrypto } = require('../helpers/symbolData'),
     discoverPatternsForSymbol,
     dropPatternCollections,
   } = require('../helpers/discoverPatternsHelper'),
+  { numberOfBarsArray } = require('../helpers/constants'),
   mongoApi = require('../helpers/mongoApi');
 
 const argOptions = {
@@ -59,7 +60,7 @@ const { argv } = require('yargs')
   const ignoreMatchesAboveThisScore = 12;
   const numberOfBars = argv.numberOfBars
     ? argv.numberOfBars
-    : [5, 10, 15, 20, 30];
+    : numberOfBarsArray;
 
   const allSymbols = await getAvailableSymbolNames();
   const equitySymbols = allSymbols.filter((s) => !isCrypto(s));

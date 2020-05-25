@@ -220,7 +220,6 @@ const { argv } = require('yargs')
   }
 
   const includeOtherSymbolsTargetsArray = [true, false];
-  const numberOfBarsArray = [5, 10, 15, 20, 30];
   const symbols = argv.symbols ? argv.symbols : await getAvailableSymbolNames();
   const ignoreMatchesAboveThisScore = 12;
   const bruteForceValsConfig = {
@@ -239,7 +238,7 @@ const { argv } = require('yargs')
 
   await runBruteForceTradeSimulationAndSaveResults(
     symbols,
-    numberOfBarsArray,
+    constants.numberOfBarsArray,
     constants.significantBars,
     includeOtherSymbolsTargetsArray,
     ignoreMatchesAboveThisScore,

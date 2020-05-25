@@ -3,7 +3,7 @@
 const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
-  { significantBars } = require('./constants'),
+  { significantBarsArray } = require('./constants'),
   { toTwoDecimals } = require('./miscMethods'),
   moment = require('moment'),
   mongoose = require('mongoose'),
@@ -49,7 +49,7 @@ exports.discoverPatternsForSymbol = async (
       jobRun = await PatternStatsJobRun.create({
         created: moment.utc(),
         numberOfBars,
-        significantBars,
+        significantBars: significantBarsArray,
         ignoreMatchesAboveThisScore,
         sourceSymbol: symbol,
         targetSymbols,
@@ -96,7 +96,7 @@ exports.discoverPatternsForSymbol = async (
       targetPriceHistories,
       targetSymbols, // the list of symbols which matches targetPriceHistories'
       //          (for now, we're just comparing an equity against itself)
-      significantBars,
+      significantBarsArray,
       ignoreMatchesAboveThisScore
     );
 
@@ -124,7 +124,7 @@ exports.discoverPatternsForSymbol = async (
       continue;
     }
 
-    for (const sb of significantBars) {
+    for (const sb of significantBarsArray) {
       const mup_by = scores
         .filter((s) => s.maxUpsidePercent_byBarX[sb] !== null)
         .map((s) => s.maxUpsidePercent_byBarX[sb]);

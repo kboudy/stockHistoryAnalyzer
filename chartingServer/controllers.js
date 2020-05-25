@@ -3,7 +3,7 @@ const _ = require('lodash'),
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
-  { significantBars } = require('../helpers/constants'),
+  { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
@@ -30,7 +30,7 @@ exports.getAvailableNumberOfBars = async (req, res, next) => {
 
 exports.getSignificantBars = async (req, res, next) => {
   try {
-    res.json(significantBars);
+    res.json(significantBarsArray);
   } catch (error) {
     return next(error);
   }
