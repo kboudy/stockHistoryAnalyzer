@@ -13,12 +13,12 @@ import ListItemText from '@material-ui/core/ListItemText';
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
 import { getSimulationColDefs } from '../helpers/constants';
-import PartialMatchFilter from './agGridFilters/PartialMatchFilter';
+import StringParseFilter from './agGridFilters/StringParseFilter';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/gridStyles.css';
-import { isEmptyObject } from '../helpers/miscMethods';
+import { isEmptyObject, getMongoFilter } from '../helpers/miscMethods';
 
 const simResKey_visibleColumns = 'simulation_results_table.visible_columns';
 const simResKey_columnFilters = 'simulation_results_table.column_filters';
@@ -86,62 +86,21 @@ const SimulationResultsTable = (props) => {
 
     {"criteria.significantBar":3}
     */
-    // significantBar is needed for looking up the deeply-nested criteria.config.
-    // for now, I'll hack it in there
     const significantBar = filterModel['criteria.significantBar']
       ? filterModel['criteria.significantBar'].filter
       : null;
 
     const mongoFilter = {};
     for (const fieldName in filterModel) {
-      // hack, continued
       const correctedFieldName =
         (significantBar && fieldName.toLowerCase().endsWith('_atbarx')) ||
         fieldName.toLowerCase().endsWith('_bybarx')
           ? `${fieldName}.${significantBar}`
           : fieldName;
 
-      const { type } = filterModel[fieldName];
-      let fieldValue = filterModel[fieldName].filter;
-      if (fieldValue === null || fieldValue === '') {
-        continue;
-      }
-
-      const strFieldValue = `${fieldValue}`;
-
-      if (strFieldValue.startsWith('>=')) {
-        const cropped = strFieldValue.slice(2).trim();
-        mongoFilter[correctedFieldName] = {
-          $gte: isNaN(cropped) ? cropped : parseFloat(cropped),
-        };
-      } else if (strFieldValue.startsWith('<=')) {
-        const cropped = strFieldValue.slice(2).trim();
-        mongoFilter[correctedFieldName] = {
-          $lte: isNaN(cropped) ? cropped : parseFloat(cropped),
-        };
-      } else if (strFieldValue.startsWith('>')) {
-        const cropped = strFieldValue.slice(1).trim();
-        mongoFilter[correctedFieldName] = {
-          $gt: isNaN(cropped) ? cropped : parseFloat(cropped),
-        };
-      } else if (strFieldValue.startsWith('<')) {
-        const cropped = strFieldValue.slice(1).trim();
-        mongoFilter[correctedFieldName] = {
-          $lt: isNaN(cropped) ? cropped : parseFloat(cropped),
-        };
-      } else if (strFieldValue.startsWith('=')) {
-        const cropped = strFieldValue.slice(1).trim();
-        mongoFilter[correctedFieldName] = isNaN(cropped)
-          ? cropped
-          : parseFloat(cropped);
-      } else if (strFieldValue.toLowerCase() === 'true') {
-        mongoFilter[correctedFieldName] = true;
-      } else if (strFieldValue.toLowerCase() === 'false') {
-        mongoFilter[correctedFieldName] = false;
-      } else {
-        mongoFilter[correctedFieldName] = isNaN(fieldValue)
-          ? fieldValue
-          : parseFloat(fieldValue);
+      const result = getMongoFilter(filterModel[fieldName]);
+      if (result.valid) {
+        mongoFilter[correctedFieldName] = result.mongo;
       }
     }
     console.log(`mongoFilter: ${JSON.stringify(mongoFilter)}`);
@@ -297,7 +256,7 @@ const SimulationResultsTable = (props) => {
           columnDefs={columnDefs}
           gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
           rowData={props.data}
-          frameworkComponents={{ partialMatchFilter: PartialMatchFilter }}
+          frameworkComponents={{ stringParseFilter: StringParseFilter }}
           sortingOrder={['asc', 'desc']}
           onGridReady={handleGridReady}
           onSelectionChanged={handleSelectionChanged}

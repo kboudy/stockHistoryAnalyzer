@@ -8,10 +8,11 @@ import React, {
 import { makeStyles } from '@material-ui/core/styles';
 import _ from 'lodash';
 
+import { getMongoFilter } from '../../helpers/miscMethods';
+
 const useStyles = makeStyles((theme) => ({
   columnChoiceList: {
-    border: '2px solid #bbaae0',
-    backgroundColor: '#bbaae0',
+    backgroundColor: '#2f6fed',
     borderRadius: '5px',
   },
 }));
@@ -23,6 +24,7 @@ export default forwardRef((props, ref) => {
   const shellRef = useRef();
 
   const [filterText, setFilterText] = useState('');
+  const [border, setBorder] = useState('2px solid #2f6fed');
 
   const isValid = (text) => {
     return true;
@@ -40,6 +42,7 @@ export default forwardRef((props, ref) => {
     doesFilterPass: (params) => isValid(filterText),
 
     afterGuiAttached: (params) => {
+      setBorderColorBasedOnFilter(filterText);
       shellRef.current.style.display = 'block';
       inputRef.current.focus();
     },
@@ -50,7 +53,18 @@ export default forwardRef((props, ref) => {
     },
   }));
 
+  const setBorderColorBasedOnFilter = (text) => {
+    const mf = getMongoFilter({ filter: text });
+    debugger;
+    if (mf.valid) {
+      setBorder('2px solid #29c434');
+    } else if (mf.valid === null) {
+      setBorder('2px solid #2f6fed');
+    }
+  };
+
   const handleChange = (e) => {
+    setBorderColorBasedOnFilter(e.target.value);
     setFilterText(e.target.value);
   };
 
@@ -63,7 +77,7 @@ export default forwardRef((props, ref) => {
   };
 
   return (
-    <div className={classes.columnChoiceList} ref={shellRef}>
+    <div className={classes.columnChoiceList} style={{ border }} ref={shellRef}>
       <input
         type="text"
         ref={inputRef}
