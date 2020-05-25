@@ -95,7 +95,7 @@ export const getSimulationColDefs = async () => {
           filter: 'stringParseFilter',
           valueFormatter: numberFormatter,
           headerClass: 'criteria-config-grid-header',
-          choices: [null, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+          choices: [null, 6, 7, 8, 9, 10, 11, 12],
           width: 140,
         },
         {
