@@ -16,10 +16,12 @@ exports.discoverPatternsForSymbol = async (
   targetSymbols,
   numberOfBars,
   ignoreMatchesAboveThisScore,
-  logToConsole = true, // these last 3 params will be set to non defaults when looking at "current day" evaluations
-  writeToDb = true,
-  mostRecentResultOnly = false
+  mostRecentResultOnly = false // this will be set when looking at "current day" evaluations
 ) => {
+  // implications of mostRecentResultOnly: don't log to console, don't write to db & return the single patternStat
+  const writeToDb = !mostRecentResultOnly;
+  const logToConsole = !mostRecentResultOnly;
+
   const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
   let lastLoggedPercentComplete = 0;
 
@@ -58,6 +60,9 @@ exports.discoverPatternsForSymbol = async (
   }
 
   const maxIndex = sourcePriceHistory.length - numberOfBars - 1;
+  if (maxIndex < numberOfBars) {
+    return null;
+  }
   const minIndex = mostRecentResultOnly ? maxIndex : numberOfBars;
 
   for (let i = minIndex; i <= maxIndex; i++) {
@@ -105,8 +110,10 @@ exports.discoverPatternsForSymbol = async (
       patternStat.jobRun = jobRun.id;
     }
     patternStat.sourceDate = sourcePriceHistory[i].date;
-    patternStat.actualProfitLossPercent_atBarX = {};
-    patternStat.actualProfitLossSellDate_atBarX = {};
+    if (!mostRecentResultOnly) {
+      patternStat.actualProfitLossPercent_atBarX = {};
+      patternStat.actualProfitLossSellDate_atBarX = {};
+    }
     patternStat.avg_maxUpsidePercent_byBarX = {};
     patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
@@ -212,21 +219,24 @@ exports.discoverPatternsForSymbol = async (
 
       //------------------------------------------------------------------------------------
       // finally, we'll record the real (forward-looking) profit loss %, per significant bar
-      const actualTradeSellCandle =
-        sourcePriceHistory[i + (numberOfBars - 1) + sb];
-      if (actualTradeSellCandle) {
-        const actualTradeBuyCandle = sourcePriceHistory[i + (numberOfBars - 1)];
+      if (!mostRecentResultOnly) {
+        const actualTradeSellCandle =
+          sourcePriceHistory[i + (numberOfBars - 1) + sb];
+        if (actualTradeSellCandle) {
+          const actualTradeBuyCandle =
+            sourcePriceHistory[i + (numberOfBars - 1)];
 
-        patternStat.actualProfitLossPercent_atBarX[sb] =
-          Math.round(
-            (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
-              1000
-          ) / 10;
-        patternStat.actualProfitLossSellDate_atBarX[sb] =
-          actualTradeSellCandle.date;
-      } else {
-        patternStat.actualProfitLossPercent_atBarX[sb] = null;
-        patternStat.actualProfitLossSellDate_atBarX[sb] = null;
+          patternStat.actualProfitLossPercent_atBarX[sb] =
+            Math.round(
+              (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
+                1000
+            ) / 10;
+          patternStat.actualProfitLossSellDate_atBarX[sb] =
+            actualTradeSellCandle.date;
+        } else {
+          patternStat.actualProfitLossPercent_atBarX[sb] = null;
+          patternStat.actualProfitLossSellDate_atBarX[sb] = null;
+        }
       }
       //------------------------------------------------------------------------------------
     }
@@ -234,24 +244,27 @@ exports.discoverPatternsForSymbol = async (
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
     );
 
-    /* 
-    // patternStat.scoreDates is just used for debugging, and takes up a bunch of space in the db
-    // uncomment if needed
+    if (mostRecentResultOnly && !writeToDb) {
+      // patternStat.scoreDates would take up too much space in the db
+      // but am including it for the "current day" scan results
 
-    patternStat.scoreDates = {};
-    for (const tphSymbol of targetSymbols) {
-      if (scoresByTargetSymbol[tphSymbol]) {
-        patternStat.scoreDates[tphSymbol] = _.orderBy(
-          scoresByTargetSymbol[tphSymbol].map((s) => s.startDate),
-          (d) => d
-        );
+      patternStat.scoreDates = {};
+      for (const tphSymbol of targetSymbols) {
+        if (scoresByTargetSymbol[tphSymbol]) {
+          patternStat.scoreDates = _.orderBy(
+            scoresByTargetSymbol[tphSymbol].map((s) => s.startDate),
+            (d) => d
+          );
+        }
       }
     }
-    */
 
     patternStat.scoreCount = scores.length;
     if (writeToDb) {
       await PatternStats.create(patternStat);
+    }
+    if (mostRecentResultOnly) {
+      return patternStat;
     }
   }
   if (logToConsole) {

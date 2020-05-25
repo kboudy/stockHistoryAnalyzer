@@ -1,13 +1,15 @@
 import React from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
-import MainPage from './components/MainPage';
+import CurrentDay from './components/pages/CurrentDay';
+import Explore from './components/pages/Explore';
 import history from './history';
 
 function App() {
   return (
     <Router history={history}>
       <Switch>
-        <Route path="/" component={MainPage} />
+        <Route path="/" exact component={Explore} />
+        <Route path="/currentDay" exact component={CurrentDay} />
       </Switch>
     </Router>
   );

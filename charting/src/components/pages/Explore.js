@@ -20,18 +20,18 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import Chart from './Chart';
-import SimulationResultsTable from './SimulationResultsTable';
+import Chart from '../Chart';
+import SimulationResultsTable from '../SimulationResultsTable';
 
 import _ from 'lodash';
-import nodeServer from '../helpers/nodeServer';
-import { getSimulationColDefs } from '../helpers/constants';
+import nodeServer from '../../helpers/nodeServer';
+import { getSimulationColDefs } from '../../helpers/constants';
 
 const {
   isNullOrUndefined,
   isNullOrEmptyString,
   isObject,
-} = require('../helpers/miscMethods');
+} = require('../../helpers/miscMethods');
 
 const NONE = '-none-';
 
@@ -69,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
   chartGridWrapper: { padding: theme.spacing(2) },
 }));
 
-function MainPage(props) {
+function Explore(props) {
   const classes = useStyles();
   const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [windowDimensions, setWindowDimensions] = useState(null);
@@ -388,4 +388,4 @@ function MainPage(props) {
   );
 }
 
-export default MainPage;
+export default Explore;

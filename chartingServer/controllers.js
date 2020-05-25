@@ -6,6 +6,7 @@ const _ = require('lodash'),
   { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   PatternStats = require('../models/patternStats'),
+  CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
@@ -80,6 +81,21 @@ exports.getPatternStatsJobRuns = async (req, res, next) => {
   }
 };
 
+exports.getMostRecentCurrentDayResults = async (req, res, next) => {
+  try {
+    const results = await CurrentDayEvaluationJobRun.findOne({})
+      .lean()
+      .sort({
+        created: -1,
+      })
+      .limit(1);
+
+    res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.getPatternStats = async (req, res, next) => {
   try {
     const { jobRunId } = req.query;
@@ -104,6 +120,7 @@ exports.queryTradeSimulationRuns = async (req, res, next) => {
       'results.avgProfitLossPercent': -1,
     };
     console.log(JSON.stringify(queryParams));
+
     const results = await TradeSimulationRun.find(queryParams)
       .sort(querySort ? querySort : defaultSort)
       .skip(startRow)

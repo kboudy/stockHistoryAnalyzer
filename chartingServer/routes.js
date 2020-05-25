@@ -7,6 +7,10 @@ module.exports = (app) => {
   app.get('/significantBars', controllers.getSignificantBars);
   app.get('/patternStatsJobRuns', controllers.getPatternStatsJobRuns);
   app.get('/patternStats', controllers.getPatternStats);
+  app.get(
+    '/getMostRecentCurrentDayResults',
+    controllers.getMostRecentCurrentDayResults
+  );
   app.post('/runTradeSimulation', controllers.runTradeSimulation);
   app.post('/tradeSimulationRuns', controllers.queryTradeSimulationRuns);
 };

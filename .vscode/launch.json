@@ -63,6 +63,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "dpPlayground",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/discoverPatternsPlayground.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "node charting server",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/chartingServer/index.js"
