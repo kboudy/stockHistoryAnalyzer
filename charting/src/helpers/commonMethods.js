@@ -1,24 +1,24 @@
-const isNullOrUndefined = (obj) => {
+import CheckboxCellRenderer from '../components/cellRenderers/checkboxCellRenderer';
+import nodeServer from './nodeServer';
+
+export const isNullOrUndefined = (obj) => {
   return typeof obj === 'undefined' || obj === null;
 };
-exports.isNullOrUndefined = isNullOrUndefined;
 
-const isObject = (obj) => {
+export const isObject = (obj) => {
   return Object.prototype.toString.call(obj) === '[object Object]';
 };
-exports.isObject = isObject;
 
-const isNullOrEmptyString = (str) => {
+export const isNullOrEmptyString = (str) => {
   return str === null || str === '';
 };
-exports.isNullOrEmptyString = isNullOrEmptyString;
 
 // any fields on the object that are empty objects get removed
-exports.isEmptyObject = (obj) => {
+export const isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;
 };
 
-exports.getMongoFilter = (filterModel) => {
+export const getMongoFilter = (filterModel) => {
   const { type, filter } = filterModel;
 
   const parseValue = (v) => {
@@ -79,7 +79,7 @@ exports.getMongoFilter = (filterModel) => {
   };
 };
 
-exports.getSimulationColDefs = async () => {
+export const getSimulationColDefs = async () => {
   return [
     {
       headerName: 'Criteria (past)',
@@ -254,4 +254,47 @@ exports.getSimulationColDefs = async () => {
       ],
     },
   ];
+};
+
+let cachedSymbols = null;
+export const getAvailableSymbols = async () => {
+  if (!cachedSymbols) {
+    cachedSymbols = (await nodeServer.get('availableSymbols')).data;
+  }
+  return cachedSymbols;
+};
+
+let cachedAvailablePatternStatsJobSymbols = null;
+export const getAvailablePatternStatsJobRunSymbols = async () => {
+  if (!cachedAvailablePatternStatsJobSymbols) {
+    cachedAvailablePatternStatsJobSymbols = (
+      await nodeServer.get('patternStatsJobRunSymbols')
+    ).data;
+  }
+  return cachedAvailablePatternStatsJobSymbols;
+};
+
+let cachedAvailableBars = null;
+export const getAvailableNumberOfBars = async () => {
+  if (!cachedAvailableBars) {
+    cachedAvailableBars = (await nodeServer.get('availableNumberOfBars')).data;
+  }
+  return cachedAvailableBars;
+};
+
+let cachedSignificantBars = null;
+export const getSignificantBars = async () => {
+  if (!cachedSignificantBars) {
+    cachedSignificantBars = (await nodeServer.get('significantBars')).data;
+  }
+  return cachedSignificantBars;
+};
+
+const numberFormatter = (params) => {
+  if (isObject(params.value)) {
+    const firstKey = Object.keys(params.value)[0];
+    return params.value[firstKey];
+  } else {
+    return params.value;
+  }
 };

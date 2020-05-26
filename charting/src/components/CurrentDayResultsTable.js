@@ -3,7 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 
 import _ from 'lodash';
-import { getSignificantBars } from '../helpers/constants';
+import { getSignificantBars } from '../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
