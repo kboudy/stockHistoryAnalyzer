@@ -20,12 +20,10 @@ export default class StringParseFloatingFilter extends Component {
       () => {
         // using "getMongoFilter" only to test validity here
         const result = getMongoFilter(this.state.currentValue);
-        if (result.valid) {
-          this.props.parentFilterInstance((instance) => {
-            // just hard coding "equals" - it doesn't matter what ag grid "type" is
-            instance.onFloatingFilterChanged('equals', this.state.currentValue);
-          });
-        }
+        this.props.parentFilterInstance((instance) => {
+          // just hard coding "equals" - it doesn't matter what ag grid "type" is
+          instance.onFloatingFilterChanged('equals', this.state.currentValue);
+        });
       }
     );
   };

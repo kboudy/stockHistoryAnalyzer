@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import {
-  // LineChart,
-  // Line,
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
+  Brush,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
+  ReferenceLine,
 } from 'recharts';
 
 const gradientOffset = (props) => {
@@ -42,8 +42,9 @@ const getTicks = (props) => {
 };
 
 const Chart = (props) => {
+  debugger;
   return (
-    <AreaChart
+    <BarChart
       width={props.width}
       height={props.height}
       data={props.data}
@@ -58,27 +59,19 @@ const Chart = (props) => {
       <XAxis dataKey="name" ticks={getTicks(props)} />
       <YAxis />
       <Tooltip />
-      <defs>
-        <linearGradient id="splitColor" x1="0" y1="0" x2="0" y2="1">
-          <stop
-            offset={gradientOffset(props)}
-            stopColor="green"
-            stopOpacity={1}
+      <ReferenceLine y={0} stroke="#000" />
+
+      <Brush dataKey="name" height={30} stroke="#8884d8" />
+
+      <Bar dataKey={props.dataKeyName} fill="#8884d8">
+        {props.data.map((entry, index) => (
+          <Cell
+            key={`cell-${index}`}
+            fill={entry[props.dataKeyName] > 0 ? '#2ca02c' : '#d62728'}
           />
-          <stop
-            offset={gradientOffset(props)}
-            stopColor="red"
-            stopOpacity={1}
-          />
-        </linearGradient>
-      </defs>
-      <Area
-        type="monotone"
-        dataKey={props.dataKeyName}
-        stroke="#000"
-        fill="url(#splitColor)"
-      />
-    </AreaChart>
+        ))}
+      </Bar>
+    </BarChart>
   );
 };
 

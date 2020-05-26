@@ -13,7 +13,7 @@ import {
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/currentDayGridStyles.css';
-import StringParseAlwaysFireFloatingFilter from './agGridFilters/StringParseAlwaysFireFloatingFilter';
+import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter';
 
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
 const useStyles = makeStyles((theme) => ({}));
@@ -252,7 +252,7 @@ const CurrentDayResultsTable = (props) => {
         <AgGridReact
           defaultColDef={{
             floatingFilter: true,
-            floatingFilterComponent: 'stringParseAlwaysFireFloatingFilter',
+            floatingFilterComponent: 'stringParseFloatingFilter',
             filter: 'agTextColumnFilter',
             floatingFilterComponentParams: { suppressFilterButton: true },
             sortable: true,
@@ -321,7 +321,7 @@ const CurrentDayResultsTable = (props) => {
             },
           }}
           frameworkComponents={{
-            stringParseAlwaysFireFloatingFilter: StringParseAlwaysFireFloatingFilter,
+            stringParseFloatingFilter: StringParseFloatingFilter,
           }}
           columnDefs={columnDefs}
           toolPanel="columns"
