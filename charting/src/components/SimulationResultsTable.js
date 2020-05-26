@@ -17,7 +17,7 @@ import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
-import './styles/gridStyles.css';
+import './styles/simulationGridStyles.css';
 import { isEmptyObject, getMongoFilter } from '../helpers/miscMethods';
 
 const simResKey_visibleColumns = 'simulation_results_table.visible_columns';

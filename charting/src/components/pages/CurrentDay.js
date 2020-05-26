@@ -19,56 +19,27 @@ const useStyles = makeStyles((theme) => ({
   root: {
     marginBottom: '30px',
   },
-  gridWrapper: { padding: theme.spacing(2) },
+  gridWrapper: { padding: theme.spacing(1) },
 }));
 
 function Explore(props) {
   const classes = useStyles();
 
-  // const [zzz, setZz] = React.useState(null);
+  const [gridData, setGridData] = React.useState([]);
 
   useEffect(() => {
     (async () => {
       const { results } = (
         await nodeServer.get('getMostRecentCurrentDayResults')
       ).data;
+      const rows = [];
       for (const symbol in results) {
         for (const numberOfBars in results[symbol]) {
           const instanceData = results[symbol][numberOfBars];
-          /*     
-
-          [instanceData schema:]
-
-          {
-            "sourceDate": "2020-05-15",
-            "scoreCount": 56
-            "avgScore": 10.06,
-            "avg_maxUpsidePercent_byBarX": {
-              "1": 1.79,
-              "2": 2.42,
-              "5": 3.96,
-              "10": 5.51,
-              "20": 7.45,
-              "30": 9.2,
-              "40": 10.5,
-              "50": 11.03
-            },
-            "stdDev_maxUpsidePercent_byBarX": {...}
-            "avg_maxDownsidePercent_byBarX": {...}
-            "stdDev_maxDownsidePercent_byBarX": {...}
-            "upsideDownsideRatio_byBarX": {...}
-            "avg_profitLossPercent_atBarX": {...}
-            "percentProfitable_atBarX": {...}
-            "percentProfitable_by_1_percent_atBarX": {...}
-            "percentProfitable_by_2_percent_atBarX": {...}
-            "percentProfitable_by_5_percent_atBarX": {...}
-            "percentProfitable_by_10_percent_atBarX": {...}
-            "stdDev_profitLossPercent_atBarX": {...}
-          }
-
-          */
+          rows.push({ symbol, numberOfBars, ...instanceData });
         }
       }
+      setGridData(rows);
     })();
   }, []);
 
@@ -77,7 +48,7 @@ function Explore(props) {
       <Paper>
         <Grid container className={classes.gridWrapper}>
           <Grid item xs={12}>
-            <CurrentDayResultsTable height={800} />
+            <CurrentDayResultsTable height={1200} data={gridData} />
           </Grid>
         </Grid>
       </Paper>

@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import '@ag-grid-enterprise/all-modules/dist/styles/ag-grid.css';
+import '@ag-grid-enterprise/all-modules/dist/styles/ag-theme-alpine.css';
 
 ReactDOM.render(
   <React.StrictMode>
