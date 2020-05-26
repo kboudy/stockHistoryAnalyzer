@@ -1,6 +1,6 @@
 const path = require('path');
 
-exports.TDA_consumerKey = '90BBK6W8IQDOUVMB31HRFQGVTTJ15BMX';
+exports.TDA_consumerKey = 'MV1NRA7OBRDGEAZPLQHQ1GN2V5KTBFH5';
 
 exports.significantBarsArray = [1, 2, 5, 10, 20, 30, 40, 50];
 
