@@ -1,19 +1,122 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
+import nodeServer from '../helpers/nodeServer';
 
 import _ from 'lodash';
-import { getSignificantBars } from '../helpers/commonMethods';
+import {
+  getSignificantBars,
+  getMongoFilter,
+  isObject,
+} from '../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/currentDayGridStyles.css';
+import StringParseAlwaysFireFloatingFilter from './agGridFilters/StringParseAlwaysFireFloatingFilter';
 
+const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
 const useStyles = makeStyles((theme) => ({}));
 
 const CurrentDayResultsTable = (props) => {
   const classes = useStyles();
-  const [columnDefs, setColumnDefs] = React.useState([]);
+  const [columnDefs, setColumnDefs] = useState([]);
+  const [gridApi, setGridApi] = useState(null);
+
+  const [gridData, setGridData] = useState([]);
+
+  const showThisRow = (row) => {
+    if (!row || parseInt(row.scoreCount) < 10) {
+      return false;
+    }
+    const avg_profitLossPercent_atBarX = row['avg_profitLossPercent_atBarX'];
+    for (const significantBar in avg_profitLossPercent_atBarX) {
+      const avgPL = parseFloat(avg_profitLossPercent_atBarX[significantBar]);
+      const sb = parseFloat(significantBar);
+      if (avgPL > sb * 1) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const doesFilterPass = (node) => {
+    debugger;
+    if (!gridApi) {
+      return true;
+    }
+    const filterModel = gridApi.getFilterModel();
+    const mongoFilters = {};
+    for (const fieldName in filterModel) {
+      const mongoFilter = getMongoFilter(filterModel[fieldName].filter);
+      if (mongoFilter.valid) {
+        mongoFilters[fieldName] = mongoFilter.mongo;
+      }
+    }
+    for (const mfKey in mongoFilters) {
+      if (isObject(mongoFilters[mfKey])) {
+        const operator = Object.keys(mongoFilters[mfKey])[0];
+        const value = mongoFilters[mfKey][operator];
+        switch (operator) {
+          case '$ne':
+            if (node.data[mfKey] === value) {
+              return false;
+            }
+          default:
+        }
+      } else {
+        // no mongo operator, so it's an exact equality check
+        if (node.data[mfKey] !== mongoFilters[mfKey]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    (async () => {
+      const { results } = (
+        await nodeServer.get('getMostRecentCurrentDayResults')
+      ).data;
+      const rows = [];
+      for (const symbol in results) {
+        for (const numberOfBars in results[symbol]) {
+          const instanceData = results[symbol][numberOfBars];
+
+          if (showThisRow(instanceData)) {
+            rows.push({ symbol, numberOfBars, ...instanceData });
+          }
+        }
+      }
+      setGridData(rows);
+    })();
+  }, []);
+
+  const handleFilterChanged = async (e) => {
+    const fm = e.api.getFilterModel();
+    if (fm) {
+      localStorage.setItem(
+        currentDayTable_columnFiltersKey,
+        JSON.stringify(fm)
+      );
+    }
+  };
+
+  const handleGridReady = (e) => {
+    console.log('handleGridReady');
+    setGridApi(e.api);
+    setTimeout(() => {
+      /*     const strStoredFilterModel = localStorage.getItem(
+        currentDayTable_columnFiltersKey
+      );
+      if (strStoredFilterModel) {
+        const storedFilterModel = JSON.parse(strStoredFilterModel);
+        e.api.setFilterModel(storedFilterModel);
+        e.api.onFilterChanged();
+      } */
+    }, 500);
+  };
 
   useEffect(() => {
     (async () => {
@@ -148,17 +251,84 @@ const CurrentDayResultsTable = (props) => {
       <div className="ag-theme-balham" style={{ height: props.height }}>
         <AgGridReact
           defaultColDef={{
+            floatingFilter: true,
+            floatingFilterComponent: 'stringParseAlwaysFireFloatingFilter',
+            filter: 'agTextColumnFilter',
+            floatingFilterComponentParams: { suppressFilterButton: true },
             sortable: true,
             resizable: true,
             width: 120,
             enableValue: true,
-            enableRowGroup: true,
-            enablePivot: true,
+            filterParams: {
+              textCustomComparator: (filter, value, filterText) => {
+                const mongoFilter = getMongoFilter(filterText);
+                if (!mongoFilter.valid) {
+                  return false;
+                }
+
+                const typedValue = isNaN(value) ? value : parseFloat(value);
+                if (isObject(mongoFilter.mongo)) {
+                  const operator = Object.keys(mongoFilter.mongo)[0];
+                  const mongoValue = mongoFilter.mongo[operator];
+                  const typedMongoValue = isNaN(mongoValue)
+                    ? mongoValue
+                    : parseFloat(mongoValue);
+                  switch (operator) {
+                    case '$ne':
+                      if (typedValue === typedMongoValue) {
+                        return false;
+                      }
+                      break;
+                    case '$gte':
+                      if (typedValue < typedMongoValue) {
+                        return false;
+                      }
+                      break;
+                    case '$lte':
+                      if (typedValue > typedMongoValue) {
+                        return false;
+                      }
+                      break;
+                    case '$gt':
+                      if (typedValue <= typedMongoValue) {
+                        return false;
+                      }
+                      break;
+                    case '$lt':
+                      if (typedValue >= typedMongoValue) {
+                        return false;
+                      }
+                      break;
+                    case '$nin':
+                      return false;
+                      break;
+                    case '$in':
+                      return false;
+                      break;
+                    default:
+                  }
+                } else {
+                  // no mongo operator, so it's an exact equality check
+                  const typedMongoValue = isNaN(mongoFilter.mongo)
+                    ? mongoFilter.mongo
+                    : parseFloat(mongoFilter.mongo);
+                  if (typedMongoValue !== typedValue) {
+                    return false;
+                  }
+                }
+                return true;
+              },
+            },
+          }}
+          frameworkComponents={{
+            stringParseAlwaysFireFloatingFilter: StringParseAlwaysFireFloatingFilter,
           }}
           columnDefs={columnDefs}
           toolPanel="columns"
           gridOptions={{ tooltipShowDelay: 0 }}
-          rowData={props.data}
+          rowData={gridData}
+          onFilterChanged={handleFilterChanged}
+          onGridReady={handleGridReady}
           sortingOrder={['asc', 'desc']}
           rowSelection="single"
         ></AgGridReact>
