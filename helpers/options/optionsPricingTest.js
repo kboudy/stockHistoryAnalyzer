@@ -4,7 +4,7 @@ const axios = require('axios'),
   chalk = require('chalk'),
   { calculateHV } = require('./historicVolatility'),
   { loadHistoricalDataForSymbol } = require('../symbolData'),
-  { getOptionChainData } = require('./tdaOptions');
+  { getOptionChainData } = require('../../helpers/tdaCommunication');
 
 const symbol = 'SLV';
 

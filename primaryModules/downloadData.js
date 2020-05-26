@@ -1,10 +1,9 @@
 const axios = require('axios'),
   moment = require('moment'),
-  chalk = require('chalk'),
   _ = require('lodash'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { isCrypto } = require('../helpers/symbolData'),
-  { sleep, isNullOrUndefined } = require('../helpers/commonMethods'),
+  { downloadEquityData } = require('../helpers/tdaCommunication'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
   Candle = require('../models/candle');
@@ -48,62 +47,6 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
   return _.orderBy(filtered, (c) => c.date);
 };
 
-let requestDateTimes_inLastMinute = [];
-const downloadEquityData = async (symbol, startDate, endDate) => {
-  const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
-  const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
-  const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
-
-  let res;
-  let retryCount = 3;
-  while (retryCount > 0) {
-    try {
-      const instance = axios.create({
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      });
-      res = await instance.get(url);
-      retryCount = 0;
-
-      // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
-      const currentDateTime = new Date().getTime();
-      requestDateTimes_inLastMinute = requestDateTimes_inLastMinute.filter(
-        (d) => d >= currentDateTime - 60000
-      );
-      requestDateTimes_inLastMinute.push(currentDateTime);
-      const throttle = requestDateTimes_inLastMinute.length > 95;
-      const sleepTime = throttle ? 1000 : 50;
-      await sleep(sleepTime);
-    } catch (err) {
-      retryCount--;
-      if (retryCount > 0 && err.response.status === 429) {
-        console.log(
-          chalk.red(
-            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last minute: ${requestDateTimes_inLastMinute.length}`
-          )
-        );
-        await sleep(1000);
-      } else {
-        // forgive the error if the start & end dates are the same
-        if (startDate !== endDate) {
-          throw err;
-        } else {
-          return [];
-        }
-      }
-    }
-  }
-
-  const { candles } = res.data;
-  for (const candle of candles) {
-    candle.date = moment(candle.datetime).format('YYYY-MM-DD');
-    candle.symbol = symbol;
-    delete candle.datetime;
-  }
-  return _.orderBy(candles, (c) => c.date);
-};
-
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   for (const symbol of symbols) {
     //await Candle.deleteMany({ symbol });
@@ -122,11 +65,11 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       existingMaxDate = candleWithMaxDate.date;
     }
 
-    const yesterday = moment().add(-1, 'days').format('YYYY-MM-DD');
+    const today = moment().format('YYYY-MM-DD');
 
     if (symbolIsCrypto) {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
-      const endDate = yesterday;
+      const endDate = today;
 
       // console.log(
       //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
@@ -149,11 +92,11 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           : `${currentYear}-01-01`;
         candleWithMaxDate = null;
         let endDate = `${currentYear + 4}-12-31`;
-        if (startDate > yesterday) {
-          startDate = yesterday;
+        if (startDate > today) {
+          startDate = today;
         }
-        if (endDate > yesterday) {
-          endDate = yesterday;
+        if (endDate > today) {
+          endDate = today;
         }
 
         // console.log(
@@ -175,7 +118,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           await Candle.insertMany(historicalData);
         }
 
-        if (endDate === yesterday) {
+        if (endDate === today) {
           break;
         }
         currentYear += 5;

@@ -1,22 +1,26 @@
-const { getAvailableSymbolNames, isCrypto } = require('../helpers/symbolData'),
+const { getAvailableSymbolNames, isCrypto } = require('./symbolData'),
   _ = require('lodash'),
-  mongoApi = require('../helpers/mongoApi'),
+  mongoApi = require('./mongoApi'),
   moment = require('moment'),
   {
     discoverPatternsForSymbol,
     dropPatternCollections,
   } = require('../helpers/discoverPatternsHelper'),
   CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
-  { numberOfBarsArray } = require('../helpers/constants');
+  { numberOfBarsArray } = require('./constants');
 
-(async () => {
-  await mongoApi.connectMongoose();
-
+const getLogDate = () => {
+  return `[${moment().format('YYYY-MM-DD HH:mm:ss')}]`;
+};
+exports.runJob = async () => {
   const ignoreMatchesAboveThisScore = 12;
   const allSymbols = await getAvailableSymbolNames();
+  console.log(`${getLogDate()}* running "CurrentDay" job`);
+  /*  
+ //TODO: use these if we need to have slightly different code between equity/crypto:
   const equitySymbols = allSymbols.filter((s) => !isCrypto(s));
   const cryptoSymbols = allSymbols.filter((s) => isCrypto(s));
-
+ */
   const symbolsAndPatternStats = {};
   for (const symbol of allSymbols) {
     console.log(
@@ -42,4 +46,5 @@ const { getAvailableSymbolNames, isCrypto } = require('../helpers/symbolData'),
     results: symbolsAndPatternStats,
   });
   await mongoApi.disconnectMongoose();
-})();
+  console.log(`${getLogDate()}* complete`);
+};
