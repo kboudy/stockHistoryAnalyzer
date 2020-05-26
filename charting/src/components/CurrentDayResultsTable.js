@@ -321,6 +321,26 @@ const CurrentDayResultsTable = (props) => {
               field: `avg_profitLossPercent_atBarX.${sb}`,
               headerTooltip: `avg_profitLossPercent_atBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
+              cellClassRules: {
+                greenLevel1: (params) => {
+                  return params.value > 0;
+                },
+                greenLevel2: (params) => {
+                  return params.value > 1;
+                },
+                greenLevel3: (params) => {
+                  return params.value > 2;
+                },
+                redLevel1: (params) => {
+                  return params.value < 0;
+                },
+                redLevel2: (params) => {
+                  return params.value < -1;
+                },
+                redLevel3: (params) => {
+                  return params.value < -2;
+                },
+              },
             },
             {
               headerName: `upsideDownsideRatio_byBarX.${sb}`,
@@ -333,6 +353,26 @@ const CurrentDayResultsTable = (props) => {
               field: `percentProfitable_atBarX.${sb}`,
               headerTooltip: `percentProfitable_atBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
+              cellClassRules: {
+                greenLevel1: (params) => {
+                  return params.value > 50;
+                },
+                greenLevel2: (params) => {
+                  return params.value > 60;
+                },
+                greenLevel3: (params) => {
+                  return params.value > 70;
+                },
+                redLevel1: (params) => {
+                  return params.value < 50;
+                },
+                redLevel2: (params) => {
+                  return params.value < 40;
+                },
+                redLevel3: (params) => {
+                  return params.value < 30;
+                },
+              },
             },
             {
               headerName: `avg_maxUpsidePercent_byBarX.${sb}`,

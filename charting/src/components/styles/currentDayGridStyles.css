@@ -39,3 +39,27 @@
 .header-5-group {
   background-color: #ffdfd3;
 }
+
+.greenLevel1 {
+  background-color: #d1ffcf;
+}
+
+.greenLevel2 {
+  background-color: #65ff5e;
+}
+
+.greenLevel3 {
+  background-color: #14e60b;
+}
+
+.redLevel1 {
+  background-color: #ffe6e6;
+}
+
+.redLevel2 {
+  background-color: #ffb0b0;
+}
+
+.redLevel3 {
+  background-color: #ff7a7a;
+}
