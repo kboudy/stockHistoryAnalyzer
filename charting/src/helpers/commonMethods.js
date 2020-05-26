@@ -18,9 +18,7 @@ export const isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;
 };
 
-export const getMongoFilter = (filterModel) => {
-  const { type, filter } = filterModel;
-
+export const getMongoFilter = (filterString) => {
   const parseValue = (v) => {
     if (v === 'true') {
       return true;
@@ -33,11 +31,11 @@ export const getMongoFilter = (filterModel) => {
     }
   };
 
-  if (isNullOrEmptyString(filter) || isNullOrUndefined(filter)) {
+  if (isNullOrEmptyString(filterString) || isNullOrUndefined(filterString)) {
     return { valid: false };
   }
 
-  let cropped = `${filter}`;
+  let cropped = `${filterString}`;
   let operator = null;
   if (cropped.startsWith('>=')) {
     operator = '$gte';

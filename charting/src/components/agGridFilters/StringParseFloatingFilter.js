@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { getMongoFilter } from '../../helpers/commonMethods';
 
 export default class StringParseFloatingFilter extends Component {
   constructor(props) {
@@ -10,113 +11,18 @@ export default class StringParseFloatingFilter extends Component {
     };
   }
 
-  parseStringToFilter = (fieldValue) => {
-    // ag grid filter types:
-    // https://www.ag-grid.com/javascript-grid-filter-provided-simple/
-    if (fieldValue !== 0 && fieldValue !== '' && !fieldValue) {
-      return { type: null };
-    }
-
-    const strFieldValue = `${fieldValue}`;
-    if (strFieldValue.startsWith('>=')) {
-      debugger;
-    }
-
-    if (strFieldValue.startsWith('!')) {
-      const cropped = strFieldValue.slice(1).trim();
-      if (cropped.trim() === '') {
-        return { type: null, value: strFieldValue };
-      }
-      if (cropped.includes(',')) {
-        const isValidList =
-          cropped.split(',').filter((s) => s.trim() === '').length === 0;
-        if (!isValidList) {
-          return {
-            type: null,
-            value: strFieldValue,
-          };
-        }
-        return {
-          type: 'notContains',
-          value: strFieldValue,
-        };
-      } else {
-        return {
-          type: 'notEqual',
-          value: strFieldValue,
-        };
-      }
-    }
-
-    if (strFieldValue.includes(',')) {
-      const isValidList =
-        strFieldValue.split(',').filter((s) => s.trim() === '').length === 0;
-      if (!isValidList) {
-        return {
-          type: null,
-          value: strFieldValue,
-        };
-      }
-      return {
-        type: 'contains',
-        value: strFieldValue,
-      };
-    }
-
-    if (strFieldValue.startsWith('>=')) {
-      return {
-        type: 'greaterThanOrEqual',
-        value: strFieldValue,
-      };
-    }
-
-    if (strFieldValue.startsWith('<=')) {
-      const cropped = strFieldValue.slice(2).trim();
-      return {
-        type: 'lessThanOrEqual',
-        value: strFieldValue,
-      };
-    }
-
-    if (strFieldValue.startsWith('>')) {
-      return {
-        type: 'greaterThan',
-        value: strFieldValue,
-      };
-    }
-    if (strFieldValue.startsWith('<')) {
-      const cropped = strFieldValue.slice(1).trim();
-      return {
-        type: 'lessThan',
-        value: strFieldValue,
-      };
-    }
-
-    if (strFieldValue.startsWith('=')) {
-      return {
-        type: 'equals',
-        value: strFieldValue,
-      };
-    }
-
-    return {
-      type: 'equals',
-      value: strFieldValue,
-    };
-  };
-
   valueChanged = (event) => {
     this.setState(
       {
         currentValue: event.target.value,
       },
       () => {
-        const { type, value } = this.parseStringToFilter(
-          this.state.currentValue
-        );
-        if (type) {
-          this.props.parentFilterInstance(function (instance) {
-            instance.onFloatingFilterChanged(type, value);
+        // using "getMongoFilter" only to test validity here
+        const result = getMongoFilter(this.state.currentValue);
+        if (result.valid) {
+          this.props.parentFilterInstance((instance) => {
+            // just hard coding "equals" - it doesn't matter what ag grid "type" is
+            instance.onFloatingFilterChanged('equals', this.state.currentValue);
           });
         }
       }

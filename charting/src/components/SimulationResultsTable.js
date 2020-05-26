@@ -101,7 +101,7 @@ const SimulationResultsTable = (props) => {
           ? `${fieldName}.${significantBar}`
           : fieldName;
 
-      const result = getMongoFilter(filterModel[fieldName]);
+      const result = getMongoFilter(filterModel[fieldName].filter);
       if (result.valid) {
         mongoFilter[correctedFieldName] = result.mongo;
       }
