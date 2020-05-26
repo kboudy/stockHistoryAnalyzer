@@ -1,42 +1,40 @@
 const axios = require('axios'),
-{ authCode, consumerKey, TDA_refreshToken } = require("./constants"),
-  const axios = require("axios"),
-  qs = require("qs"),
-  opn = require("opn");
+  { TDA_authCode, TDA_consumerKey, TDA_refreshToken } = require('./constants'),
+  qs = require('qs'),
+  chalk = require('chalk'),
+  _ = require('lodash'),
+  moment = require('moment'),
+  { sleep } = require('./commonMethods'),
+  opn = require('opn');
 
-let requestDateTimes_inLastMinute = [];
-exports.downloadEquityData = async (symbol, startDate, endDate) => {
-  const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
-  const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
-  const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
+let current_access_token = null;
 
+let requestDateTimes_inLast5Seconds = [];
+const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   let res;
   let retryCount = 3;
   while (retryCount > 0) {
     try {
-      const instance = axios.create({
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      });
-      res = await instance.get(url);
-      retryCount = 0;
+      res = await asyncMethod();
 
+      retryCount = 0;
       // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
       const currentDateTime = new Date().getTime();
-      requestDateTimes_inLastMinute = requestDateTimes_inLastMinute.filter(
-        (d) => d >= currentDateTime - 60000
+      requestDateTimes_inLast5Seconds = requestDateTimes_inLast5Seconds.filter(
+        (d) => d >= currentDateTime - 5000
       );
-      requestDateTimes_inLastMinute.push(currentDateTime);
-      const throttle = requestDateTimes_inLastMinute.length > 95;
-      const sleepTime = throttle ? 1000 : 50;
+      requestDateTimes_inLast5Seconds.push(currentDateTime);
+      const throttle = requestDateTimes_inLast5Seconds.length > 10;
+      const sleepTime = throttle ? 600 : 100;
       await sleep(sleepTime);
+      return res;
     } catch (err) {
       retryCount--;
+      debugger;
       if (retryCount > 0 && err.response.status === 429) {
         console.log(
           chalk.red(
-            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last minute: ${requestDateTimes_inLastMinute.length}`
+            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}`
           )
         );
         await sleep(5000);
@@ -50,6 +48,28 @@ exports.downloadEquityData = async (symbol, startDate, endDate) => {
       }
     }
   }
+};
+
+exports.downloadEquityData = async (symbol, startDate, endDate) => {
+  if (!current_access_token) {
+    await authenticate();
+  }
+  const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
+  const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
+  const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
+
+  const options = {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${current_access_token}`,
+    },
+    url,
+  };
+
+  res = await delayIfNecessary_forTDALimit(async () => {
+    return await axios(options);
+  });
 
   const { candles } = res.data;
   for (const candle of candles) {
@@ -60,7 +80,6 @@ exports.downloadEquityData = async (symbol, startDate, endDate) => {
   return _.orderBy(candles, (c) => c.date);
 };
 
-let requestDateTimes_inLastMinute = [];
 exports.getOptionChainData = async (
   symbol,
   isPut,
@@ -68,94 +87,65 @@ exports.getOptionChainData = async (
   strikeCount,
   date
 ) => {
-  let urlQuery = `https://api.tdameritrade.com/v1/marketdata/chains?apikey=${consumerKey}&symbol=${symbol}&contractType=${
+  if (!current_access_token) {
+    await authenticate();
+  }
+  let url = `https://api.tdameritrade.com/v1/marketdata/chains?apikey=${TDA_consumerKey}&symbol=${symbol}&contractType=${
     isPut ? 'PUT' : 'CALL'
   }&includeQuotes=TRUE&strike=${strike}&optionType=ALL&strategy=SINGLE&strikeCount=${strikeCount}`;
   if (date) {
     urlQuery = `${urlQuery}&fromDate=${date}&toDate=${date}`;
   }
 
-  let res;
-  let retryCount = 3;
-  while (retryCount > 0) {
-    try {
-      res = await axios.get(urlQuery);
-      retryCount = 0;
+  const options = {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${current_access_token}`,
+    },
+    url,
+  };
 
-      // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
-      const currentDateTime = new Date().getTime();
-      requestDateTimes_inLastMinute = requestDateTimes_inLastMinute.filter(
-        (d) => d >= currentDateTime - 60000
-      );
-      requestDateTimes_inLastMinute.push(currentDateTime);
-      const throttle = requestDateTimes_inLastMinute.length > 95;
-      const sleepTime = throttle ? 2000 : 50;
-      await sleep(sleepTime);
-    } catch (err) {
-      retryCount--;
-      if (retryCount > 0 && err.response.status === 429) {
-        console.log(
-          chalk.red(
-            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last minute: ${requestDateTimes_inLastMinute.length}`
-          )
-        );
-        await sleep(5000);
-      }
-    }
-  }
+  res = await delayIfNecessary_forTDALimit(async () => {
+    return await axios(options);
+  });
 
   return res.data;
 };
 
+// use this if you need to generate a new auth token (in theory, you shouldn't - just need to make a request within 90 days)
 const getAuthCode = async () => {
   // opens a browser, requests authentication, then you'll see the auth code in the url
   opn(
-    `https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=https://127.0.0.1&client_id=${consumerKey}%40AMER.OAUTHAP`
+    `https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=https://127.0.0.1&client_id=${TDA_consumerKey}%40AMER.OAUTHAP`
   );
 };
 exports.getAuthCode = getAuthCode;
 
-// you can use request this once (then you'll have to use getAuthCode & verify with the browser again)
-const getAccessToken_fromAuthCode = async () => {
+const getAccessToken_fromRefreshToken = async () => {
+  const data = {
+    grant_type: 'refresh_token',
+    refresh_token: TDA_refreshToken,
+    client_id: TDA_consumerKey,
+  };
   try {
-    const data = {
-      grant_type: "authorization_code",
-      refresh_token: null,
-      access_type: "offline",
-      code: decodeURIComponent(authCode),
-      client_id: consumerKey,
-      redirect_uri: "https://127.0.0.1",
-    };
-
     const options = {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
       data: qs.stringify(data),
-      url: "https://api.tdameritrade.com/v1/oauth2/token",
-    };
-
-    const res = await axios(options);
-  } catch (err) {}
-};
-exports.getAccessToken = getAccessToken_fromAuthCode;
-
-const getAccessToken_fromRefreshToken = async (refresh_token) => {
-  try {
-    const data = {
-      grant_type: "refresh_token",
-      refresh_token,
-      client_id: consumerKey,
-    };
-
-    const options = {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      data: qs.stringify(data),
-      url: "https://api.tdameritrade.com/v1/oauth2/token",
+      url: 'https://api.tdameritrade.com/v1/oauth2/token',
     };
 
     const res = await axios(options);
     return res.data.access_token;
-  } catch (err) {}
+  } catch (err) {
+    debugger;
+  }
 };
-exports.getAccessToken = getAccessToken_fromAuthCode;
+exports.getAccessToken = getAccessToken_fromRefreshToken;
+
+// this is called internally the first time a request is made
+// (uses a refresh token to get & store-in-memory)
+const authenticate = async () => {
+  current_access_token = await getAccessToken_fromRefreshToken();
+};

@@ -49,6 +49,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "tdaCommunication",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/helpers/tdaCommunication.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "chartingServer",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/chartingServer/index.js"
