@@ -7,7 +7,6 @@ import CurrentDayResultsTable from '../CurrentDayResultsTable';
 
 import _ from 'lodash';
 import nodeServer from '../../helpers/nodeServer';
-import { getSimulationColDefs } from '../../helpers/constants';
 
 const {
   isNullOrUndefined,

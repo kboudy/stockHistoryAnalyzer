@@ -12,13 +12,16 @@ import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import _ from 'lodash';
 import nodeServer from '../helpers/nodeServer';
-import { getSimulationColDefs } from '../helpers/constants';
 import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/simulationGridStyles.css';
-import { isEmptyObject, getMongoFilter } from '../helpers/commonMethods';
+import {
+  getSimulationColDefs,
+  isEmptyObject,
+  getMongoFilter,
+} from '../helpers/commonMethods';
 
 const simResKey_visibleColumns = 'simulation_results_table.visible_columns';
 const simResKey_columnFilters = 'simulation_results_table.column_filters';

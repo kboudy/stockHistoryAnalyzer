@@ -25,13 +25,12 @@ import SimulationResultsTable from '../SimulationResultsTable';
 
 import _ from 'lodash';
 import nodeServer from '../../helpers/nodeServer';
-import { getSimulationColDefs } from '../../helpers/constants';
-
-const {
+import {
   isNullOrUndefined,
   isNullOrEmptyString,
   isObject,
-} = require('../../helpers/commonMethods');
+  getSimulationColDefs,
+} from '../../helpers/commonMethods';
 
 const NONE = '-none-';
 
