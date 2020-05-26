@@ -28,7 +28,7 @@ function Explore(props) {
       <Paper>
         <Grid container className={classes.gridWrapper}>
           <Grid item xs={12}>
-            <CurrentDayResultsTable height={1200} />
+            <CurrentDayResultsTable height={1150} />
           </Grid>
         </Grid>
       </Paper>

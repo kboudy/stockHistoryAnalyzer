@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 
-import AppBar from '@material-ui/core/AppBar';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
 import FormControl from '@material-ui/core/FormControl';
@@ -42,9 +41,7 @@ const StyledTableCell = withStyles((theme) => ({
 }))(TableCell);
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    marginBottom: '30px',
-  },
+  root: {},
   clipboardTextArea: {
     position: 'absolute',
     left: '-1000px',
@@ -63,7 +60,6 @@ const useStyles = makeStyles((theme) => ({
     minWidth: 150,
   },
   title: { flexGrow: 1 },
-  appBarSpacer: theme.mixins.toolbar,
   addChartGrid: { padding: theme.spacing(3) },
   chartGridWrapper: { padding: theme.spacing(2) },
 }));
@@ -262,37 +258,6 @@ function Explore(props) {
 
   return (
     <div className={classes.root}>
-      <AppBar position="fixed" style={{ backgroundColor: '#111' }}>
-        <Toolbar>
-          <Grid container justify="space-between" alignItems="center">
-            <Grid item>
-              <IconButton
-                aria-controls="get-info"
-                aria-haspopup="true"
-                onClick={(e) => setInfoAnchorEl(e.currentTarget)}
-              >
-                <InfoIcon style={{ color: '#fff' }}></InfoIcon>
-              </IconButton>
-              <Menu
-                id="get-info"
-                anchorEl={infoAnchorEl}
-                keepMounted
-                open={Boolean(infoAnchorEl)}
-                onClose={() => setInfoAnchorEl(null)}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setInfoAnchorEl(null);
-                  }}
-                >
-                  Data sources
-                </MenuItem>
-              </Menu>
-            </Grid>
-          </Grid>
-        </Toolbar>
-      </AppBar>
-      <div className={classes.appBarSpacer} />
       <Grid container className={classes.chartGridWrapper}>
         <Grid item>
           <Chart

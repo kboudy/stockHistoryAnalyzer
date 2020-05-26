@@ -29,7 +29,7 @@ const simResKey_columnFilters = 'simulation_results_table.column_filters';
 const useStyles = makeStyles((theme) => ({
   columnChooserButton: { marginTop: theme.spacing(1) },
   columnChoiceList: {
-    height: '300px',
+    height: '1000px',
     overflow: 'auto',
     backgroundColor: theme.palette.background.paper,
     border: '1px solid #ddd',
