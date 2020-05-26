@@ -11,6 +11,8 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
+import Grid from '@material-ui/core/Grid';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import _ from 'lodash';
 import {
@@ -26,9 +28,12 @@ import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter
 
 const currentDayTable_visibleColumnsKey = 'current_day_table.visible_columns';
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
+const currentDayTable_applyBasicFilteringKey =
+  'current_day_table.apply_basic_filting';
 
 const useStyles = makeStyles((theme) => ({
   columnChooserButton: { marginTop: theme.spacing(1) },
+  chkBasicFiltering: { marginLeft: theme.spacing(2) },
   columnChoiceList: {
     height: '1000px',
     overflow: 'auto',
@@ -43,11 +48,15 @@ const CurrentDayResultsTable = (props) => {
   const [gridApi, setGridApi] = useState(null);
   const [columnApi, setColumnApi] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [applyBasicFiltering, setApplyBasicFiltering] = useState(true);
 
   const [gridData, setGridData] = useState([]);
   const [visibleColumns, setVisibleColumns] = useState(null);
 
-  const showThisRow = (row) => {
+  const showThisRow = (row, basicFiltering) => {
+    if (!basicFiltering) {
+      return true;
+    }
     if (!row || parseInt(row.scoreCount) < 10) {
       return false;
     }
@@ -55,29 +64,39 @@ const CurrentDayResultsTable = (props) => {
     for (const significantBar in avg_profitLossPercent_atBarX) {
       const avgPL = parseFloat(avg_profitLossPercent_atBarX[significantBar]);
       const sb = parseFloat(significantBar);
-      if (avgPL > sb * 1) {
+      if (avgPL > sb * 0.5) {
         return true;
       }
     }
     return false;
   };
 
-  useEffect(() => {
-    (async () => {
-      const { results } = (
-        await nodeServer.get('getMostRecentCurrentDayResults')
-      ).data;
-      const rows = [];
-      for (const symbol in results) {
-        for (const numberOfBars in results[symbol]) {
-          const instanceData = results[symbol][numberOfBars];
+  const reloadData = async () => {
+    let bfFromStorage = localStorage.getItem(
+      currentDayTable_applyBasicFilteringKey
+    );
+    const basicFiltering = !bfFromStorage || bfFromStorage === 'true';
+    setApplyBasicFiltering(basicFiltering);
 
-          if (showThisRow(instanceData)) {
-            rows.push({ symbol, numberOfBars, ...instanceData });
-          }
+    const { results } = (
+      await nodeServer.get('getMostRecentCurrentDayResults')
+    ).data;
+    const rows = [];
+    for (const symbol in results) {
+      for (const numberOfBars in results[symbol]) {
+        const instanceData = results[symbol][numberOfBars];
+
+        if (showThisRow(instanceData, basicFiltering)) {
+          rows.push({ symbol, numberOfBars, ...instanceData });
         }
       }
-      setGridData(rows);
+    }
+    setGridData(rows);
+  };
+
+  useEffect(() => {
+    (async () => {
+      await reloadData();
     })();
   }, []);
 
@@ -178,19 +197,34 @@ const CurrentDayResultsTable = (props) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
+  const handleApplyBasicFilteringChanged = async () => {
+    const newVal = !applyBasicFiltering;
+    setApplyBasicFiltering(newVal);
+    localStorage.setItem(
+      currentDayTable_applyBasicFilteringKey,
+      newVal ? 'true' : 'false'
+    );
+    await reloadData();
+    getFiltersFromLocalStorage(gridApi);
+  };
+
+  const getFiltersFromLocalStorage = (gApi) => {
+    const strStoredFilterModel = localStorage.getItem(
+      currentDayTable_columnFiltersKey
+    );
+    if (strStoredFilterModel) {
+      const storedFilterModel = JSON.parse(strStoredFilterModel);
+      gApi.setFilterModel(storedFilterModel);
+      gApi.onFilterChanged();
+    }
+  };
+
   const handleGridReady = (e) => {
     setGridApi(e.api);
     setColumnApi(e.columnApi);
 
     setTimeout(() => {
-      const strStoredFilterModel = localStorage.getItem(
-        currentDayTable_columnFiltersKey
-      );
-      if (strStoredFilterModel) {
-        const storedFilterModel = JSON.parse(strStoredFilterModel);
-        e.api.setFilterModel(storedFilterModel);
-        e.api.onFilterChanged();
-      }
+      getFiltersFromLocalStorage(e.api);
     }, 500);
   };
 
@@ -456,17 +490,30 @@ const CurrentDayResultsTable = (props) => {
           rowSelection="single"
         ></AgGridReact>
       </div>
-      <Button
-        variant="contained"
-        className={classes.columnChooserButton}
-        startIcon={<ViewColumnIcon />}
-        onClick={handleChooseColumnsClicked}
-      >
-        Choose columns
-      </Button>
-      <Popper open={Boolean(anchorEl)} anchorEl={anchorEl}>
-        {getColumnChoices()}
-      </Popper>
+      <Grid container className={classes.gridWrapper}>
+        <Grid item>
+          <Button
+            variant="contained"
+            className={classes.columnChooserButton}
+            startIcon={<ViewColumnIcon />}
+            onClick={handleChooseColumnsClicked}
+          >
+            Choose columns
+          </Button>
+          <Popper open={Boolean(anchorEl)} anchorEl={anchorEl}>
+            {getColumnChoices()}
+          </Popper>
+        </Grid>
+        <Grid item>
+          <FormControlLabel
+            className={classes.chkBasicFiltering}
+            control={<Checkbox name="chkBasicFiltering" />}
+            label="Apply basic filtering"
+            checked={applyBasicFiltering}
+            onChange={handleApplyBasicFilteringChanged}
+          />
+        </Grid>
+      </Grid>
     </div>
   );
 };
