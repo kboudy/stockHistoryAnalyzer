@@ -181,6 +181,17 @@ const CurrentDayResultsTable = (props) => {
   const handleGridReady = (e) => {
     setGridApi(e.api);
     setColumnApi(e.columnApi);
+
+    setTimeout(() => {
+      const strStoredFilterModel = localStorage.getItem(
+        currentDayTable_columnFiltersKey
+      );
+      if (strStoredFilterModel) {
+        const storedFilterModel = JSON.parse(strStoredFilterModel);
+        e.api.setFilterModel(storedFilterModel);
+        e.api.onFilterChanged();
+      }
+    }, 500);
   };
 
   const addHideWhereNecessary = (colDefs, vcFromStorage) => {
