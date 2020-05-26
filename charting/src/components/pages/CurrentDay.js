@@ -13,7 +13,7 @@ const {
   isNullOrUndefined,
   isNullOrEmptyString,
   isObject,
-} = require('../../helpers/miscMethods');
+} = require('../../helpers/commonMethods');
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -27,6 +27,20 @@ function Explore(props) {
 
   const [gridData, setGridData] = React.useState([]);
 
+  const showThisRow = (row) => {
+    if (!row || parseInt(row.scoreCount) < 10) {
+      return false;
+    }
+    const avg_profitLossPercent_atBarX = row['avg_profitLossPercent_atBarX'];
+    for (const significantBar in avg_profitLossPercent_atBarX) {
+      const avgPL = parseFloat(avg_profitLossPercent_atBarX[significantBar]);
+      const sb = parseFloat(significantBar);
+      if (avgPL > sb * 1) {
+        return true;
+      }
+    }
+    return false;
+  };
   useEffect(() => {
     (async () => {
       const { results } = (
@@ -36,7 +50,10 @@ function Explore(props) {
       for (const symbol in results) {
         for (const numberOfBars in results[symbol]) {
           const instanceData = results[symbol][numberOfBars];
-          rows.push({ symbol, numberOfBars, ...instanceData });
+
+          if (showThisRow(instanceData)) {
+            rows.push({ symbol, numberOfBars, ...instanceData });
+          }
         }
       }
       setGridData(rows);

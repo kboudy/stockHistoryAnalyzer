@@ -4,7 +4,7 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   chalk = require('chalk'),
   moment = require('moment'),
-  { isNullOrUndefined, isObject, isEmptyObject } = require('./miscMethods'),
+  { isNullOrUndefined, isObject, isEmptyObject } = require('./commonMethods'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
 

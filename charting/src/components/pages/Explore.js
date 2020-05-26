@@ -31,7 +31,7 @@ const {
   isNullOrUndefined,
   isNullOrEmptyString,
   isObject,
-} = require('../../helpers/miscMethods');
+} = require('../../helpers/commonMethods');
 
 const NONE = '-none-';
 

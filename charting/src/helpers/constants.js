@@ -1,6 +1,6 @@
 import CheckboxCellRenderer from '../components/cellRenderers/checkboxCellRenderer';
 import nodeServer from './nodeServer';
-import { isObject } from './miscMethods';
+import { isObject } from './commonMethods';
 
 let cachedSymbols = null;
 export const getAvailableSymbols = async () => {
