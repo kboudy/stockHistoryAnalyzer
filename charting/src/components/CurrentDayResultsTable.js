@@ -134,6 +134,9 @@ const CurrentDayResultsTable = (props) => {
     const aggregatedBySymbol = {};
     for (const row of allRows) {
       const { symbol } = row;
+      if (selectedSymbols.length > 0 && !selectedSymbols.includes(symbol)) {
+        continue;
+      }
       if (!aggregatedBySymbol[symbol]) {
         aggregatedBySymbol[symbol] = clone(aggregated);
         aggregatedBySymbol[symbol].symbol = symbol; // looks weird, but we're only temporarily grouping by symbol here
@@ -850,7 +853,7 @@ const CurrentDayResultsTable = (props) => {
             </Button>
           </Grid>
         )}
-        {!props.singleSymbolMode && (
+        {!props.singleSymbolMode && !aggregateBySymbol && (
           <Grid item>
             <FormControlLabel
               className={classes.chkUsePrefiltering}
