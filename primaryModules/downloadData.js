@@ -3,7 +3,10 @@ const axios = require('axios'),
   _ = require('lodash'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { isCrypto } = require('../helpers/symbolData'),
-  { downloadHistoricalEquityData } = require('../helpers/tdaCommunication'),
+  {
+    downloadBulkCurrentEquityData,
+    downloadHistoricalEquityData,
+  } = require('../helpers/tdaCommunication'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
   Candle = require('../models/candle');
@@ -33,6 +36,7 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
     candles.push({
       created: moment.utc(),
       date: parts[0],
+      fromBulkDownload: false,
       symbol,
       open: parseFloat(parts[2]),
       high: parseFloat(parts[3]),
@@ -48,9 +52,29 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
   return _.orderBy(filtered, (c) => c.date);
 };
 
+const getMostRecentTradingDay = () => {
+  let m = moment().add(-1, 'days');
+  while (m.day() === 6 || m.day === 0) {
+    m = moment().add(-1, 'days');
+  }
+  return m.format('YYYY-MM-DD');
+};
+
 const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
+  // since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
+  await Candle.deleteMany({
+    fromBulkDownload: true,
+  });
+
+  const mostRecentTradingDate = getMostRecentTradingDay();
+  const mostRecentTradingCloseDateTime = moment(
+    mostRecentTradingDate,
+    'YYYY-MM-DD'
+  ).add(16, 'hours');
+
+  const getTheseInBulk = []; // because they only need the most recent day
+
   for (const symbol of symbols) {
-    //await Candle.deleteMany({ symbol });
     console.log(`Downloading ${symbol}`);
     const symbolIsCrypto = isCrypto(symbol);
     let existingMaxDate = null;
@@ -69,6 +93,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     const today = moment().format('YYYY-MM-DD');
 
     if (symbolIsCrypto) {
+      continue; //REMOVE ME
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
       const endDate = today;
 
@@ -86,6 +111,16 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       let historicalData = await downloadCryptoData(symbol, startDate, endDate);
       await Candle.insertMany(historicalData);
     } else {
+      if (existingMaxDate === mostRecentTradingDate) {
+        const candleCreatedDateTime = moment
+          .utc(candleWithMaxDate.created)
+          .local();
+        if (candleCreatedDateTime > mostRecentTradingCloseDateTime) {
+          // it was created after the previous market close, so we can use bulk methods to get current-day values
+          getTheseInBulk.push(symbol);
+          continue;
+        }
+      }
       // for equities, we'll request it from TDAmeritrade in 5-year chunks
       while (true) {
         let startDate = existingMaxDate
@@ -100,11 +135,6 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           endDate = today;
         }
 
-        // console.log(
-        //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
-        //     .add(1, 'day')
-        //     .format('YYYY-MM-DD')}-${endDate}`
-        // );
         await Candle.deleteMany({
           symbol,
           date: { $gte: startDate, $lte: endDate },
@@ -125,6 +155,12 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
         currentYear += 5;
       }
     }
+  }
+  const currentDayCandles_fromBulk = await downloadBulkCurrentEquityData(
+    getTheseInBulk
+  );
+  if (currentDayCandles_fromBulk.length > 0) {
+    await Candle.insertMany(currentDayCandles_fromBulk);
   }
 };
 

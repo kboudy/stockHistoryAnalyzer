@@ -74,9 +74,56 @@ exports.downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
   const { candles } = res.data;
   for (const candle of candles) {
     candle.created = moment.utc();
+    candle.fromBulkDownload = false;
     candle.date = moment(candle.datetime).format('YYYY-MM-DD');
     candle.symbol = symbol;
     delete candle.datetime;
+  }
+  return _.orderBy(candles, (c) => c.date);
+};
+
+exports.downloadBulkCurrentEquityData = async (symbols) => {
+  if (!current_access_token) {
+    await authenticate();
+  }
+  const url = `https://api.tdameritrade.com/v1/marketdata/quotes?apikey=${TDA_consumerKey}&symbol=${symbols.join(
+    ','
+  )}`;
+  const today = moment().format('YYYY-MM-DD');
+
+  const options = {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${current_access_token}`,
+    },
+    url,
+  };
+
+  res = await delayIfNecessary_forTDALimit(async () => {
+    return await axios(options);
+  });
+
+  const candles = [];
+  for (const symbol in res.data) {
+    const c = res.data[symbol];
+    const candleDate = moment(c.regularMarketTradeTimeInLong).format(
+      'YYYY-MM-DD'
+    );
+    if (candleDate !== today) {
+      continue;
+    }
+    const candle = {};
+    candle.created = moment.utc();
+    candle.fromBulkDownload = true;
+    candle.date = candleDate;
+    candle.symbol = symbol;
+    candle.open = c.openPrice;
+    candle.high = c.highPrice;
+    candle.low = c.lowPrice;
+    candle.close = c.closePrice;
+    candle.volume = c.totalVolume;
+    candles.push(candle);
   }
   return _.orderBy(candles, (c) => c.date);
 };

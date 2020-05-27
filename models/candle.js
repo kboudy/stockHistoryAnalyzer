@@ -8,6 +8,10 @@ const CandleSchema = new Schema({
     type: Schema.Types.String,
     sparse: true,
   },
+  fromBulkDownload: {
+    type: Schema.Types.Boolean,
+    sparse: true,
+  },
   date: {
     type: Schema.Types.String,
     sparse: true,
