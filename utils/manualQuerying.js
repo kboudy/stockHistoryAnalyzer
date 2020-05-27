@@ -8,6 +8,7 @@ const _ = require('lodash'),
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
   Candle = require('../models/candle'),
+  currentDayJobRunner = require('../helpers/currentDayJobRunner'),
   PatternStats = require('../models/patternStats'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
@@ -149,6 +150,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await misc();
+  await currentDayJobRunner.runCurrentDayJob();
   await mongoApi.disconnectMongoose();
 })();

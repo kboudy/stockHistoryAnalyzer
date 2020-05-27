@@ -42,6 +42,10 @@ function CurrentDay(props) {
     })();
   }, []);
 
+  const handleDetailRequested = (symbol, scoreDates, significantBar) => {
+    debugger;
+  };
+
   const handleResize = () => {
     if (
       !windowDimensions ||
@@ -78,6 +82,7 @@ function CurrentDay(props) {
               height={singleSymbolMode ? 400 : 1100}
               singleSymbolMode={singleSymbolMode}
               onModeChangeRequested={handleModeChangeRequested}
+              onDetailRequested={handleDetailRequested}
             />
           </Grid>
         </Grid>

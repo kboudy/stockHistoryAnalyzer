@@ -277,6 +277,20 @@ const CurrentDayResultsTable = (props) => {
   ]);
   //------------------------------------------------
 
+  const handleCellClicked = (e) => {
+    if (props.singleSymbolMode) {
+      const { field } = e.colDef;
+      if (field.includes('_atBarX') || field.includes('_byBarX')) {
+        const parts = field.split('.');
+        const significantBar = parseInt(parts[parts.length - 1]);
+        const { symbol, scoreDates } = e.data;
+        if (props.onDetailRequested) {
+          props.onDetailRequested(symbol, scoreDates, significantBar);
+        }
+      }
+    }
+  };
+
   const handleFilterChanged = async (e) => {
     const fm = e.api.getFilterModel();
     if (fm) {
@@ -800,6 +814,7 @@ const CurrentDayResultsTable = (props) => {
           gridOptions={{ tooltipShowDelay: 0 }}
           rowData={gridData}
           onFilterChanged={handleFilterChanged}
+          onCellClicked={handleCellClicked}
           onGridReady={handleGridReady}
           sortingOrder={['asc', 'desc']}
           rowSelection={props.singleSymbolMode ? 'single' : 'multiple'}

@@ -31,7 +31,6 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
       return res;
     } catch (err) {
       retryCount--;
-      debugger;
       if (retryCount > 0 && err.response.status === 429) {
         console.log(
           chalk.red(
