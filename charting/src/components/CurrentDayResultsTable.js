@@ -596,10 +596,8 @@ const CurrentDayResultsTable = (props) => {
                       break;
                     case '$nin':
                       return false;
-                      break;
                     case '$in':
                       return false;
-                      break;
                     default:
                   }
                 } else {

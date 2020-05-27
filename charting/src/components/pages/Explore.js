@@ -1,15 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 
-import IconButton from '@material-ui/core/IconButton';
-import Toolbar from '@material-ui/core/Toolbar';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Select from '@material-ui/core/Select';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import Grid from '@material-ui/core/Grid';
-import InfoIcon from '@material-ui/icons/Info';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -17,12 +14,10 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Chart from '../Chart';
 import SimulationResultsTable from '../SimulationResultsTable';
 
-import _ from 'lodash';
 import nodeServer from '../../helpers/nodeServer';
 import {
   isNullOrUndefined,
@@ -66,7 +61,6 @@ const useStyles = makeStyles((theme) => ({
 
 function Explore(props) {
   const classes = useStyles();
-  const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
   const [windowDimensions, setWindowDimensions] = useState(null);
 
   const [chartParams, setChartParams] = React.useState({

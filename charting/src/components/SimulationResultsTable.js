@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 import ViewColumnIcon from '@material-ui/icons/ViewColumn';
@@ -17,11 +17,7 @@ import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/simulationGridStyles.css';
-import {
-  getSimulationColDefs,
-  isEmptyObject,
-  getMongoFilter,
-} from '../helpers/commonMethods';
+import { getSimulationColDefs, getMongoFilter } from '../helpers/commonMethods';
 
 const simResKey_visibleColumns = 'simulation_results_table.visible_columns';
 const simResKey_columnFilters = 'simulation_results_table.column_filters';
@@ -40,7 +36,6 @@ const SimulationResultsTable = (props) => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const [columnDefs, setColumnDefs] = useState([]);
-  const [gridApi, setGridApi] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -152,8 +147,6 @@ const SimulationResultsTable = (props) => {
   };
 
   const handleGridReady = (e) => {
-    setGridApi(e.api);
-
     setTimeout(() => {
       const strStoredFilterModel = localStorage.getItem(
         simResKey_columnFilters
