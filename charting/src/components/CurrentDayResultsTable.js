@@ -845,8 +845,8 @@ const CurrentDayResultsTable = (props) => {
               onClick={handleToggleAggregateBySymbol}
             >
               {aggregateBySymbol
-                ? 'Stop aggregating by numberOfBars'
-                : 'Aggregate by numberOfBars'}
+                ? 'Stop aggregating by symbol'
+                : 'Aggregate by symbol'}
             </Button>
           </Grid>
         )}
