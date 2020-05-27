@@ -86,45 +86,55 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
   if (!current_access_token) {
     await authenticate();
   }
-  const url = `https://api.tdameritrade.com/v1/marketdata/quotes?apikey=${TDA_consumerKey}&symbol=${symbols.join(
-    ','
-  )}`;
-  const today = moment().format('YYYY-MM-DD');
 
-  const options = {
-    method: 'GET',
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      Authorization: `Bearer ${current_access_token}`,
-    },
-    url,
-  };
-
-  res = await delayIfNecessary_forTDALimit(async () => {
-    return await axios(options);
-  });
-
-  const candles = [];
-  for (const symbol in res.data) {
-    const c = res.data[symbol];
-    const candleDate = moment(c.regularMarketTradeTimeInLong).format(
-      'YYYY-MM-DD'
-    );
-    if (candleDate !== today) {
-      continue;
-    }
-    const candle = {};
-    candle.created = moment.utc();
-    candle.fromBulkDownload = true;
-    candle.date = candleDate;
-    candle.symbol = symbol;
-    candle.open = c.openPrice;
-    candle.high = c.highPrice;
-    candle.low = c.lowPrice;
-    candle.close = c.closePrice;
-    candle.volume = c.totalVolume;
-    candles.push(candle);
+  const symbolChunks = [];
+  const chunkSize = 300;
+  let i, j;
+  for (i = 0, j = symbols.length; i < j; i += chunkSize) {
+    symbolChunks.push(symbols.slice(i, i + chunkSize));
   }
+  const candles = [];
+  const today = moment().format('YYYY-MM-DD');
+  for (const symbolChunk of symbolChunks) {
+    const url = `https://api.tdameritrade.com/v1/marketdata/quotes?apikey=${TDA_consumerKey}&symbol=${symbolChunk.join(
+      ','
+    )}`;
+
+    const options = {
+      method: 'GET',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${current_access_token}`,
+      },
+      url,
+    };
+
+    res = await delayIfNecessary_forTDALimit(async () => {
+      return await axios(options);
+    });
+
+    for (const symbol in res.data) {
+      const c = res.data[symbol];
+      const candleDate = moment(c.regularMarketTradeTimeInLong).format(
+        'YYYY-MM-DD'
+      );
+      if (candleDate !== today) {
+        continue;
+      }
+      const candle = {};
+      candle.created = moment.utc();
+      candle.fromBulkDownload = true;
+      candle.date = candleDate;
+      candle.symbol = symbol;
+      candle.open = c.openPrice;
+      candle.high = c.highPrice;
+      candle.low = c.lowPrice;
+      candle.close = c.closePrice;
+      candle.volume = c.totalVolume;
+      candles.push(candle);
+    }
+  }
+
   return _.orderBy(candles, (c) => c.date);
 };
 
