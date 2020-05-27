@@ -6,6 +6,8 @@ import Paper from '@material-ui/core/Paper';
 import CurrentDayResultsTable from '../CurrentDayResultsTable';
 import Chart from '../Chart';
 import _ from 'lodash';
+import nodeServer from '../../helpers/nodeServer';
+import { toTwoDecimals } from '../../helpers/commonMethods';
 
 const {
   isNullOrUndefined,
@@ -25,6 +27,13 @@ function CurrentDay(props) {
   const [singleSymbolMode, setSingleSymbolMode] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(null);
 
+  const [chartData, setChartData] = useState({
+    symbol: null,
+    candles: [],
+    scoreDates: [],
+    rechartsFormattedData: [],
+  });
+
   const handleModeChangeRequested = () => {
     const newMode = !singleSymbolMode;
     setSingleSymbolMode(newMode);
@@ -36,14 +45,37 @@ function CurrentDay(props) {
       handleResize();
 
       return () => {
-        // componentWillUnmount
         window.removeEventListener('resize', handleResize);
       };
     })();
   }, []);
 
-  const handleDetailRequested = (symbol, scoreDates, significantBar) => {
-    debugger;
+  const handleDetailRequested = async (symbol, scoreDates, significantBar) => {
+    let candles;
+    if (chartData.symbol !== symbol) {
+      candles = (await nodeServer.get(`candles?symbol=${symbol}`)).data;
+    } else {
+      candles = chartData.candles;
+    }
+    const rechartsFormattedData = [];
+    for (const scoreDate of scoreDates) {
+      const buyCandle = candles.filter((c) => c.date === scoreDate)[0];
+      const buyCandleIndex = candles.indexOf(buyCandle);
+      const sellCandle = candles[buyCandleIndex + significantBar];
+
+      const pl = toTwoDecimals(
+        ((sellCandle.close - buyCandle.close) * 100) / buyCandle.close
+      );
+
+      rechartsFormattedData.push({ name: scoreDate, ['p/l %']: pl });
+    }
+
+    const hsd = {
+      symbol,
+      candles,
+      rechartsFormattedData,
+    };
+    setChartData(hsd);
   };
 
   const handleResize = () => {
@@ -71,7 +103,7 @@ function CurrentDay(props) {
               <Chart
                 width={Math.round(windowDimensions.width * 0.8)}
                 height={Math.round(windowDimensions.width * 0.8 * 0.25)}
-                data={[]}
+                data={chartData.rechartsFormattedData}
                 dataKeyName={'p/l %'}
                 maxTicks={5}
               />
