@@ -55,7 +55,9 @@ exports.getMostRecentEquityTradingDay = async () => {
   let today = moment().format('YYYY-MM-DD');
 
   const candles = await downloadHistoricalEquityData('SPY', oneWeekAgo, today);
-  const maxDate = _.max(candles.map((c) => c.date));
+  const maxDate = _.max(
+    candles.filter((c) => c.date < today).map((c) => c.date)
+  );
   return maxDate;
 };
 

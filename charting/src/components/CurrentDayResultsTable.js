@@ -70,30 +70,34 @@ const CurrentDayResultsTable = (props) => {
     const { results } = (
       await nodeServer.get('getMostRecentCurrentDayResults')
     ).data;
-    return results;
+    const allSymbols = _.orderBy(Object.keys(results), (r) => r);
+    const rows = [];
+    for (const symbol in results) {
+      for (const numberOfBars in results[symbol]) {
+        const rowData = results[symbol][numberOfBars];
+        rows.push({ symbol, numberOfBars, ...rowData });
+      }
+    }
+    return { rows, allSymbols };
+  };
+
+  const reloadData = async () => {
+    const { rows, allSymbols } = await getLatestCurrentDayJobData();
+    setAllRows(rows);
+    setGridData([...rows]);
+    setAllSymbolsInGrid(allSymbols);
+    setSelectedSymbols([]);
+
+    let bfFromStorage = localStorage.getItem(
+      currentDayTable_usePrefilteringKey
+    );
+    const prefiltering = !bfFromStorage || bfFromStorage === 'true';
+    setUsePrefiltering(prefiltering);
   };
 
   useEffect(() => {
     (async () => {
-      const results = await getLatestCurrentDayJobData();
-      const rows = [];
-      for (const symbol in results) {
-        for (const numberOfBars in results[symbol]) {
-          const rowData = results[symbol][numberOfBars];
-          rows.push({ symbol, numberOfBars, ...rowData });
-        }
-      }
-      setAllRows(rows);
-      setGridData([...rows]);
-      const allSymbols = _.orderBy(Object.keys(results), (r) => r);
-      setAllSymbolsInGrid(allSymbols);
-      setSelectedSymbols([]);
-
-      let bfFromStorage = localStorage.getItem(
-        currentDayTable_usePrefilteringKey
-      );
-      const prefiltering = !bfFromStorage || bfFromStorage === 'true';
-      setUsePrefiltering(prefiltering);
+      await reloadData();
     })();
   }, []);
 
@@ -443,9 +447,19 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const handleRunNewJob = async () => {
-    const res = await nodeServer.post('runCurrentDayJob');
-
-    // await reloadData(res.data.results);
+    const { results } = (await nodeServer.post('runCurrentDayJob')).data;
+    const allSymbols = _.orderBy(Object.keys(results), (r) => r);
+    const rows = [];
+    for (const symbol in results) {
+      for (const numberOfBars in results[symbol]) {
+        const rowData = results[symbol][numberOfBars];
+        rows.push({ symbol, numberOfBars, ...rowData });
+      }
+    }
+    setAllRows(rows);
+    setGridData([...rows]);
+    setAllSymbolsInGrid(allSymbols);
+    setSelectedSymbols([]);
   };
 
   const handleUsePrefilteringChanged = async () => {

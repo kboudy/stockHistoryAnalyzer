@@ -56,6 +56,10 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   await Candle.deleteMany({
     fromBulkDownload: true,
   });
+  const today = moment().format('YYYY-MM-DD');
+  await Candle.deleteMany({
+    date: today,
+  });
 
   const mostRecentTradingDate = await getMostRecentEquityTradingDay();
   const mostRecentTradingCloseDateTime = moment(
@@ -80,8 +84,6 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       currentYear = parseInt(candleWithMaxDate.date.split('-')[0]);
       existingMaxDate = candleWithMaxDate.date;
     }
-
-    const today = moment().format('YYYY-MM-DD');
 
     if (symbolIsCrypto) {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
