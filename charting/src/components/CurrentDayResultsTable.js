@@ -59,7 +59,7 @@ const CurrentDayResultsTable = (props) => {
   const [usePrefiltering, setUsePrefiltering] = useState(true);
   const [allSymbolsInGrid, setAllSymbolsInGrid] = useState([]);
   const [selectedSymbols, setSelectedSymbols] = useState([]);
-  const [aggregateByNumberOfBars, setAggregateByNumberOfBars] = useState(false);
+  const [aggregateBySymbol, setAggregateBySymbol] = useState(false);
 
   const [gridData, setGridData] = useState([]);
   const [allRows, setAllRows] = useState([]);
@@ -101,7 +101,7 @@ const CurrentDayResultsTable = (props) => {
     return JSON.parse(JSON.stringify(obj));
   };
 
-  const getAggregatedByNumberOfBarsData = () => {
+  const getAggregatedBySymbolData = () => {
     if (allRows.length === 0) {
       return [];
     }
@@ -223,8 +223,8 @@ const CurrentDayResultsTable = (props) => {
   useEffect(() => {
     if (currentSingleSymbol) {
       setGridData(allRows.filter((r) => r.symbol === currentSingleSymbol));
-    } else if (aggregateByNumberOfBars) {
-      setGridData(getAggregatedByNumberOfBarsData());
+    } else if (aggregateBySymbol) {
+      setGridData(getAggregatedBySymbolData());
     } else if (usePrefiltering) {
       const rowsToKeep = [];
       for (const row of allRows) {
@@ -263,7 +263,7 @@ const CurrentDayResultsTable = (props) => {
       ]);
     }
   }, [
-    aggregateByNumberOfBars,
+    aggregateBySymbol,
     currentSingleSymbol,
     selectedSymbols,
     usePrefiltering,
@@ -363,7 +363,7 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const handleToggleAggregateBySymbol = () => {
-    setAggregateByNumberOfBars(!aggregateByNumberOfBars);
+    setAggregateBySymbol(!aggregateBySymbol);
     let vcFromStorage = localStorage.getItem(currentDayTable_visibleColumnsKey);
     if (!vcFromStorage) {
       vcFromStorage = {
@@ -499,7 +499,7 @@ const CurrentDayResultsTable = (props) => {
             subCol.field === 'sourceDate'
           ) {
             if (columnApi) {
-              columnApi.hideColumn(subCol.field, !aggregateByNumberOfBars);
+              columnApi.hideColumn(subCol.field, !aggregateBySymbol);
             }
           }
         }
@@ -844,7 +844,7 @@ const CurrentDayResultsTable = (props) => {
               className={classes.button}
               onClick={handleToggleAggregateBySymbol}
             >
-              {aggregateByNumberOfBars
+              {aggregateBySymbol
                 ? 'Stop aggregating by numberOfBars'
                 : 'Aggregate by numberOfBars'}
             </Button>
