@@ -8,6 +8,7 @@ const axios = require('axios'),
   opn = require('opn');
 
 let current_access_token = null;
+let lastAuthenticated = null;
 
 let requestDateTimes_inLast5Seconds = [];
 const delayIfNecessary_forTDALimit = async (asyncMethod) => {
@@ -61,10 +62,19 @@ exports.getMostRecentEquityTradingDay = async () => {
   return maxDate;
 };
 
-const downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
-  if (!current_access_token) {
+const authenticateIfNecessary = async () => {
+  const currentDate = moment();
+  if (
+    !current_access_token ||
+    !lastAuthenticated ||
+    moment.duration(currentDate.diff(lastAuthenticated)).asMinutes() > 5
+  ) {
     await authenticate();
   }
+};
+
+const downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
+  await authenticateIfNecessary();
   const mStart = moment.utc(`${startDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const mEnd = moment.utc(`${endDate} 18:00`, 'YYYY-MM-DD HH:mm').valueOf();
   const url = `https://api.tdameritrade.com/v1/marketdata/${symbol}/pricehistory?apikey=${TDA_consumerKey}&periodType=year&period=2&frequencyType=daily&startDate=${mStart}&endDate=${mEnd}`;
@@ -95,9 +105,7 @@ const downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
 exports.downloadHistoricalEquityData = downloadHistoricalEquityData;
 
 exports.downloadBulkCurrentEquityData = async (symbols) => {
-  if (!current_access_token) {
-    await authenticate();
-  }
+  await authenticateIfNecessary();
 
   const symbolChunks = [];
   const chunkSize = 300;
@@ -157,9 +165,8 @@ exports.getOptionChainData = async (
   strikeCount,
   date
 ) => {
-  if (!current_access_token) {
-    await authenticate();
-  }
+  await authenticateIfNecessary();
+
   let url = `https://api.tdameritrade.com/v1/marketdata/chains?apikey=${TDA_consumerKey}&symbol=${symbol}&contractType=${
     isPut ? 'PUT' : 'CALL'
   }&includeQuotes=TRUE&strike=${strike}&optionType=ALL&strategy=SINGLE&strikeCount=${strikeCount}`;
@@ -218,4 +225,5 @@ exports.getAccessToken = getAccessToken_fromRefreshToken;
 // (uses a refresh token to get & store-in-memory)
 const authenticate = async () => {
   current_access_token = await getAccessToken_fromRefreshToken();
+  lastAuthenticated = moment();
 };
