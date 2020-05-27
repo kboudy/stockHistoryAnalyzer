@@ -16,11 +16,7 @@ exports.runCurrentDayJob = async () => {
   const ignoreMatchesAboveThisScore = 12;
   const allSymbols = await getAvailableSymbolNames();
   console.log(`${getLogDate()}* running "CurrentDay" job`);
-  /*  
- //TODO: use these if we need to have slightly different code between equity/crypto:
-  const equitySymbols = allSymbols.filter((s) => !isCrypto(s));
-  const cryptoSymbols = allSymbols.filter((s) => isCrypto(s));
- */
+
   const symbolsAndPatternStats = {};
   for (const symbol of allSymbols) {
     console.log(

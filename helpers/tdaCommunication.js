@@ -50,7 +50,7 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   }
 };
 
-exports.downloadEquityData = async (symbol, startDate, endDate) => {
+exports.downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
   if (!current_access_token) {
     await authenticate();
   }
@@ -73,6 +73,7 @@ exports.downloadEquityData = async (symbol, startDate, endDate) => {
 
   const { candles } = res.data;
   for (const candle of candles) {
+    candle.created = moment.utc();
     candle.date = moment(candle.datetime).format('YYYY-MM-DD');
     candle.symbol = symbol;
     delete candle.datetime;

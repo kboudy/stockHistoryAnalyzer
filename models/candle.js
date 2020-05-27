@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const CandleSchema = new Schema({
+  created: { type: Date },
   symbol: {
     type: Schema.Types.String,
     sparse: true,

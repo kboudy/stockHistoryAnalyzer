@@ -3,7 +3,7 @@ const axios = require('axios'),
   _ = require('lodash'),
   { symbolsToDownload, TDA_consumerKey } = require('../helpers/constants'),
   { isCrypto } = require('../helpers/symbolData'),
-  { downloadEquityData } = require('../helpers/tdaCommunication'),
+  { downloadHistoricalEquityData } = require('../helpers/tdaCommunication'),
   https = require('https'),
   mongoApi = require('../helpers/mongoApi'),
   Candle = require('../models/candle');
@@ -31,6 +31,7 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
     //Date,Symbol,Open,High,Low,Close,Volume BTC,Volume USD
     const parts = l.split(',');
     candles.push({
+      created: moment.utc(),
       date: parts[0],
       symbol,
       open: parseFloat(parts[2]),
@@ -108,7 +109,7 @@ const downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           symbol,
           date: { $gte: startDate, $lte: endDate },
         });
-        let historicalData = await downloadEquityData(
+        let historicalData = await downloadHistoricalEquityData(
           symbol,
           startDate,
           endDate
