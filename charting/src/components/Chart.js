@@ -11,20 +11,6 @@ import {
   ReferenceLine,
 } from 'recharts';
 
-const gradientOffset = (props) => {
-  const dataMax = Math.max(...props.data.map((d) => d[props.dataKeyName]));
-  const dataMin = Math.min(...props.data.map((d) => d[props.dataKeyName]));
-
-  if (dataMax <= 0) {
-    return 0;
-  }
-  if (dataMin >= 0) {
-    return 1;
-  }
-
-  return dataMax / (dataMax - dataMin);
-};
-
 const getTicks = (props) => {
   const allTicks = props.data.map((n) => n.name);
   if (props.maxTicks) {
