@@ -629,28 +629,32 @@ const CurrentDayResultsTable = (props) => {
         ></AgGridReact>
       </div>
       <Grid container className={classes.gridWrapper}>
-        <Grid item>
-          <Button
-            variant="contained"
-            className={classes.button}
-            onClick={handleRunNewJob}
-          >
-            Run new job
-          </Button>
-        </Grid>
-        <Grid item>
-          <Button
-            variant="contained"
-            className={classes.button}
-            startIcon={<ViewColumnIcon />}
-            onClick={handleChooseColumnsClicked}
-          >
-            Choose columns
-          </Button>
-          <Popper open={Boolean(anchorEl)} anchorEl={anchorEl}>
-            {getColumnChoices()}
-          </Popper>
-        </Grid>
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={handleRunNewJob}
+            >
+              Run new job
+            </Button>
+          </Grid>
+        )}
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              startIcon={<ViewColumnIcon />}
+              onClick={handleChooseColumnsClicked}
+            >
+              Choose columns
+            </Button>
+            <Popper open={Boolean(anchorEl)} anchorEl={anchorEl}>
+              {getColumnChoices()}
+            </Popper>
+          </Grid>
+        )}
         <Grid item>
           <Button
             variant="contained"
