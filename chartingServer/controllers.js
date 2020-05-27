@@ -5,6 +5,7 @@ const _ = require('lodash'),
   } = require('../helpers/symbolData'),
   { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
+  { runCurrentDayJob } = require('../helpers/currentDayJobRunner'),
   PatternStats = require('../models/patternStats'),
   CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
@@ -141,6 +142,15 @@ exports.queryTradeSimulationRuns = async (req, res, next) => {
     const correctedResultSize = results.slice(0, requestedSetSize);
 
     res.json({ results: correctedResultSize, isLastSet });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.runCurrentDayJob = async (req, res, next) => {
+  try {
+    const results = await runCurrentDayJob();
+    res.json(results);
   } catch (error) {
     return next(error);
   }

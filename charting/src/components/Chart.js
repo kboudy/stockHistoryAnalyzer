@@ -42,7 +42,6 @@ const getTicks = (props) => {
 };
 
 const Chart = (props) => {
-  debugger;
   return (
     <BarChart
       width={props.width}

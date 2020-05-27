@@ -22,13 +22,23 @@ const useStyles = makeStyles((theme) => ({
 
 function Explore(props) {
   const classes = useStyles();
+  const [singleSymbolMode, setSingleSymbolMode] = useState(false);
+
+  const handleModeChangeRequested = () => {
+    const newMode = !singleSymbolMode;
+    setSingleSymbolMode(newMode);
+  };
 
   return (
     <div className={classes.root}>
       <Paper>
         <Grid container className={classes.gridWrapper}>
           <Grid item xs={12}>
-            <CurrentDayResultsTable height={1100} />
+            <CurrentDayResultsTable
+              height={singleSymbolMode ? 400 : 1100}
+              singleSymbolMode={singleSymbolMode}
+              onModeChangeRequested={handleModeChangeRequested}
+            />
           </Grid>
         </Grid>
       </Paper>

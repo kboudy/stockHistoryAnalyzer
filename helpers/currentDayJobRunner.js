@@ -1,6 +1,5 @@
 const { getAvailableSymbolNames, isCrypto } = require('./symbolData'),
   _ = require('lodash'),
-  mongoApi = require('./mongoApi'),
   moment = require('moment'),
   {
     discoverPatternsForSymbol,
@@ -12,7 +11,8 @@ const { getAvailableSymbolNames, isCrypto } = require('./symbolData'),
 const getLogDate = () => {
   return `[${moment().format('YYYY-MM-DD HH:mm:ss')}]`;
 };
-exports.runJob = async () => {
+
+exports.runCurrentDayJob = async () => {
   const ignoreMatchesAboveThisScore = 12;
   const allSymbols = await getAvailableSymbolNames();
   console.log(`${getLogDate()}* running "CurrentDay" job`);
@@ -41,10 +41,10 @@ exports.runJob = async () => {
       symbolsAndPatternStats[symbol][nb] = results;
     }
   }
-  await CurrentDayEvaluationJobRun.create({
+  const job = await CurrentDayEvaluationJobRun.create({
     created: moment.utc(),
     results: symbolsAndPatternStats,
   });
-  await mongoApi.disconnectMongoose();
   console.log(`${getLogDate()}* complete`);
+  return job;
 };

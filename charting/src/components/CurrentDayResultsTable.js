@@ -3,7 +3,10 @@ import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 import nodeServer from '../helpers/nodeServer';
 import ViewColumnIcon from '@material-ui/icons/ViewColumn';
+import SkipNextIcon from '@material-ui/icons/SkipNext';
+import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
 import Popper from '@material-ui/core/Popper';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import List from '@material-ui/core/List';
@@ -28,12 +31,14 @@ import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter
 
 const currentDayTable_visibleColumnsKey = 'current_day_table.visible_columns';
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
-const currentDayTable_applyBasicFilteringKey =
-  'current_day_table.apply_basic_filting';
+const currentDayTable_usePrefilteringKey = 'current_day_table.use_prefilting';
 
 const useStyles = makeStyles((theme) => ({
-  columnChooserButton: { marginTop: theme.spacing(1) },
-  chkBasicFiltering: { marginLeft: theme.spacing(2) },
+  button: {
+    marginTop: theme.spacing(1),
+    marginLeft: theme.spacing(1),
+  },
+  chkUsePrefiltering: { marginLeft: theme.spacing(2) },
   columnChoiceList: {
     height: '1000px',
     overflow: 'auto',
@@ -48,57 +53,85 @@ const CurrentDayResultsTable = (props) => {
   const [gridApi, setGridApi] = useState(null);
   const [columnApi, setColumnApi] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [applyBasicFiltering, setApplyBasicFiltering] = useState(true);
+  const [currentSingleSymbol, setCurrentSingleSymbol] = useState(null);
+  const [usePrefiltering, setUsePrefiltering] = useState(true);
+  const [allSymbolsInGrid, setAllSymbolsInGrid] = useState([]);
+  const [selectedSymbols, setSelectedSymbols] = useState([]);
 
   const [gridData, setGridData] = useState([]);
+  const [allRows, setAllRows] = useState([]);
+
   const [visibleColumns, setVisibleColumns] = useState(null);
 
-  const showThisRow = (row, basicFiltering) => {
-    if (!basicFiltering) {
-      return true;
-    }
-    if (!row || parseInt(row.scoreCount) < 10) {
-      return false;
-    }
-    const avg_profitLossPercent_atBarX = row['avg_profitLossPercent_atBarX'];
-    for (const significantBar in avg_profitLossPercent_atBarX) {
-      const avgPL = parseFloat(avg_profitLossPercent_atBarX[significantBar]);
-      const sb = parseFloat(significantBar);
-      if (avgPL > sb * 0.5) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const reloadData = async () => {
-    let bfFromStorage = localStorage.getItem(
-      currentDayTable_applyBasicFilteringKey
-    );
-    const basicFiltering = !bfFromStorage || bfFromStorage === 'true';
-    setApplyBasicFiltering(basicFiltering);
-
+  const getLatestCurrentDayJobData = async () => {
     const { results } = (
       await nodeServer.get('getMostRecentCurrentDayResults')
     ).data;
-    const rows = [];
-    for (const symbol in results) {
-      for (const numberOfBars in results[symbol]) {
-        const instanceData = results[symbol][numberOfBars];
-
-        if (showThisRow(instanceData, basicFiltering)) {
-          rows.push({ symbol, numberOfBars, ...instanceData });
-        }
-      }
-    }
-    setGridData(rows);
+    return results;
   };
 
   useEffect(() => {
     (async () => {
-      await reloadData();
+      const results = await getLatestCurrentDayJobData();
+      const rows = [];
+      for (const symbol in results) {
+        for (const numberOfBars in results[symbol]) {
+          const rowData = results[symbol][numberOfBars];
+          rows.push({ symbol, numberOfBars, ...rowData });
+        }
+      }
+      setAllRows(rows);
+      setGridData([...rows]);
+      const allSymbols = _.orderBy(Object.keys(results), (r) => r);
+      setAllSymbolsInGrid(allSymbols);
+      setSelectedSymbols([]);
+
+      let bfFromStorage = localStorage.getItem(
+        currentDayTable_usePrefilteringKey
+      );
+      const prefiltering = !bfFromStorage || bfFromStorage === 'true';
+      setUsePrefiltering(prefiltering);
     })();
   }, []);
+
+  useEffect(() => {
+    if (currentSingleSymbol) {
+      setGridData(allRows.filter((r) => r.symbol === currentSingleSymbol));
+    } else if (usePrefiltering) {
+      const rowsToKeep = [];
+      for (const row of allRows) {
+        if (!row || parseInt(row.scoreCount) < 10) {
+          continue;
+        }
+        const avg_profitLossPercent_atBarX =
+          row['avg_profitLossPercent_atBarX'];
+        let keepThisRow = false;
+        if (!selectedSymbols.length || selectedSymbols.includes(row.symbol)) {
+          for (const significantBar in avg_profitLossPercent_atBarX) {
+            const avgPL = parseFloat(
+              avg_profitLossPercent_atBarX[significantBar]
+            );
+            const sb = parseFloat(significantBar);
+            if (avgPL > sb * 0.5) {
+              keepThisRow = true;
+              break;
+            }
+          }
+        }
+
+        if (keepThisRow) {
+          rowsToKeep.push(row);
+        }
+      }
+      setGridData(rowsToKeep);
+    } else {
+      setGridData([
+        ...allRows.filter(
+          (r) => !selectedSymbols.length || selectedSymbols.includes(r.symbol)
+        ),
+      ]);
+    }
+  }, [usePrefiltering, selectedSymbols, currentSingleSymbol]);
 
   const handleFilterChanged = async (e) => {
     const fm = e.api.getFilterModel();
@@ -197,14 +230,74 @@ const CurrentDayResultsTable = (props) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
 
-  const handleApplyBasicFilteringChanged = async () => {
-    const newVal = !applyBasicFiltering;
-    setApplyBasicFiltering(newVal);
+  const handleModeChange = () => {
+    const newModeIsSingleSymbol = !props.singleSymbolMode;
+    props.onModeChangeRequested(newModeIsSingleSymbol);
+    if (newModeIsSingleSymbol) {
+      if (usePrefiltering) {
+        setUsePrefiltering(false);
+      }
+
+      // single symbol mode
+      const firstSymbol =
+        selectedSymbols.length === 0 ? allSymbolsInGrid[0] : selectedSymbols[0];
+      setCurrentSingleSymbol(firstSymbol);
+    } else {
+      setCurrentSingleSymbol(null);
+    }
+  };
+
+  const handleRevealHiddenSymbols = () => {
+    setSelectedSymbols([]);
+  };
+
+  const handleHideUnselectedSymbols = () => {
+    const selectedRows = gridApi.getSelectedRows();
+    if (selectedRows.length > 0) {
+      const aggregatedSymbols = _.orderBy(
+        _.uniq(
+          selectedRows.map((r) => r.symbol),
+          (r) => r
+        ),
+        (r) => r
+      );
+      setSelectedSymbols(aggregatedSymbols);
+    }
+  };
+
+  const handlePreviousSingleSymbol = () => {
+    const syms = selectedSymbols.length ? selectedSymbols : allSymbolsInGrid;
+    let idx = syms.indexOf(currentSingleSymbol);
+    idx--;
+    if (idx < 0) {
+      idx = syms.length - 1;
+    }
+    setCurrentSingleSymbol(syms[idx]);
+  };
+
+  const handleNextSingleSymbol = () => {
+    const syms = selectedSymbols.length ? selectedSymbols : allSymbolsInGrid;
+    let idx = syms.indexOf(currentSingleSymbol);
+    idx++;
+    if (idx >= syms.length) {
+      idx = 0;
+    }
+    setCurrentSingleSymbol(syms[idx]);
+  };
+
+  const handleRunNewJob = async () => {
+    const res = await nodeServer.post('runCurrentDayJob');
+
+    // await reloadData(res.data.results);
+  };
+
+  const handleUsePrefilteringChanged = async () => {
+    const newVal = !usePrefiltering;
+    setUsePrefiltering(newVal);
     localStorage.setItem(
-      currentDayTable_applyBasicFilteringKey,
+      currentDayTable_usePrefilteringKey,
       newVal ? 'true' : 'false'
     );
-    await reloadData();
     getFiltersFromLocalStorage(gridApi);
   };
 
@@ -443,6 +536,11 @@ const CurrentDayResultsTable = (props) => {
     })();
   }, []);
 
+  const syms =
+    selectedSymbols && selectedSymbols.length
+      ? selectedSymbols
+      : allSymbolsInGrid;
+
   return (
     <div>
       <div className="ag-theme-balham" style={{ height: props.height }}>
@@ -527,14 +625,23 @@ const CurrentDayResultsTable = (props) => {
           onFilterChanged={handleFilterChanged}
           onGridReady={handleGridReady}
           sortingOrder={['asc', 'desc']}
-          rowSelection="single"
+          rowSelection={props.singleSymbolMode ? 'single' : 'multiple'}
         ></AgGridReact>
       </div>
       <Grid container className={classes.gridWrapper}>
         <Grid item>
           <Button
             variant="contained"
-            className={classes.columnChooserButton}
+            className={classes.button}
+            onClick={handleRunNewJob}
+          >
+            Run new job
+          </Button>
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            className={classes.button}
             startIcon={<ViewColumnIcon />}
             onClick={handleChooseColumnsClicked}
           >
@@ -545,14 +652,71 @@ const CurrentDayResultsTable = (props) => {
           </Popper>
         </Grid>
         <Grid item>
-          <FormControlLabel
-            className={classes.chkBasicFiltering}
-            control={<Checkbox name="chkBasicFiltering" />}
-            label="Apply basic filtering"
-            checked={applyBasicFiltering}
-            onChange={handleApplyBasicFilteringChanged}
-          />
+          <Button
+            variant="contained"
+            className={classes.button}
+            onClick={handleModeChange}
+          >
+            {props.singleSymbolMode
+              ? 'Switch to large grid mode'
+              : 'Switch to single symbol mode'}
+          </Button>
         </Grid>
+
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={handleHideUnselectedSymbols}
+            >
+              {'Hide unselected Symbols'}
+            </Button>
+          </Grid>
+        )}
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <FormControlLabel
+              className={classes.chkUsePrefiltering}
+              control={<Checkbox name="chkUsePrefiltering" />}
+              label="Use prefiltering"
+              checked={usePrefiltering}
+              onChange={handleUsePrefilteringChanged}
+            />
+          </Grid>
+        )}
+
+        {selectedSymbols && selectedSymbols.length > 0 && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={handleRevealHiddenSymbols}
+            >
+              {'Reveal hidden symbols'}
+            </Button>
+          </Grid>
+        )}
+        {props.singleSymbolMode && (
+          <>
+            <Grid item>
+              <IconButton
+                aria-label="previous"
+                onClick={handlePreviousSingleSymbol}
+              >
+                <SkipPreviousIcon />
+              </IconButton>
+            </Grid>
+            <Grid item>{`${currentSingleSymbol} (${
+              syms.indexOf(currentSingleSymbol) + 1
+            }/${syms.length})`}</Grid>
+            <Grid item>
+              <IconButton aria-label="next" onClick={handleNextSingleSymbol}>
+                <SkipNextIcon />
+              </IconButton>
+            </Grid>
+          </>
+        )}
       </Grid>
     </div>
   );
