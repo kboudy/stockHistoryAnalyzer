@@ -22,6 +22,7 @@ import {
   getSignificantBars,
   getMongoFilter,
   isObject,
+  isNullOrUndefined,
 } from '../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -33,6 +34,7 @@ const currentDayTable_visibleColumnsKey = 'current_day_table.visible_columns';
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
 const currentDayTable_usePrefilteringKey = 'current_day_table.use_prefilting';
 
+const tempCountKeySuffix = '_tempCount';
 const useStyles = makeStyles((theme) => ({
   button: {
     marginTop: theme.spacing(1),
@@ -57,6 +59,7 @@ const CurrentDayResultsTable = (props) => {
   const [usePrefiltering, setUsePrefiltering] = useState(true);
   const [allSymbolsInGrid, setAllSymbolsInGrid] = useState([]);
   const [selectedSymbols, setSelectedSymbols] = useState([]);
+  const [aggregateByNumberOfBars, setAggregateByNumberOfBars] = useState(false);
 
   const [gridData, setGridData] = useState([]);
   const [allRows, setAllRows] = useState([]);
@@ -94,9 +97,134 @@ const CurrentDayResultsTable = (props) => {
     })();
   }, []);
 
+  const clone = (obj) => {
+    return JSON.parse(JSON.stringify(obj));
+  };
+
+  const getAggregatedByNumberOfBarsData = () => {
+    if (allRows.length === 0) {
+      return [];
+    }
+
+    // set up a zero-d out template
+    const aggregated = clone(allRows[0]);
+    const fields = Object.keys(aggregated);
+    for (const field of fields) {
+      if (field === 'symbol') {
+      } else if (field === 'numberOfBars') {
+        aggregated[field] = -1;
+      } else if (field === 'sourceDate') {
+        aggregated[field] = '----';
+      } else if (field === 'scoreDates') {
+        aggregated[field] = [];
+      } else if (field === 'scoreCount' || field === 'avgScore') {
+        aggregated[field] = 0;
+      } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
+        aggregated[field] = clone(aggregated[field]);
+        const bars = Object.keys(aggregated[field]);
+        for (const b of bars) {
+          aggregated[field][b] = 0;
+        }
+      } else {
+        debugger;
+      }
+    }
+
+    // add everything up (if it needs to be avg'd, we'll do that next loop)
+    const aggregatedBySymbol = {};
+    for (const row of allRows) {
+      const { symbol } = row;
+      if (!aggregatedBySymbol[symbol]) {
+        aggregatedBySymbol[symbol] = clone(aggregated);
+        aggregatedBySymbol[symbol].symbol = symbol; // looks weird, but we're only temporarily grouping by symbol here
+      }
+      const abs = aggregatedBySymbol[symbol];
+      const fields = Object.keys(row);
+      for (const field of fields) {
+        if (field === 'numberOfBars') {
+          abs[field] = -1;
+        } else if (field === 'scoreDates') {
+          abs[field] = [...abs[field], ...row[field]];
+        } else if (field === 'scoreCount' || field === 'avgScore') {
+          abs[field] = abs[field] + row[field];
+        } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
+          const bars = Object.keys(abs[field]);
+          for (const b of bars) {
+            if (!isNullOrUndefined(row[field][b])) {
+              abs[field][b] = abs[field][b] + row[field][b];
+              // keep a count, for averaging (because there are nulls in here, and we don't want them in the avg)
+              const countFieldKey = `${field}${tempCountKeySuffix}`;
+              if (!abs[countFieldKey]) {
+                abs[countFieldKey] = {};
+              }
+              const currentCount = abs[countFieldKey][b]
+                ? abs[countFieldKey][b] + 1
+                : 1;
+              abs[countFieldKey][b] = currentCount;
+            }
+          }
+        }
+      }
+    }
+
+    // finally, average it out
+    const flattenedRows = [];
+    const symbols = Object.keys(aggregatedBySymbol);
+    for (const symbol of symbols) {
+      const thisAgg = aggregatedBySymbol[symbol];
+      const thisAggBefore = { ...thisAgg };
+
+      const fields = [...Object.keys(thisAgg)];
+
+      for (const field of fields) {
+        if (field === 'symbol' || field.endsWith(tempCountKeySuffix)) {
+          continue;
+        }
+        if (field === 'scoreDates') {
+          thisAgg[field] = _.orderBy(thisAgg[field], (d) => d);
+        } else if (field === 'avgScore') {
+          if (thisAgg['scoreDates'].length > 0) {
+            thisAgg[field] =
+              Math.round(
+                (parseFloat(thisAgg[field]) * 100) /
+                  thisAgg['scoreDates'].length
+              ) / 100;
+          }
+        } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
+          const countFieldKey = `${field}${tempCountKeySuffix}`;
+          const bars = Object.keys(thisAgg[field]);
+          for (const b of bars) {
+            if (
+              !isNullOrUndefined(thisAgg[field][b]) &&
+              !isNullOrUndefined(thisAgg[countFieldKey]) &&
+              !isNullOrUndefined(thisAgg[countFieldKey][b]) &&
+              thisAgg[countFieldKey][b] > 0
+            ) {
+              const val =
+                Math.round(
+                  (parseFloat(thisAgg[field][b]) * 100) /
+                    parseFloat(thisAgg[countFieldKey][b])
+                ) / 100;
+              //console.log(`${field}/${countFieldKey}: ${val}`);
+              thisAgg[field][b] = val;
+            }
+          }
+          //delete thisAgg[countFieldKey];
+        }
+      }
+      flattenedRows.push(thisAgg);
+    }
+
+    return flattenedRows;
+  };
+
+  //------------------------------------------------
+  // All filtering takes place here
   useEffect(() => {
     if (currentSingleSymbol) {
       setGridData(allRows.filter((r) => r.symbol === currentSingleSymbol));
+    } else if (aggregateByNumberOfBars) {
+      setGridData(getAggregatedByNumberOfBarsData());
     } else if (usePrefiltering) {
       const rowsToKeep = [];
       for (const row of allRows) {
@@ -107,14 +235,17 @@ const CurrentDayResultsTable = (props) => {
           row['avg_profitLossPercent_atBarX'];
         let keepThisRow = false;
         if (!selectedSymbols.length || selectedSymbols.includes(row.symbol)) {
-          for (const significantBar in avg_profitLossPercent_atBarX) {
-            const avgPL = parseFloat(
-              avg_profitLossPercent_atBarX[significantBar]
-            );
-            const sb = parseFloat(significantBar);
-            if (avgPL > sb * 0.5) {
-              keepThisRow = true;
-              break;
+          if (avg_profitLossPercent_atBarX) {
+            const significantBars = Object.keys(avg_profitLossPercent_atBarX);
+            for (const significantBar of significantBars) {
+              const avgPL = parseFloat(
+                avg_profitLossPercent_atBarX[significantBar]
+              );
+              const sb = parseFloat(significantBar);
+              if (avgPL > sb * 0.5) {
+                keepThisRow = true;
+                break;
+              }
             }
           }
         }
@@ -131,7 +262,13 @@ const CurrentDayResultsTable = (props) => {
         ),
       ]);
     }
-  }, [usePrefiltering, selectedSymbols, currentSingleSymbol]);
+  }, [
+    aggregateByNumberOfBars,
+    currentSingleSymbol,
+    selectedSymbols,
+    usePrefiltering,
+  ]);
+  //------------------------------------------------
 
   const handleFilterChanged = async (e) => {
     const fm = e.api.getFilterModel();
@@ -144,7 +281,6 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const handleColumnVisibleToggle = (groupKey, colName) => {
-    console.log(`handleColumnVisibleToggle(${groupKey},${colName})`);
     const vc = { ...visibleColumns };
     if (!vc[groupKey]) {
       vc[groupKey] = [];
@@ -224,6 +360,24 @@ const CurrentDayResultsTable = (props) => {
         </List>
       </ClickAwayListener>
     );
+  };
+
+  const handleToggleAggregateBySymbol = () => {
+    setAggregateByNumberOfBars(!aggregateByNumberOfBars);
+    let vcFromStorage = localStorage.getItem(currentDayTable_visibleColumnsKey);
+    if (!vcFromStorage) {
+      vcFromStorage = {
+        ['Bar Groups']: columnDefs
+          .map((c) => c.headerName)
+          .filter((c) => c.toLowerCase().startsWith('bar')),
+        ['Bar Fields']: columnDefs[1].children.map(
+          (c) => c.headerName.split('.')[0]
+        ),
+      };
+    } else {
+      vcFromStorage = JSON.parse(vcFromStorage);
+    }
+    setColumnDefs(addHideWhereNecessary(columnDefs, vcFromStorage));
   };
 
   const handleChooseColumnsClicked = (event) => {
@@ -321,24 +475,32 @@ const CurrentDayResultsTable = (props) => {
     }, 500);
   };
 
-  const addHideWhereNecessary = (colDefs, vcFromStorage) => {
+  const addHideWhereNecessary = (colDefs, vc) => {
     const cd = [...colDefs];
     // first set show/hide on the bar groups
     for (const c of cd) {
       if (c.headerName.toLowerCase().startsWith('bar ')) {
-        const hideAllChildren = !vcFromStorage['Bar Groups'].includes(
-          c.headerName
-        );
+        const hideAllChildren = !vc['Bar Groups'].includes(c.headerName);
         // then set each of the sub columns
         for (const subCol of c.children) {
           subCol.hide =
             hideAllChildren ||
-            vcFromStorage['Bar Fields'].filter((vcc) =>
-              subCol.headerName.startsWith(vcc)
-            ).length === 0;
+            vc['Bar Fields'].filter((vcc) => subCol.headerName.startsWith(vcc))
+              .length === 0;
 
           if (columnApi) {
             columnApi.hideColumn(subCol.field, subCol.hide);
+          }
+        }
+      } else if (c.headerName === 'Primary criteria') {
+        for (const subCol of c.children) {
+          if (
+            subCol.field === 'numberOfBars' ||
+            subCol.field === 'sourceDate'
+          ) {
+            if (columnApi) {
+              columnApi.hideColumn(subCol.field, !aggregateByNumberOfBars);
+            }
           }
         }
       }
@@ -664,7 +826,6 @@ const CurrentDayResultsTable = (props) => {
               : 'Switch to single symbol mode'}
           </Button>
         </Grid>
-
         {!props.singleSymbolMode && (
           <Grid item>
             <Button
@@ -673,6 +834,19 @@ const CurrentDayResultsTable = (props) => {
               onClick={handleHideUnselectedSymbols}
             >
               {'Hide unselected Symbols'}
+            </Button>
+          </Grid>
+        )}
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={handleToggleAggregateBySymbol}
+            >
+              {aggregateByNumberOfBars
+                ? 'Stop aggregating by numberOfBars'
+                : 'Aggregate by numberOfBars'}
             </Button>
           </Grid>
         )}
@@ -687,7 +861,6 @@ const CurrentDayResultsTable = (props) => {
             />
           </Grid>
         )}
-
         {selectedSymbols && selectedSymbols.length > 0 && (
           <Grid item>
             <Button
