@@ -50,7 +50,16 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   }
 };
 
-exports.downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
+exports.getMostRecentEquityTradingDay = async () => {
+  let oneWeekAgo = moment().add(-7, 'days').format('YYYY-MM-DD');
+  let today = moment().format('YYYY-MM-DD');
+
+  const candles = await downloadHistoricalEquityData('SPY', oneWeekAgo, today);
+  const maxDate = _.max(candles.map((c) => c.date));
+  return maxDate;
+};
+
+const downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
   if (!current_access_token) {
     await authenticate();
   }
@@ -81,6 +90,7 @@ exports.downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
   }
   return _.orderBy(candles, (c) => c.date);
 };
+exports.downloadHistoricalEquityData = downloadHistoricalEquityData;
 
 exports.downloadBulkCurrentEquityData = async (symbols) => {
   if (!current_access_token) {
