@@ -23,6 +23,7 @@ import {
   getMongoFilter,
   isObject,
   isNullOrUndefined,
+  numberFormatter,
 } from '../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -283,9 +284,14 @@ const CurrentDayResultsTable = (props) => {
       if (field.includes('_atBarX') || field.includes('_byBarX')) {
         const parts = field.split('.');
         const significantBar = parseInt(parts[parts.length - 1]);
-        const { symbol, scoreDates } = e.data;
+        const { symbol, scoreDates, numberOfBars } = e.data;
         if (props.onDetailRequested) {
-          props.onDetailRequested(symbol, scoreDates, significantBar);
+          props.onDetailRequested(
+            symbol,
+            scoreDates,
+            parseInt(significantBar),
+            parseInt(numberOfBars)
+          );
         }
       }
     }
@@ -589,23 +595,27 @@ const CurrentDayResultsTable = (props) => {
               field: `stdDev_maxUpsidePercent_byBarX.${sb}`,
               headerTooltip: `stdDev_maxUpsidePercent_byBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
+              valueFormatter: numberFormatter,
             },
             {
               headerName: `avg_maxDownsidePercent_byBarX.${sb}`,
               field: `avg_maxDownsidePercent_byBarX.${sb}`,
               headerTooltip: `avg_maxDownsidePercent_byBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
+              valueFormatter: numberFormatter,
             },
             {
               headerName: `stdDev_maxDownsidePercent_byBarX.${sb}`,
               field: `stdDev_maxDownsidePercent_byBarX.${sb}`,
               headerTooltip: `stdDev_maxDownsidePercent_byBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
+              valueFormatter: numberFormatter,
             },
             {
               headerName: `avg_profitLossPercent_atBarX.${sb}`,
               field: `avg_profitLossPercent_atBarX.${sb}`,
               headerTooltip: `avg_profitLossPercent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
               cellClassRules: {
                 greenLevel1: (params) => {
@@ -632,12 +642,14 @@ const CurrentDayResultsTable = (props) => {
               headerName: `upsideDownsideRatio_byBarX.${sb}`,
               field: `upsideDownsideRatio_byBarX.${sb}`,
               headerTooltip: `upsideDownsideRatio_byBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `percentProfitable_atBarX.${sb}`,
               field: `percentProfitable_atBarX.${sb}`,
               headerTooltip: `percentProfitable_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
               cellClassRules: {
                 greenLevel1: (params) => {
@@ -664,36 +676,42 @@ const CurrentDayResultsTable = (props) => {
               headerName: `avg_maxUpsidePercent_byBarX.${sb}`,
               field: `avg_maxUpsidePercent_byBarX.${sb}`,
               headerTooltip: `avg_maxUpsidePercent_byBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `percentProfitable_by_1_percent_atBarX.${sb}`,
               field: `percentProfitable_by_1_percent_atBarX.${sb}`,
               headerTooltip: `percentProfitable_by_1_percent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `percentProfitable_by_2_percent_atBarX.${sb}`,
               field: `percentProfitable_by_2_percent_atBarX.${sb}`,
               headerTooltip: `percentProfitable_by_2_percent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `percentProfitable_by_5_percent_atBarX.${sb}`,
               field: `percentProfitable_by_5_percent_atBarX.${sb}`,
               headerTooltip: `percentProfitable_by_5_percent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `percentProfitable_by_10_percent_atBarX.${sb}`,
               field: `percentProfitable_by_10_percent_atBarX.${sb}`,
               headerTooltip: `percentProfitable_by_10_percent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
             {
               headerName: `stdDev_profitLossPercent_atBarX.${sb}`,
               field: `stdDev_profitLossPercent_atBarX.${sb}`,
               headerTooltip: `stdDev_profitLossPercent_atBarX.${sb}`,
+              valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
           ],

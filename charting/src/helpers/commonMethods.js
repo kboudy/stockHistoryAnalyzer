@@ -290,7 +290,7 @@ export const getSignificantBars = async () => {
   return cachedSignificantBars;
 };
 
-const numberFormatter = (params) => {
+export const numberFormatter = (params) => {
   if (isObject(params.value)) {
     const firstKey = Object.keys(params.value)[0];
     return params.value[firstKey];

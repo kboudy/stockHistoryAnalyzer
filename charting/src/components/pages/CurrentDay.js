@@ -1,7 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import React, { useEffect, useState } from 'react';
+import { withStyles, makeStyles } from '@material-ui/core/styles';
 
 import Grid from '@material-ui/core/Grid';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import CurrentDayResultsTable from '../CurrentDayResultsTable';
 import Chart from '../Chart';
@@ -26,6 +32,7 @@ function CurrentDay(props) {
   const classes = useStyles();
   const [singleSymbolMode, setSingleSymbolMode] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(null);
+  const [tableData, setTableData] = useState([]);
 
   const [chartData, setChartData] = useState({
     symbol: null,
@@ -50,25 +57,71 @@ function CurrentDay(props) {
     })();
   }, []);
 
-  const handleDetailRequested = async (symbol, scoreDates, significantBar) => {
+  const StyledTableCell = withStyles((theme) => ({
+    head: {
+      backgroundColor: theme.palette.common.black,
+      color: theme.palette.common.white,
+    },
+  }))(TableCell);
+
+  const handleDetailRequested = async (
+    symbol,
+    scoreDates,
+    significantBar,
+    numberOfBars
+  ) => {
     let candles;
     if (chartData.symbol !== symbol) {
       candles = (await nodeServer.get(`candles?symbol=${symbol}`)).data;
     } else {
       candles = chartData.candles;
     }
+
     const rechartsFormattedData = [];
     for (const scoreDate of scoreDates) {
-      const buyCandle = candles.filter((c) => c.date === scoreDate)[0];
-      const buyCandleIndex = candles.indexOf(buyCandle);
+      const patternBeginCandle = candles.filter((c) => c.date === scoreDate)[0];
+      const patternBeginIndex = candles.indexOf(patternBeginCandle);
+
+      const buyCandleIndex = patternBeginIndex + numberOfBars - 1;
+      const buyCandle = candles[buyCandleIndex];
       const sellCandle = candles[buyCandleIndex + significantBar];
 
       const pl = toTwoDecimals(
         ((sellCandle.close - buyCandle.close) * 100) / buyCandle.close
       );
-
       rechartsFormattedData.push({ name: scoreDate, ['p/l %']: pl });
     }
+
+    // aggregate those results for the table
+    const tableData = [];
+
+    const percentProfitable =
+      Math.round(
+        (10000 *
+          rechartsFormattedData.filter(
+            (r) => Math.round(r['p/l %'] * 10) / 10 > 0
+          ).length) /
+          rechartsFormattedData.length
+      ) / 100;
+    setTableData([
+      {
+        name: ['avg pl %'],
+        value:
+          Math.round(
+            (10 *
+              _.sumBy(
+                rechartsFormattedData,
+                (r) => Math.round(r['p/l %'] * 10) / 10
+              )) /
+              rechartsFormattedData.length
+          ) / 10,
+      },
+      {
+        name: ['% profitable'],
+        value: percentProfitable,
+      },
+      { name: ['trade count'], value: scoreDates.length },
+    ]);
 
     const hsd = {
       symbol,
@@ -107,6 +160,35 @@ function CurrentDay(props) {
                 dataKeyName={'p/l %'}
                 maxTicks={5}
               />
+            </Grid>
+          )}
+          {singleSymbolMode && tableData.length > 0 && (
+            <Grid item>
+              <TableContainer
+                component={Paper}
+                className={classes.formControlWrapper}
+              >
+                <Table className={classes.table} aria-label="simple table">
+                  <TableHead>
+                    <TableRow>
+                      <StyledTableCell>Aggregated Result</StyledTableCell>
+                      <StyledTableCell align="right">Value</StyledTableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableData.map((row) => (
+                      <TableRow key={row.name}>
+                        <StyledTableCell component="th" scope="row">
+                          {row.name}
+                        </StyledTableCell>
+                        <StyledTableCell align="right">
+                          {row.value}
+                        </StyledTableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Grid>
           )}
           <Grid item xs={12}>
