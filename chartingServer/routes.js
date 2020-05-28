@@ -12,7 +12,6 @@ module.exports = (app) => {
     controllers.getMostRecentCurrentDayResults
   );
   app.post('/runTradeSimulation', controllers.runTradeSimulation);
-  app.post('/runCurrentDayJob', controllers.runCurrentDayJob);
   app.post('/tradeSimulationRuns', controllers.queryTradeSimulationRuns);
   app.get(
     '/patternStatsJobRunSymbols',

@@ -9,6 +9,6 @@ const axios = require('axios'),
 
 (async () => {
   await mongoApi.connectMongoose();
-  await downloadAndSaveMultipleSymbolHistory(symbolsToDownload);
+  await downloadAndSaveMultipleSymbolHistory(['ACA']);
   await mongoApi.disconnectMongoose();
 })();

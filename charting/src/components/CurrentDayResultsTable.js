@@ -33,7 +33,6 @@ import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter
 
 const currentDayTable_visibleColumnsKey = 'current_day_table.visible_columns';
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
-const currentDayTable_usePrefilteringKey = 'current_day_table.use_prefilting';
 
 const tempCountKeySuffix = '_tempCount';
 const useStyles = makeStyles((theme) => ({
@@ -41,7 +40,6 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(1),
     marginLeft: theme.spacing(1),
   },
-  chkUsePrefiltering: { marginLeft: theme.spacing(2) },
   columnChoiceList: {
     height: '1000px',
     overflow: 'auto',
@@ -57,7 +55,6 @@ const CurrentDayResultsTable = (props) => {
   const [columnApi, setColumnApi] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentSingleSymbol, setCurrentSingleSymbol] = useState(null);
-  const [usePrefiltering, setUsePrefiltering] = useState(true);
   const [allSymbolsInGrid, setAllSymbolsInGrid] = useState([]);
   const [selectedSymbols, setSelectedSymbols] = useState([]);
   const [aggregateBySymbol, setAggregateBySymbol] = useState(false);
@@ -71,6 +68,7 @@ const CurrentDayResultsTable = (props) => {
     const { results } = (
       await nodeServer.get('getMostRecentCurrentDayResults')
     ).data;
+    debugger;
     const allSymbols = _.orderBy(Object.keys(results), (r) => r);
     const rows = [];
     for (const symbol in results) {
@@ -88,12 +86,6 @@ const CurrentDayResultsTable = (props) => {
     setGridData([...rows]);
     setAllSymbolsInGrid(allSymbols);
     setSelectedSymbols([]);
-
-    let bfFromStorage = localStorage.getItem(
-      currentDayTable_usePrefilteringKey
-    );
-    const prefiltering = !bfFromStorage || bfFromStorage === 'true';
-    setUsePrefiltering(prefiltering);
   };
 
   useEffect(() => {
@@ -233,36 +225,6 @@ const CurrentDayResultsTable = (props) => {
       setGridData(allRows.filter((r) => r.symbol === currentSingleSymbol));
     } else if (aggregateBySymbol) {
       setGridData(getAggregatedBySymbolData());
-    } else if (usePrefiltering) {
-      const rowsToKeep = [];
-      for (const row of allRows) {
-        if (!row || parseInt(row.scoreCount) < 10) {
-          continue;
-        }
-        const avg_profitLossPercent_atBarX =
-          row['avg_profitLossPercent_atBarX'];
-        let keepThisRow = false;
-        if (!selectedSymbols.length || selectedSymbols.includes(row.symbol)) {
-          if (avg_profitLossPercent_atBarX) {
-            const significantBars = Object.keys(avg_profitLossPercent_atBarX);
-            for (const significantBar of significantBars) {
-              const avgPL = parseFloat(
-                avg_profitLossPercent_atBarX[significantBar]
-              );
-              const sb = parseFloat(significantBar);
-              if (avgPL > sb * 0.5) {
-                keepThisRow = true;
-                break;
-              }
-            }
-          }
-        }
-
-        if (keepThisRow) {
-          rowsToKeep.push(row);
-        }
-      }
-      setGridData(rowsToKeep);
     } else {
       setGridData([
         ...allRows.filter(
@@ -270,12 +232,7 @@ const CurrentDayResultsTable = (props) => {
         ),
       ]);
     }
-  }, [
-    aggregateBySymbol,
-    currentSingleSymbol,
-    selectedSymbols,
-    usePrefiltering,
-  ]);
+  }, [aggregateBySymbol, currentSingleSymbol, selectedSymbols]);
   //------------------------------------------------
 
   const handleCellClicked = (e) => {
@@ -426,10 +383,6 @@ const CurrentDayResultsTable = (props) => {
     const newModeIsSingleSymbol = !props.singleSymbolMode;
     props.onModeChangeRequested(newModeIsSingleSymbol);
     if (newModeIsSingleSymbol) {
-      if (usePrefiltering) {
-        setUsePrefiltering(false);
-      }
-
       // single symbol mode
       const firstSymbol =
         selectedSymbols.length === 0 ? allSymbolsInGrid[0] : selectedSymbols[0];
@@ -475,32 +428,6 @@ const CurrentDayResultsTable = (props) => {
       idx = 0;
     }
     setCurrentSingleSymbol(syms[idx]);
-  };
-
-  const handleRunNewJob = async () => {
-    const { results } = (await nodeServer.post('runCurrentDayJob')).data;
-    const allSymbols = _.orderBy(Object.keys(results), (r) => r);
-    const rows = [];
-    for (const symbol in results) {
-      for (const numberOfBars in results[symbol]) {
-        const rowData = results[symbol][numberOfBars];
-        rows.push({ symbol, numberOfBars, ...rowData });
-      }
-    }
-    setAllRows(rows);
-    setGridData([...rows]);
-    setAllSymbolsInGrid(allSymbols);
-    setSelectedSymbols([]);
-  };
-
-  const handleUsePrefilteringChanged = async () => {
-    const newVal = !usePrefiltering;
-    setUsePrefiltering(newVal);
-    localStorage.setItem(
-      currentDayTable_usePrefilteringKey,
-      newVal ? 'true' : 'false'
-    );
-    getFiltersFromLocalStorage(gridApi);
   };
 
   const getFiltersFromLocalStorage = (gApi) => {
@@ -856,17 +783,6 @@ const CurrentDayResultsTable = (props) => {
             <Button
               variant="contained"
               className={classes.button}
-              onClick={handleRunNewJob}
-            >
-              Run new job
-            </Button>
-          </Grid>
-        )}
-        {!props.singleSymbolMode && (
-          <Grid item>
-            <Button
-              variant="contained"
-              className={classes.button}
               startIcon={<ViewColumnIcon />}
               onClick={handleChooseColumnsClicked}
             >
@@ -910,17 +826,6 @@ const CurrentDayResultsTable = (props) => {
                 ? 'Stop aggregating by symbol'
                 : 'Aggregate by symbol'}
             </Button>
-          </Grid>
-        )}
-        {!props.singleSymbolMode && !aggregateBySymbol && (
-          <Grid item>
-            <FormControlLabel
-              className={classes.chkUsePrefiltering}
-              control={<Checkbox name="chkUsePrefiltering" />}
-              label="Use prefiltering"
-              checked={usePrefiltering}
-              onChange={handleUsePrefilteringChanged}
-            />
           </Grid>
         )}
         {selectedSymbols && selectedSymbols.length > 0 && (

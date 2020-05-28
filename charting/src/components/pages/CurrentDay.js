@@ -86,10 +86,12 @@ function CurrentDay(props) {
       const buyCandle = candles[buyCandleIndex];
       const sellCandle = candles[buyCandleIndex + significantBar];
 
-      const pl = toTwoDecimals(
-        ((sellCandle.close - buyCandle.close) * 100) / buyCandle.close
-      );
-      rechartsFormattedData.push({ name: scoreDate, ['p/l %']: pl });
+      if (buyCandle && sellCandle) {
+        const pl = toTwoDecimals(
+          ((sellCandle.close - buyCandle.close) * 100) / buyCandle.close
+        );
+        rechartsFormattedData.push({ name: scoreDate, ['p/l %']: pl });
+      }
     }
 
     // aggregate those results for the table

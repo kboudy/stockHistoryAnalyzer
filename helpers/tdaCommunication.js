@@ -13,7 +13,7 @@ let lastAuthenticated = null;
 let requestDateTimes = [];
 const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   let res;
-  let retryCount = 3;
+  let retryCount = 4;
   while (retryCount > 0) {
     let requestDateTimes_inLast5Seconds = [];
     let requestDateTimes_inLast60Seconds = [];
@@ -39,12 +39,18 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
       return res;
     } catch (err) {
       retryCount--;
-      if (retryCount > 0 && err.response && err.response.status === 429) {
-        console.log(
-          chalk.red(
-            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}, 60 seconds: ${requestDateTimes_inLast60Seconds.length}`
-          )
-        );
+      if (retryCount > 0) {
+        if (err.response && err.response.status === 429) {
+          console.log(
+            chalk.red(
+              `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}, 60 seconds: ${requestDateTimes_inLast60Seconds.length}`
+            )
+          );
+        } else if (err.response && err.response.status === 404) {
+          console.log(chalk.red(`Error 404 - retrying`));
+        } else {
+          console.log(chalk.red(`Error - retrying: ${err.message}`));
+        }
         await sleep(5000);
       } else {
         throw err;

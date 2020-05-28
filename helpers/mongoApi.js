@@ -8,6 +8,10 @@ const INDEX_NAME = 'stock_analysis',
 const mongoUrl = `mongodb://${MONGO_HOST_NAME}:${MONGO_PORT}/${INDEX_NAME}`;
 exports.mongoUrl = mongoUrl;
 
+// this keeps the ensureIndex warnings away
+// https://github.com/Automattic/mongoose/issues/6890
+mongoose.set('useCreateIndex', true);
+
 const connectMongoose = async () => {
   const dbOptions = {
     useFindAndModify: false,
