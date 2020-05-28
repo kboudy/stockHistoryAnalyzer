@@ -1,21 +1,11 @@
-const path = require('path');
+// PURPOSE: Look through large list of symbols (obtained by EODData) & query tda for options data.  Record highest open interest contract, if it exists
 
-exports.TDA_consumerKey = 'MV1NRA7OBRDGEAZPLQHQ1GN2V5KTBFH5';
-exports.TDA_authCode =
-  'vSqqjaQ3u%2FxyzOJl15j5T0iQO2GYTqe%2BCH4N%2FzUz50RNPDWeoi70tflnWz6QFDAvsg7ZHXJNFSNwyH4YST7hKmlxz6Ukc5EbBIKos3Meh%2Bar1MK%2FlK3XHPfdhDNGZHdH9Bup%2F1vwmVdXs04fsqFBi0xyP2Gc%2BdOqktHQ1qQM%2BmIALDbxmbcBNRgLfAYtGvz037HZJ230jd3PhYgx1DTnffoTnATfKSZHt23oUtj4xV2UAzT5kxhYo3qROxIhkfj40Rs9fnBrA%2Bvj1DybTLey4v%2BVpsWzKcDoNjAfMUL24qHWP5AHLrAoxeBWRqZtEP2Aq77swkhDoZVa8d40FI89ZlnynQRLrWFK%2Fc%2Bg9jrnmSDE8MayZiapzWOg77%2FaxbFdUHA%2FZ29CBk26FIWdMg6Iba0QQ1R5spoE7k2bBE1FsqoWTDc939cxDwpnaBo3xAwPImbAO100MQuG4LYrgoVi%2FJHHvlBNL4fdQ8%2FCq5IIqRiLgwnh8CfcvsRz9KP8EeRoG9%2BtR3lYTFS0i4x2iQWeOxP1tSafEYR2BwAUJ0vcDnR2sba4ZuOyHrFfOb2DXoGzE8uFmKNiSTET6bZua%2BVxzJwRZBoat02A5hdy3BwX%2FN3Rbguhkjt8ZrvoqBbO3xWM0fYXkBf%2BMJFrASOQT60D%2FmDck%2F2JT%2BR0UAxKdYTxXsWdX9bbg9H7zT4%2BV8w544RxHwhFv64jA0R6uFg2jJ4oAjtT3V1M5Ky12q1WrRhn0bSD89%2F%2BwBCqx7WCwhkmSZmYenIu47mm5wyyhQkmCn%2BEnDgdrX46Jipnxg1j1lojP4sznWUqRYGIHVSVuYPEvoqfxImLHGs%2BtwhojDT3iupia2PCeBhkRQFp53f8pplm1n5tpS8qrVGIqiqlYzxxbHLt02%2BkJdIja5kzmip9Cn9XCBEJ%2BLXCuEc7212FD3x19z9sWBHDJACbC00B75E';
+const _ = require('lodash'),
+  mongoApi = require('../helpers/mongoApi'),
+  fs = require('fs'),
+  { getOptionChainData } = require('../helpers/tdaCommunication');
 
-exports.TDA_accessToken = `MJyfiybbi7Ye/xS+UPmfUpnmQDYA/nUSBU0JrsGwsez9UDhHfBqwBzfYkhUxrRNNJiJJ3O1KHuo90fGA8xyHpK+P4pjp2xpYmf63i9Ay4mtsynteqYxZcUit1uYcqqtXEgLBxNrvDj0vkZ5ymQN5kLcn1R39l6MObnoWpybFxMu3yL1IFWyQmtm+70j3piLaE2LVZXRXkPChYit15iM4qjhYjlaiBq7mcXKrtwC+DJgI6lxeI1P6bG7+l+YVJqxF57+gieQMr9om0DlvEx3l7Zi72TcxrK6XpKH6rjBjJ27lf4vTQfN9oW2d7KcLuuQaQnN08wBYS1dM/btti+Z1lvN6DiHMQLK771XPdMR8oDyFOBaIxqB6/HzwLNK2+x/zaVyIHWLYegvuVaRkW4ApMQaixf5viXYrhsiT8EFnlKkHvP4Kb0JITZZ/1AfeyXIDeHCdIOAR1eOHh9BNLwPx8BRSm/93AIbvGs12q7vjABkWTmAvVDFl9eldEpKzxckOux/7rG8TvQALwcsebvhI9vQHZkcW8kbI0rLiGffp67I/0bphhnctvSmoz6nvmqlxNhg68s+KI0XtkMW46100MQuG4LYrgoVi/JHHvldb/Vf+scOY2LUlZi9I1dQI1t/GC0rjhl9EmfCyB+a0gyY+f9mlnlNZ8Efqr1qkX5fNAlqmAS2LQH5r8/gdjd2ZThR1Z4s+IZwHDkNmqaXiqtmucaqBZ+PcBUkTkiikjVAbBZzpuA0mCQHeDji7CWuKBMdGJF0SP8s+HTMZVpBRNU4XbeJW2qMZFNWADvoSMG4zj9m0vxjBlsxP//5HmzpclggHN+qj30i0Dxo9G1xY9P0PVWRR7KTM1eIqBDBfIFzn/p+tzr7w9I6BUXvxgJe6B9OA0Hm45S8CWPCQBGUgyUyeSgMXN8vcvYsheaW75IOUhgsPuPwGpoe2YNpDs7vA5BngFuvWy3ZmAxCMo3423HGl9xSGzpcVugTI7CCU5OgTCAZiYk4U8GkMQ4Nuy/8MOuoGflk9nu6vS+LFb5B4C2YJVSGIx8IbnX0RH+1UQyJ4MzK8hf0+kErP/17KCnJf/e2fp7TvD3hQPUdtOGJ5dDZkiHqeiGwte9V0Xs/PY9w9rbfgydN3c/R+uE1BeIRxJol3cRPpZQg8I703xAEwJINMvoBvMmZ8ZXCOctYsFKM1FIhGWPabhaIKDw==212FD3x19z9sWBHDJACbC00B75E`;
-
-exports.TDA_refreshToken =
-  '91DCiHnzBv/F4HWHS4336mFwkuPXxSiqOZA0AaF3czHj3LgDun6hGxH4+nVQ6rH0wzVSLUp2Ed1a0EqA86sZbIj7c49YEoQuyGYd86ECS1uPuQbaRxdlupR0WpGF0FiCggpYJcj/3UsyQt69nsNjQQ73vR8EMfDiRK2ILw8sjiGhjW4wcXsoAnTnINjhpaP7OSue8Ajb+e+vTPCvQbfHA60VDHPBLY+edVCYqNWXRLSCAvFKJc/vZsgaqiupDYegGSOqGERVlVMKOQ8wCf1WiMKbXK9HyM78FV4AFFgQMYoR77gifOIWKUPSJYG/NHpKiMWQBCh4GP5e0T35f1dipDdTEI8xvLdJNviLK57EhQOy2fBQ1EucjUx0n0Fowf5+1s1x8281OOPy4wyd8WA/m42nygl6goxPh323RsR1saV0ci2sE74OvisXYwt100MQuG4LYrgoVi/JHHvlogPSxfbfW48wfdZwSYpyNIW0ue8mbll1BySPaqeOUbKEJWESxRO4ea6DBvhJc4QDGMkGXbG6ISMMJ38REylTHD+Hb19jCVxCGIqiRXQvPhs+DuExDhkkU34DLe2g/lGPh+eBiHF0WRS9sMbL7tRqCNTY9VtwNhJtkUBzWM7DRaeNsbAF8ex13RHvEtf8iXe4TjS3rNQLgOcWykSsW3uRHk/iAhbP+EODWzl+K+HTbZbGUF8hAN2StN0Zlmsb9GgzCWkAzgJAETZGUzxKjEEzvLi5ffoGl+M6ETbgKBx4BBQZSShuIxM/u77ttgvQ6hIpVlcPOigiqTERHHSZdi2O12x8/cajblqEIR58myspsmhm7gVZDFlcoLE3kNiUVHuEC2vKhvzsN45QdJOMuN95hhbMpJLdy208kvw3s+PsL2D4akPg72pjwkmLFFk=212FD3x19z9sWBHDJACbC00B75E';
-
-exports.significantBarsArray = [1, 2, 5, 10, 20, 30, 40, 50];
-
-exports.numberOfBarsArray = [5, 10, 15, 20, 30];
-
-exports.symbolsToDownload = [
-  'BTCUSD',
-  'ETHUSD',
+const symbolsToSearch = [
   'A',
   'AA',
   'AAL',
@@ -4196,4 +4186,41 @@ exports.symbolsToDownload = [
   'ZYXI',
 ];
 
-exports.nodeServerPort = 3059;
+(async () => {
+  await mongoApi.connectMongoose();
+  let lastPercentCompleteLogged = 0;
+  for (const s of symbolsToSearch) {
+    const percentComplete = Math.round(
+      (100 * (symbolsToSearch.indexOf(s) + 1)) / symbolsToSearch.length
+    );
+    if (
+      percentComplete - lastPercentCompleteLogged !== 0 &&
+      (percentComplete - lastPercentCompleteLogged) % 5 === 0
+    ) {
+      lastPercentCompleteLogged = percentComplete;
+      console.log(`% complete: ${percentComplete}`);
+    }
+    const res = await getOptionChainData(s, false, null, 1, null);
+    if (
+      res.status === 'FAILED' ||
+      Object.keys(res.callExpDateMap).length === 0
+    ) {
+      continue;
+    }
+    let maxOpenInterest = 0;
+    for (const date of Object.keys(res.callExpDateMap)) {
+      for (const strike of Object.keys(res.callExpDateMap[date])) {
+        const thisOpenInterest =
+          res.callExpDateMap[date][strike][0].openInterest;
+        if (thisOpenInterest > maxOpenInterest) {
+          maxOpenInterest = thisOpenInterest;
+        }
+      }
+    }
+    fs.appendFileSync(
+      '/home/keith/Downloads/symbolsWithOptions.csv',
+      `${s},${maxOpenInterest}\n`
+    );
+  }
+  await mongoApi.disconnectMongoose();
+})();

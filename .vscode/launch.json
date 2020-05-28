@@ -70,6 +70,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "symbolDiscovery",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/symbolDiscovery.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "dpPlayground",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/discoverPatternsPlayground.js"

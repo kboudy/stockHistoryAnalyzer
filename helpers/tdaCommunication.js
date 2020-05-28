@@ -4,47 +4,50 @@ const axios = require('axios'),
   chalk = require('chalk'),
   _ = require('lodash'),
   moment = require('moment-timezone'),
-  { sleep } = require('./commonMethods'),
+  { isNullOrUndefined, sleep } = require('./commonMethods'),
   opn = require('opn');
 
 let current_access_token = null;
 let lastAuthenticated = null;
 
-let requestDateTimes_inLast5Seconds = [];
+let requestDateTimes = [];
 const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   let res;
   let retryCount = 3;
   while (retryCount > 0) {
+    let requestDateTimes_inLast5Seconds = [];
+    let requestDateTimes_inLast60Seconds = [];
     try {
       res = await asyncMethod();
 
       retryCount = 0;
       // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
       const currentDateTime = new Date().getTime();
-      requestDateTimes_inLast5Seconds = requestDateTimes_inLast5Seconds.filter(
+      requestDateTimes.push(currentDateTime);
+      requestDateTimes_inLast5Seconds = requestDateTimes.filter(
         (d) => d >= currentDateTime - 5000
       );
-      requestDateTimes_inLast5Seconds.push(currentDateTime);
+      requestDateTimes_inLast60Seconds = requestDateTimes.filter(
+        (d) => d >= currentDateTime - 60000
+      );
+      requestDateTimes = requestDateTimes.filter(
+        (d) => d >= currentDateTime - 90000
+      );
       const throttle = requestDateTimes_inLast5Seconds.length > 10;
-      const sleepTime = throttle ? 600 : 100;
+      const sleepTime = throttle ? 600 : 200;
       await sleep(sleepTime);
       return res;
     } catch (err) {
       retryCount--;
-      if (retryCount > 0 && err.response.status === 429) {
+      if (retryCount > 0 && err.response && err.response.status === 429) {
         console.log(
           chalk.red(
-            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}`
+            `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}, 60 seconds: ${requestDateTimes_inLast60Seconds.length}`
           )
         );
         await sleep(5000);
       } else {
-        // forgive the error if the start & end dates are the same
-        if (startDate !== endDate) {
-          throw err;
-        } else {
-          return [];
-        }
+        throw err;
       }
     }
   }
@@ -173,9 +176,15 @@ exports.getOptionChainData = async (
 
   let url = `https://api.tdameritrade.com/v1/marketdata/chains?apikey=${TDA_consumerKey}&symbol=${symbol}&contractType=${
     isPut ? 'PUT' : 'CALL'
-  }&includeQuotes=TRUE&strike=${strike}&optionType=ALL&strategy=SINGLE&strikeCount=${strikeCount}`;
-  if (date) {
-    urlQuery = `${urlQuery}&fromDate=${date}&toDate=${date}`;
+  }&includeQuotes=TRUE&optionType=ALL&strategy=SINGLE`;
+  if (!isNullOrUndefined(strike)) {
+    url = `${url}&strike=${strike}`;
+  }
+  if (!isNullOrUndefined(strikeCount)) {
+    url = `${url}&strikeCount=${strikeCount}`;
+  }
+  if (!isNullOrUndefined(date)) {
+    url = `${url}&fromDate=${date}&toDate=${date}`;
   }
 
   const options = {

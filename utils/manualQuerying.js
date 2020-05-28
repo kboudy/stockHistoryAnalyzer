@@ -1,5 +1,5 @@
 const _ = require('lodash'),
-  moment = require('moment'),
+  moment = require('moment-timezone'),
   mongoApi = require('../helpers/mongoApi'),
   mongoose = require('mongoose'),
   {
@@ -9,7 +9,9 @@ const _ = require('lodash'),
   } = require('../helpers/symbolData'),
   Candle = require('../models/candle'),
   currentDayJobRunner = require('../helpers/currentDayJobRunner'),
+  downloadBulkCurrentEquityData = require('../helpers/tdaCommunication'),
   PatternStats = require('../models/patternStats'),
+  PaperTrade = require('../models/paperTrade'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
@@ -54,7 +56,6 @@ const validateCandleDates = async () => {
     );
     let previousDate = null;
     for (const date of candleDates) {
-      const currentDate = moment(date, 'YYYY-MM-DD');
       if (previousDate) {
         const daysBetween = Math.round(
           moment.duration(currentDate.diff(previousDate)).asDays()
@@ -132,6 +133,34 @@ const createIndexes = async () => {
   );
 };
 
+const createPaperTrades = async () => {
+  const buyDateTime = moment('2020-05-27 4:00PM', 'YYYY-MM-DD h:mmA') //, 'America/New_York')
+    .utc()
+    .toDate();
+
+  const symbolsToBuy = ['BILI', 'CGC', 'EGHT', 'FCX', 'LEVI', 'TWLO'];
+
+  //const currentDate = moment(date, 'YYYY-MM-DD');
+  for (const symbol of symbolsToBuy) {
+    const todayCandle = await Candle.findOne({
+      symbol,
+      date: moment().format('YYYY-MM-DD'),
+    });
+    await PaperTrade.create({
+      created: moment.utc(),
+      symbol: symbol,
+      buyDate: buyDateTime,
+      sellDate: null,
+      optionExpiration: null,
+      optionStrike: null,
+      buyPrice_underlying: todayCandle.close,
+      buyPrice_option: null,
+      sellPrice_underlying: null,
+      sellPrice_option: null,
+    });
+  }
+};
+
 const misc = async () => {
   const psjr = await PatternStatsJobRun.findOne({
     sourceSymbol: 'TSLA',
@@ -150,6 +179,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await currentDayJobRunner.runCurrentDayJob();
+  await createPaperTrades();
   await mongoApi.disconnectMongoose();
 })();
