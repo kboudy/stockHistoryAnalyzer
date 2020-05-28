@@ -3,7 +3,7 @@ const axios = require('axios'),
   qs = require('qs'),
   chalk = require('chalk'),
   _ = require('lodash'),
-  moment = require('moment'),
+  moment = require('moment-timezone'),
   { sleep } = require('./commonMethods'),
   opn = require('opn');
 
@@ -106,6 +106,11 @@ exports.downloadHistoricalEquityData = downloadHistoricalEquityData;
 exports.downloadBulkCurrentEquityData = async (symbols) => {
   await authenticateIfNecessary();
 
+  // NOTE: since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
+  // unless it's after market close (5PM or later), then we'll let them live in the db permanently
+  const currentEasternTime = moment().tz('America/New_York');
+  const fromBulkDownload = currentEasternTime.hour() < 17;
+
   const symbolChunks = [];
   const chunkSize = 300;
   let i, j;
@@ -142,7 +147,7 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
       }
       const candle = {};
       candle.created = moment.utc();
-      candle.fromBulkDownload = true;
+      candle.fromBulkDownload = fromBulkDownload;
       candle.date = candleDate;
       candle.symbol = symbol;
       candle.open = c.openPrice;

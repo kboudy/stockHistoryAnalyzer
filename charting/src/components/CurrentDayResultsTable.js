@@ -325,7 +325,11 @@ const CurrentDayResultsTable = (props) => {
       vcFromStorageString
     );
     setVisibleColumns(vc);
-    const hiddenWhereNecessary = addHideWhereNecessary(columnDefs, vc);
+    const hiddenWhereNecessary = addHideWhereNecessary(
+      columnDefs,
+      vc,
+      aggregateBySymbol
+    );
     setColumnDefs(hiddenWhereNecessary);
   };
 
@@ -390,7 +394,8 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const handleToggleAggregateBySymbol = () => {
-    setAggregateBySymbol(!aggregateBySymbol);
+    const newAggregateBySymbolValue = !aggregateBySymbol;
+    setAggregateBySymbol(newAggregateBySymbolValue);
     let vcFromStorage = localStorage.getItem(currentDayTable_visibleColumnsKey);
     if (!vcFromStorage) {
       vcFromStorage = {
@@ -404,7 +409,13 @@ const CurrentDayResultsTable = (props) => {
     } else {
       vcFromStorage = JSON.parse(vcFromStorage);
     }
-    setColumnDefs(addHideWhereNecessary(columnDefs, vcFromStorage));
+    setColumnDefs(
+      addHideWhereNecessary(
+        columnDefs,
+        vcFromStorage,
+        newAggregateBySymbolValue
+      )
+    );
   };
 
   const handleChooseColumnsClicked = (event) => {
@@ -512,7 +523,7 @@ const CurrentDayResultsTable = (props) => {
     }, 500);
   };
 
-  const addHideWhereNecessary = (colDefs, vc) => {
+  const addHideWhereNecessary = (colDefs, vc, aggBySymbol) => {
     const cd = [...colDefs];
     // first set show/hide on the bar groups
     for (const c of cd) {
@@ -536,7 +547,7 @@ const CurrentDayResultsTable = (props) => {
             subCol.field === 'sourceDate'
           ) {
             if (columnApi) {
-              columnApi.hideColumn(subCol.field, !aggregateBySymbol);
+              columnApi.hideColumn(subCol.field, aggBySymbol);
             }
           }
         }
@@ -740,7 +751,8 @@ const CurrentDayResultsTable = (props) => {
 
       const hiddenWhereNecessary = addHideWhereNecessary(
         colDefs,
-        vcFromStorage
+        vcFromStorage,
+        aggregateBySymbol
       );
       setColumnDefs(hiddenWhereNecessary);
       setVisibleColumns(vcFromStorage);

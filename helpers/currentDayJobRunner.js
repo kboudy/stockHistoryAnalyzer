@@ -21,7 +21,7 @@ exports.runCurrentDayJob = async () => {
   console.log(`${getLogDate()}* running "CurrentDay" job`);
   console.log(`  -- downloading latest symbol data`);
 
-  //await downloadAndSaveMultipleSymbolHistory(allSymbols);
+  await downloadAndSaveMultipleSymbolHistory(allSymbols);
 
   const symbolsAndPatternStats = {};
   for (const symbol of allSymbols) {

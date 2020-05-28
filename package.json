@@ -28,6 +28,7 @@
     "lodash": "^4.17.15",
     "mathjs": "^7.0.0",
     "moment": "^2.25.3",
+    "moment-timezone": "^0.5.31",
     "mongoose": "^5.9.14",
     "opn": "^6.0.0",
     "option-pricing-tree": "^1.0.1",

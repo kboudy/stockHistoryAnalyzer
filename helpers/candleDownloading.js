@@ -52,7 +52,8 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
 };
 
 exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
-  // since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
+  // NOTE: since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
+  // unless it's after market close (5PM or later), then we'll let them live in the db permanently
   await Candle.deleteMany({
     fromBulkDownload: true,
   });
