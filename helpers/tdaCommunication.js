@@ -9,14 +9,13 @@ const axios = require('axios'),
 
 let current_access_token = null;
 let lastAuthenticated = null;
-
+let requestDateTimes_inLast5Seconds = [];
+let requestDateTimes_inLast60Seconds = [];
 let requestDateTimes = [];
 const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   let res;
   let retryCount = 4;
   while (retryCount > 0) {
-    let requestDateTimes_inLast5Seconds = [];
-    let requestDateTimes_inLast60Seconds = [];
     try {
       res = await asyncMethod();
 
@@ -34,7 +33,8 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
         (d) => d >= currentDateTime - 90000
       );
       const throttle = requestDateTimes_inLast5Seconds.length > 10;
-      const sleepTime = throttle ? 600 : 200;
+      const sleepTime = throttle ? 600 : 600;
+      console.log(sleepTime);
       await sleep(sleepTime);
       return res;
     } catch (err) {
