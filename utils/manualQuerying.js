@@ -88,6 +88,38 @@ const validateCandleDates = async () => {
   }
 };
 
+const updatePaperTradePrices = async () => {
+  for (const pt of await PaperTrade.find({})) {
+    if (pt.buyDate) {
+      const strBuyDate = moment(pt.buyDate).format('YYYY-MM-DD');
+      const matchingCandle = await Candle.findOne({
+        symbol: pt.symbol,
+        date: strBuyDate,
+      });
+      if (matchingCandle && !matchingCandle.fromBulkDownload) {
+        await PaperTrade.updateOne(
+          { _id: pt._id },
+          { buyPrice_underlying: parseFloat(matchingCandle.close.toString()) }
+        );
+      }
+    }
+
+    if (pt.sellDate) {
+      const strSellDate = moment(pt.sellDate).format('YYYY-MM-DD');
+      const matchingCandle = await Candle.findOne({
+        symbol: pt.symbol,
+        date: strSellDate,
+      });
+      if (matchingCandle && !matchingCandle.fromBulkDownload) {
+        await PaperTrade.updateOne(
+          { _id: pt._id },
+          { sellPrice_underlying: parseFloat(matchingCandle.close.toString()) }
+        );
+      }
+    }
+  }
+};
+
 const createPaperTrades = async () => {
   const strToday = moment().format('YYYY-MM-DD');
   const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
@@ -179,6 +211,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await fillInPaperTradeSellDates();
+  await updatePaperTradePrices();
   await mongoApi.disconnectMongoose();
 })();

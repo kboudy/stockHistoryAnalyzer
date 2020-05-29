@@ -1,5 +1,5 @@
 const axios = require('axios'),
-  moment = require('moment'),
+  moment = require('moment-timezone'),
   _ = require('lodash'),
   Candle = require('../models/candle'),
   https = require('https'),
@@ -57,16 +57,16 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   await Candle.deleteMany({
     fromBulkDownload: true,
   });
-  const today = moment().format('YYYY-MM-DD');
-  await Candle.deleteMany({
-    date: today,
-  });
 
+  const currentEasternTime = moment().tz('America/New_York');
+  const today = currentEasternTime.format('YYYY-MM-DD');
   const mostRecentTradingDate = await getMostRecentEquityTradingDay();
   const mostRecentTradingCloseDateTime = moment(
     mostRecentTradingDate,
     'YYYY-MM-DD'
   ).add(16, 'hours');
+  const lastDayToDownloadEquities =
+    currentEasternTime.hour() < 17 ? mostRecentTradingDate : today;
 
   const getTheseInBulk = []; // because they only need the most recent day
 
@@ -88,7 +88,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
 
     if (symbolIsCrypto) {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
-      const endDate = today;
+      const endDate = lastDayToDownloadEquities;
 
       // console.log(
       //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
@@ -104,7 +104,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       let historicalData = await downloadCryptoData(symbol, startDate, endDate);
       await Candle.insertMany(historicalData);
     } else {
-      if (existingMaxDate === mostRecentTradingDate) {
+      if (existingMaxDate === lastDayToDownloadEquities) {
         const candleCreatedDateTime = moment
           .utc(candleWithMaxDate.created)
           .local();
@@ -121,11 +121,11 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           : `${currentYear}-01-01`;
         candleWithMaxDate = null;
         let endDate = `${currentYear + 4}-12-31`;
-        if (startDate > today) {
-          startDate = today;
+        if (startDate > lastDayToDownloadEquities) {
+          startDate = lastDayToDownloadEquities;
         }
-        if (endDate > today) {
-          endDate = today;
+        if (endDate > lastDayToDownloadEquities) {
+          endDate = lastDayToDownloadEquities;
         }
 
         await Candle.deleteMany({
@@ -142,7 +142,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           await Candle.insertMany(historicalData);
         }
 
-        if (endDate === today) {
+        if (endDate === lastDayToDownloadEquities) {
           break;
         }
         currentYear += 5;
