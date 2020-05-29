@@ -16,9 +16,12 @@ import {
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import '../styles/currentDayGridStyles.css';
+import { Typography, Grid } from '@material-ui/core';
 // import StringParseFloatingFilter from '../agGridFilters/StringParseFloatingFilter';
 
-const useStyles = makeStyles((theme) => ({}));
+const useStyles = makeStyles((theme) => ({
+  avgLabel: { margin: theme.spacing(2) },
+}));
 
 const PaperTrading = (props) => {
   const classes = useStyles();
@@ -53,6 +56,7 @@ const PaperTrading = (props) => {
   ];
 
   const [gridData, setGridData] = useState([]);
+  const [avgPL, setAvgPL] = useState(0);
 
   const formatMongooseDecimal = (obj) => {
     {
@@ -114,7 +118,6 @@ const PaperTrading = (props) => {
         }
 
         for (const row of mappedGridData) {
-          debugger;
           if (
             !row.sellPrice_underlying &&
             !isNullOrUndefined(symbolKeyed[row.symbol])
@@ -129,13 +132,25 @@ const PaperTrading = (props) => {
         }
       }
 
+      updateAverages(mappedGridData);
       setGridData(mappedGridData);
     })();
   }, []);
 
+  const updateAverages = (rows) => {
+    const plp = rows.map((r) => r.pl_percent);
+    const avg =
+      Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
+    setAvgPL({ avg, count: plp.length });
+  };
+
+  const handleSelectionChanged = (e) => {
+    updateAverages(e.api.getSelectedRows());
+  };
+
   return (
     <div>
-      <div className="ag-theme-balham" style={{ height: 1100 }}>
+      <div className="ag-theme-balham" style={{ height: 600 }}>
         <AgGridReact
           defaultColDef={{
             // floatingFilter: true,
@@ -157,9 +172,17 @@ const PaperTrading = (props) => {
           // onCellClicked={handleCellClicked}
           // onGridReady={handleGridReady}
           sortingOrder={['asc', 'desc']}
-          rowSelection={'single'}
+          rowSelection={'multiple'}
+          onSelectionChanged={handleSelectionChanged}
         ></AgGridReact>
       </div>
+      <Grid container className={classes.avgLabel}>
+        <Grid item></Grid>
+        <Grid item>
+          <Typography>{avgPL.count} trades </Typography>
+          <Typography>avg pl%: {avgPL.avg}</Typography>
+        </Grid>
+      </Grid>
     </div>
   );
 };
