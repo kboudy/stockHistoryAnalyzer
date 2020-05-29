@@ -15,8 +15,13 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import Grid from '@material-ui/core/Grid';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import Select from '@material-ui/core/Select';
 
+import moment from 'moment';
 import _ from 'lodash';
 import {
   getSignificantBars,
@@ -40,6 +45,12 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(1),
     marginLeft: theme.spacing(1),
   },
+  jobSelector: {
+    marginBottom: theme.spacing(1),
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    minWidth: 150,
+  },
   columnChoiceList: {
     height: '1000px',
     overflow: 'auto',
@@ -51,6 +62,13 @@ const useStyles = makeStyles((theme) => ({
 const CurrentDayResultsTable = (props) => {
   const classes = useStyles();
   const [columnDefs, setColumnDefs] = useState([]);
+
+  const [currentJobRunCreatedDate, setCurrentJobRunCreatedDate] = useState('');
+  const [
+    currentDayJobRuns_datesAndIds,
+    setCurrentDayJobRuns_datesAndIds,
+  ] = useState([]);
+
   const [gridApi, setGridApi] = useState(null);
   const [columnApi, setColumnApi] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -65,10 +83,10 @@ const CurrentDayResultsTable = (props) => {
   const [visibleColumns, setVisibleColumns] = useState(null);
 
   const getLatestCurrentDayJobData = async () => {
-    const { results } = (
+    const { results, created } = (
       await nodeServer.get('getMostRecentCurrentDayResults')
     ).data;
-    debugger;
+    setCurrentJobRunCreatedDate(created);
     const allSymbols = _.orderBy(Object.keys(results), (r) => r);
     const rows = [];
     for (const symbol in results) {
@@ -90,6 +108,10 @@ const CurrentDayResultsTable = (props) => {
 
   useEffect(() => {
     (async () => {
+      setCurrentDayJobRuns_datesAndIds(
+        (await nodeServer.get(`currentDayJobRunDates`)).data
+      );
+
       await reloadData();
     })();
   }, []);
@@ -234,6 +256,8 @@ const CurrentDayResultsTable = (props) => {
     }
   }, [aggregateBySymbol, currentSingleSymbol, selectedSymbols]);
   //------------------------------------------------
+
+  const handleCurrentDayJobSelected = (e) => {};
 
   const handleCellClicked = (e) => {
     if (props.singleSymbolMode) {
@@ -686,6 +710,16 @@ const CurrentDayResultsTable = (props) => {
     })();
   }, []);
 
+  const getMenuItems = () => {
+    return currentDayJobRuns_datesAndIds.map((s) => {
+      return (
+        <MenuItem key={s._id} value={s._id}>
+          {s.created}
+        </MenuItem>
+      );
+    });
+  };
+
   const syms =
     selectedSymbols && selectedSymbols.length
       ? selectedSymbols
@@ -778,6 +812,25 @@ const CurrentDayResultsTable = (props) => {
         ></AgGridReact>
       </div>
       <Grid container className={classes.gridWrapper}>
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <FormControl className={classes.jobSelector}>
+              <InputLabel id="select-current-day-job">
+                {moment(currentJobRunCreatedDate).format('YYYY-MM-DD')}
+              </InputLabel>
+              <Select
+                displayEmpty
+                labelId="select-current-day-job"
+                id="cboCurrentDayJob"
+                value={currentJobRunCreatedDate}
+                onChange={handleCurrentDayJobSelected}
+              >
+                {getMenuItems()}
+              </Select>
+            </FormControl>
+          </Grid>
+        )}
+
         {!props.singleSymbolMode && (
           <Grid item>
             <Button

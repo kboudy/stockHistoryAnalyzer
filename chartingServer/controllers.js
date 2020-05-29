@@ -122,6 +122,20 @@ exports.getPaperTradingData = async (req, res, next) => {
   }
 };
 
+exports.getCurrentDayJobRunDates = async (req, res, next) => {
+  try {
+    const results = await CurrentDayEvaluationJobRun.find({})
+      .lean()
+      .sort({
+        created: 1,
+      })
+      .select({ created: 1 });
+    res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.getMultipleCurrentUnderlyingQuotes = async (req, res, next) => {
   try {
     const symbols = req.query.symbols.split(',');

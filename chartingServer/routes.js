@@ -17,6 +17,7 @@ module.exports = (app) => {
     '/multipleCurrentUnderlyingQuotes',
     controllers.getMultipleCurrentUnderlyingQuotes
   );
+  app.get('/currentDayJobRunDates', controllers.getCurrentDayJobRunDates);
   app.get('/paperTrading', controllers.getPaperTradingData);
   app.get(
     '/patternStatsJobRunSymbols',
