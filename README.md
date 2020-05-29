@@ -75,3 +75,13 @@
   ```sh
   npm run charting
   ```
+
+# backing up the db
+
+- the /dump dir will end up in your current dir
+
+```sh
+docker exec ubqt_mongo sh -c "cd /data && mongodump --db stock_analysis"
+docker cp ubqt_mongo:/data/dump .
+docker exec ubqt_mongo sh -c "rm -rf /data/dump"
+```
