@@ -132,6 +132,57 @@ const createPaperTrades = async () => {
   }
 };
 
+const fillInPaperTradeSellDates = async () => {
+  const strToday = moment().format('YYYY-MM-DD');
+  const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
+    .utc()
+    .toDate();
+
+  const res = await PaperTrade.find({ sellPrice_underlying: null });
+  for (const pt of res) {
+    const histData = await loadHistoricalDataForSymbol(pt.symbol);
+    const buyIndex = histData.indexOf(
+      histData.filter(
+        (d) => d.date === moment(pt.buyDate).format('YYYY-MM-DD')
+      )[0]
+    );
+    const sellIndex = buyIndex + pt.heldDays;
+    if (sellIndex < histData.length) {
+      const sellDate = moment(
+        `${histData[sellIndex].date} 4:00PM`,
+        'YYYY-MM-DD h:mmA'
+      ).toDate();
+
+      await PaperTrade.update(
+        { _id: pt._id },
+        { sellDate: sellDate, sellPrice_underlying: histData[sellIndex].close }
+      );
+    }
+  }
+
+  /*   //const currentDate = moment(date, 'YYYY-MM-DD');
+  for (const symbol of symbolsToBuy) {
+    const todayCandle = await Candle.findOne({
+      symbol,
+      date: strToday,
+    });
+    await PaperTrade.create({
+      created: moment.utc(),
+      symbol: symbol,
+      buyDate: buyDateTime,
+      sellDate: null,
+      heldDays: 1,
+      optionExpiration: null,
+      optionStrike: null,
+      buyPrice_underlying: todayCandle.close,
+      buyPrice_option: null,
+      sellPrice_underlying: null,
+      sellPrice_option: null,
+    });
+  }
+ */
+};
+
 const misc = async () => {
   const psjr = await PatternStatsJobRun.findOne({
     sourceSymbol: 'TSLA',
@@ -150,6 +201,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await createPaperTrades();
+  await fillInPaperTradeSellDates();
   await mongoApi.disconnectMongoose();
 })();
