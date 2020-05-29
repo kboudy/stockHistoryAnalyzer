@@ -1,5 +1,5 @@
 const axios = require('axios'),
-  { TDA_authCode, TDA_consumerKey, TDA_refreshToken } = require('./constants'),
+  { TDA_consumerKey, TDA_refreshToken } = require('./constants'),
   qs = require('qs'),
   chalk = require('chalk'),
   _ = require('lodash'),
@@ -33,8 +33,8 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
         (d) => d >= currentDateTime - 90000
       );
       const throttle = requestDateTimes_inLast5Seconds.length > 10;
-      const sleepTime = throttle ? 600 : 600;
-      console.log(sleepTime);
+      // abandoning the conditional throttle for now - was maxxing out on 429's (too many requests)
+      const sleepTime = 550;
       await sleep(sleepTime);
       return res;
     } catch (err) {
