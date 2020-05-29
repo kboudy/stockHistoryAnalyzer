@@ -69,17 +69,19 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     mostRecentTradingDate,
     'YYYY-MM-DD'
   ).add(16, 'hours');
-  const lastDayToDownloadEquities_theSlowWay = mostRecentTradingDate;
+  const lastDayToDownloadEquities_theSlowWay = mostRecentTradingDate; // otherwise they're downloaded in bulk
 
-  const getTheseInBulk = []; // because they only need the most recent day
+  // find any symbols that have the last trading date.  They'll be our bulk downloads
+  const getTheseInBulk = (
+    await Candle.find({
+      date: mostRecentTradingDate,
+    })
+      .lean()
+      .select({ symbol: 1 })
+  ).map((s) => s.symbol);
 
-  let ignoring = true;
   for (const symbol of symbols) {
-    if (symbol === 'SBAC') {
-      ignoring = false;
-      continue;
-    }
-    if (ignoring) {
+    if (getTheseInBulk.includes(symbol)) {
       continue;
     }
     console.log(`Downloading ${symbol}`);
@@ -99,7 +101,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
 
     if (symbolIsCrypto) {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
-      const endDate = lastDayToDownloadEquities_theSlowWay; // otherwise they're downloaded in bulk
+      const endDate = lastDayToDownloadEquities_theSlowWay;
 
       // console.log(
       //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
@@ -115,18 +117,6 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       let historicalData = await downloadCryptoData(symbol, startDate, endDate);
       await Candle.insertMany(historicalData);
     } else {
-      if (existingMaxDate === lastDayToDownloadEquities_theSlowWay) {
-        const candleCreatedDateTime = moment
-          .utc(candleWithMaxDate.created)
-          .local();
-        if (candleCreatedDateTime.isAfter(mostRecentTradingCloseDateTime)) {
-          // it was created after the previous market close, so we can use bulk methods to get current-day values
-          getTheseInBulk.push(symbol);
-          continue;
-        } else {
-          debugger;
-        }
-      }
       // for equities, we'll request it from TDAmeritrade in 5-year chunks
       while (true) {
         let startDate = existingMaxDate
@@ -162,6 +152,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       }
     }
   }
+  console.log('Bulk downloading the symbols that only needed today...');
   const currentDayCandles_fromBulk = await downloadBulkCurrentEquityData(
     getTheseInBulk
   );
