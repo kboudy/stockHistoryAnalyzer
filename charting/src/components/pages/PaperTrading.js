@@ -68,15 +68,22 @@ const PaperTrading = (props) => {
 
   useEffect(() => {
     (async () => {
+      const getLivePricesForThese = [];
       const results = (await nodeServer.get('paperTrading')).data;
 
-      const mapped = results.map((r) => {
+      const mappedGridData = results.map((r) => {
         const buyPrice_underlying = formatMongooseDecimal(
           r.buyPrice_underlying
         );
         const sellPrice_underlying = formatMongooseDecimal(
           r.sellPrice_underlying
         );
+        if (!sellPrice_underlying) {
+          // we'll get the live prices for any that aren't yet sold
+          if (!getLivePricesForThese.includes(r.symbol)) {
+            getLivePricesForThese.push(r.symbol);
+          }
+        }
         const pl_percent = sellPrice_underlying
           ? Math.round(
               (1000 * (sellPrice_underlying - buyPrice_underlying)) /
@@ -93,8 +100,36 @@ const PaperTrading = (props) => {
           pl_percent,
         };
       });
-      debugger;
-      setGridData(mapped);
+      if (getLivePricesForThese.length > 0) {
+        const liveSymbolRows = (
+          await nodeServer.get(
+            `multipleCurrentUnderlyingQuotes?symbols=${getLivePricesForThese.join(
+              ','
+            )}`
+          )
+        ).data;
+        const symbolKeyed = {};
+        for (const row of liveSymbolRows) {
+          symbolKeyed[row.symbol] = Math.round(row.close * 100) / 100;
+        }
+
+        for (const row of mappedGridData) {
+          debugger;
+          if (
+            !row.sellPrice_underlying &&
+            !isNullOrUndefined(symbolKeyed[row.symbol])
+          ) {
+            row.sellPrice_underlying = symbolKeyed[row.symbol];
+            row.pl_percent =
+              Math.round(
+                (1000 * (row.sellPrice_underlying - row.buyPrice_underlying)) /
+                  row.buyPrice_underlying
+              ) / 10;
+          }
+        }
+      }
+
+      setGridData(mappedGridData);
     })();
   }, []);
 

@@ -159,28 +159,6 @@ const fillInPaperTradeSellDates = async () => {
       );
     }
   }
-
-  /*   //const currentDate = moment(date, 'YYYY-MM-DD');
-  for (const symbol of symbolsToBuy) {
-    const todayCandle = await Candle.findOne({
-      symbol,
-      date: strToday,
-    });
-    await PaperTrade.create({
-      created: moment.utc(),
-      symbol: symbol,
-      buyDate: buyDateTime,
-      sellDate: null,
-      heldDays: 1,
-      optionExpiration: null,
-      optionStrike: null,
-      buyPrice_underlying: todayCandle.close,
-      buyPrice_option: null,
-      sellPrice_underlying: null,
-      sellPrice_option: null,
-    });
-  }
- */
 };
 
 const misc = async () => {

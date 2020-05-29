@@ -3,6 +3,7 @@ const _ = require('lodash'),
     getAvailableSymbolNames,
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
+  { downloadBulkCurrentEquityData } = require('../helpers/tdaCommunication'),
   { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   Candle = require('../models/candle'),
@@ -116,6 +117,16 @@ exports.getPaperTradingData = async (req, res, next) => {
     });
 
     res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getMultipleCurrentUnderlyingQuotes = async (req, res, next) => {
+  try {
+    const symbols = req.query.symbols.split(',');
+    const currentData = await downloadBulkCurrentEquityData(symbols);
+    res.json(currentData);
   } catch (error) {
     return next(error);
   }
