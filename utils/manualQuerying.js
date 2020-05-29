@@ -88,68 +88,40 @@ const validateCandleDates = async () => {
   }
 };
 
-const createIndexes = async () => {
-  const tradeSimulationRunsCollection = await mongoose.connection.db.collection(
-    'tradesimulationruns'
-  );
-  const existingIndexes = await TradeSimulationRun.collection.getIndexes();
-  for (const idxName of Object.keys(existingIndexes)) {
-    if (idxName !== '_id_') {
-      await tradeSimulationRunsCollection.dropIndex(idxName);
-    }
-  }
-  await tradeSimulationRunsCollection.createIndex(
-    { 'criteria.symbol': 1 },
-    { sparse: true }
-  ); // sparse will not index documents without this field
-  await tradeSimulationRunsCollection.createIndex(
-    { 'criteria.includeOtherSymbolsTargets': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'criteria.numberOfBars': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'criteria.significantBar': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'results.avgProfitLossPercent': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'results.percentProfitable': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'results.tradeCount': 1 },
-    { sparse: true }
-  );
-  await tradeSimulationRunsCollection.createIndex(
-    { 'results.tradeCountPerYear': 1 },
-    { sparse: true }
-  );
-};
-
 const createPaperTrades = async () => {
-  const buyDateTime = moment('2020-05-27 4:00PM', 'YYYY-MM-DD h:mmA') //, 'America/New_York')
+  const strToday = moment().format('YYYY-MM-DD');
+  const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
     .utc()
     .toDate();
 
-  const symbolsToBuy = ['BILI', 'CGC', 'EGHT', 'FCX', 'LEVI', 'TWLO'];
+  const symbolsToBuy = [
+    'AAOI',
+    'AGRX',
+    'AMC',
+    'AMZN',
+    'ATRA',
+    'BIB',
+    'BILI',
+    'EIDX',
+    'HWC',
+    'LITE',
+    'ORTX',
+    'PI',
+    'TECK',
+  ];
 
   //const currentDate = moment(date, 'YYYY-MM-DD');
   for (const symbol of symbolsToBuy) {
     const todayCandle = await Candle.findOne({
       symbol,
-      date: moment().format('YYYY-MM-DD'),
+      date: strToday,
     });
     await PaperTrade.create({
       created: moment.utc(),
       symbol: symbol,
       buyDate: buyDateTime,
       sellDate: null,
+      heldDays: 1,
       optionExpiration: null,
       optionStrike: null,
       buyPrice_underlying: todayCandle.close,
