@@ -6,6 +6,7 @@ const _ = require('lodash'),
   { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   Candle = require('../models/candle'),
+  PaperTrade = require('../models/paperTrade'),
   PatternStats = require('../models/patternStats'),
   CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
@@ -102,6 +103,18 @@ exports.getPatternStats = async (req, res, next) => {
     const { jobRunId } = req.query;
 
     const results = await PatternStats.find({ jobRun: jobRunId }).lean();
+    res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getPaperTradingData = async (req, res, next) => {
+  try {
+    const results = await PaperTrade.find({}).lean().sort({
+      buyDate: 1,
+    });
+
     res.json(results);
   } catch (error) {
     return next(error);

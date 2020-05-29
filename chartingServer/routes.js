@@ -13,6 +13,7 @@ module.exports = (app) => {
   );
   app.post('/runTradeSimulation', controllers.runTradeSimulation);
   app.post('/tradeSimulationRuns', controllers.queryTradeSimulationRuns);
+  app.get('/paperTrading', controllers.getPaperTradingData);
   app.get(
     '/patternStatsJobRunSymbols',
     controllers.getPatternStatsJobRunSymbols
