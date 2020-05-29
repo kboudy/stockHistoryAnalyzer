@@ -12,6 +12,9 @@ const PaperTradeSchema = new Schema({
     type: Schema.Types.Date,
     sparse: true,
   },
+  heldDays: {
+    type: Schema.Types.Number,
+  },
   sellDate: {
     type: Schema.Types.Date,
     sparse: true,
