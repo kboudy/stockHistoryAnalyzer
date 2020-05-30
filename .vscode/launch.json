@@ -49,9 +49,9 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "optionsPricingTest",
+      "name": "theoreticalOptionsPricing",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/helpers/options/optionsPricingTest.js"
+      "program": "${workspaceFolder}/helpers/options/theoreticalOptionsPricing.js"
     },
     {
       "type": "node",
