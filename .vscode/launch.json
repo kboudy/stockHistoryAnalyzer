@@ -70,6 +70,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "updatePaperTrades",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/primaryModules/updatePaperTrades.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "manualQuerying",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/manualQuerying.js"

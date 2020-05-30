@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
 
 const profitLossFormatter = (params) => {
   const { value } = params.value;
+  if (value !== 0 && !value) {
+    return '';
+  }
   return parseFloat(value).toFixed(1);
 };
 
@@ -165,7 +168,6 @@ const PaperTrading = (props) => {
 
   const updateAverages = (rows) => {
     const plp = rows.map((r) => r.pl_percent.value);
-    debugger;
     const avg =
       Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
     setAvgPL({ avg, count: plp.length });

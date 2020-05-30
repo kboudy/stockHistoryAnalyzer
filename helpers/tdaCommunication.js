@@ -118,7 +118,7 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
   // NOTE: since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
   // unless it's after market close (5PM or later), then we'll let them live in the db permanently
   const currentEasternTime = moment().tz('America/New_York');
-  const settled = currentEasternTime.hour() >= 17;
+  const isAfter5PM = currentEasternTime.hour() >= 17;
 
   const symbolChunks = [];
   const chunkSize = 300;
@@ -151,12 +151,9 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
       const candleDate = moment(c.regularMarketTradeTimeInLong).format(
         'YYYY-MM-DD'
       );
-      if (candleDate !== today) {
-        continue;
-      }
       const candle = {};
       candle.created = moment.utc();
-      candle.settled = settled;
+      candle.settled = isAfter5PM || candleDate !== today;
       candle.date = candleDate;
       candle.symbol = symbol;
       candle.open = c.openPrice;

@@ -1,18 +1,33 @@
 const _ = require('lodash'),
   moment = require('moment-timezone'),
   mongoApi = require('../helpers/mongoApi'),
-  mongoose = require('mongoose'),
-  {
-    getAvailableSymbolNames,
-    isCrypto,
-    loadHistoricalDataForSymbol,
-  } = require('../helpers/symbolData'),
+  { loadHistoricalDataForSymbol } = require('../helpers/symbolData'),
   Candle = require('../models/candle'),
-  downloadBulkCurrentEquityData = require('../helpers/tdaCommunication'),
-  PatternStats = require('../models/patternStats'),
-  PaperTrade = require('../models/paperTrade'),
-  PatternStatsJobRun = require('../models/patternStatsJobRun'),
-  TradeSimulationRun = require('../models/tradeSimulationRun');
+  PaperTrade = require('../models/paperTrade');
+
+const fillInPaperTradeSellDates = async () => {
+  const tradesThatNeedSellDates = await PaperTrade.find({
+    $or: [{ sellDate: null }],
+  });
+
+  for (const pt of tradesThatNeedSellDates) {
+    const histData = await loadHistoricalDataForSymbol(pt.symbol);
+    const buyIndex = histData.indexOf(
+      histData.filter(
+        (d) => d.date === moment(pt.buyDate).format('YYYY-MM-DD')
+      )[0]
+    );
+    const sellIndex = buyIndex + pt.heldDays;
+    if (sellIndex < histData.length) {
+      const sellDate = moment(
+        `${histData[sellIndex].date} 4:00PM`,
+        'YYYY-MM-DD h:mmA'
+      ).toDate();
+
+      await PaperTrade.updateOne({ _id: pt._id }, { sellDate: sellDate });
+    }
+  }
+};
 
 const updatePaperTradePrices = async () => {
   const tradesThatNeedPriceUpdates = await PaperTrade.find({
@@ -49,30 +64,6 @@ const updatePaperTradePrices = async () => {
   }
 };
 
-const fillInPaperTradeSellDates = async () => {
-  const res = await PaperTrade.find({ sellPrice_underlying: null });
-  for (const pt of res) {
-    const histData = await loadHistoricalDataForSymbol(pt.symbol);
-    const buyIndex = histData.indexOf(
-      histData.filter(
-        (d) => d.date === moment(pt.buyDate).format('YYYY-MM-DD')
-      )[0]
-    );
-    const sellIndex = buyIndex + pt.heldDays;
-    if (sellIndex < histData.length) {
-      const sellDate = moment(
-        `${histData[sellIndex].date} 4:00PM`,
-        'YYYY-MM-DD h:mmA'
-      ).toDate();
-
-      await PaperTrade.update(
-        { _id: pt._id },
-        { sellDate: sellDate, sellPrice_underlying: histData[sellIndex].close }
-      );
-    }
-  }
-};
-
 const argOptions = {};
 
 const { argv } = require('yargs')
@@ -83,5 +74,6 @@ const { argv } = require('yargs')
 (async () => {
   await mongoApi.connectMongoose();
   await fillInPaperTradeSellDates();
+  await updatePaperTradePrices();
   await mongoApi.disconnectMongoose();
 })();
