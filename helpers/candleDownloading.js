@@ -84,7 +84,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     if (getTheseInBulk.includes(symbol)) {
       continue;
     }
-    console.log(`Downloading ${symbol}`);
+    console.log(` - Downloading ${symbol}`);
     const symbolIsCrypto = isCrypto(symbol);
     let existingMaxDate = null;
     let currentYear = 1960;
@@ -152,7 +152,8 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       }
     }
   }
-  console.log('Bulk downloading the symbols that only needed today...');
+  if (getTheseInBulk.length > 0)
+    console.log('Bulk downloading the symbols that only needed today...');
   const currentDayCandles_fromBulk = await downloadBulkCurrentEquityData(
     getTheseInBulk
   );

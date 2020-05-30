@@ -127,19 +127,41 @@ const createPaperTrades = async () => {
     .toDate();
 
   const symbolsToBuy = [
-    'AAOI',
-    'AGRX',
-    'AMC',
-    'AMZN',
-    'ATRA',
-    'BIB',
-    'BILI',
-    'EIDX',
-    'HWC',
+    'ADPT',
+    'CGC',
+    'CCLP',
+    'CLUB',
+    'CUE',
+    'DMRC',
+    'EOLS',
+    'EVER',
+    'EXAS',
+    'HIL',
+    'INFI',
+    'INMD',
+    'KRYS',
+    'LEVI',
     'LITE',
-    'ORTX',
-    'PI',
-    'TECK',
+    'LQDA',
+    'MLCO',
+    'MNLO',
+    'MTCH',
+    'NBRV',
+    'ONEM',
+    'PLAY',
+    'PLT',
+    'PRPL',
+    'RCUS',
+    'RNG',
+    'SLDB',
+    'STNE',
+    'TARO',
+    'TDOC',
+    'TLRY',
+    'TPTX',
+    'TRIB',
+    'VOLT',
+    'XENT',
   ];
 
   //const currentDate = moment(date, 'YYYY-MM-DD');
@@ -211,6 +233,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await updatePaperTradePrices();
+  await createPaperTrades();
   await mongoApi.disconnectMongoose();
 })();

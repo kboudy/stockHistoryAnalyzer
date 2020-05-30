@@ -167,22 +167,35 @@ const CurrentDayResultsTable = (props) => {
           abs[field] = -1;
         } else if (field === 'scoreDates') {
           abs[field] = [...abs[field], ...row[field]];
-        } else if (field === 'scoreCount' || field === 'avgScore') {
+        } else if (field === 'scoreCount') {
           abs[field] = abs[field] + row[field];
+        } else if (field === 'avgScore') {
+          if (row.numberOfBars >= 10) {
+            // weighting avgScore against scoreCount
+            abs.avgScore = abs.avgScore + row.avgScore * row.scoreCount;
+            if (!abs[`${field}${tempCountKeySuffix}`]) {
+              abs[`${field}${tempCountKeySuffix}`] = 0;
+            }
+            abs[`${field}${tempCountKeySuffix}`] += row.scoreCount;
+          }
         } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
           const bars = Object.keys(abs[field]);
           for (const b of bars) {
+            if (row.numberOfBars < 10) {
+              continue; // for the weighted averages, ignoring the small pattern matches
+            }
             if (!isNullOrUndefined(row[field][b])) {
-              abs[field][b] = abs[field][b] + row[field][b];
-              // keep a count, for averaging (because there are nulls in here, and we don't want them in the avg)
+              const scoreCount = row.scoreCount;
+              abs[field][b] = abs[field][b] + row[field][b] * scoreCount;
+
+              // NOTE: these averages are weighted by score count
               const countFieldKey = `${field}${tempCountKeySuffix}`;
               if (!abs[countFieldKey]) {
                 abs[countFieldKey] = {};
               }
-              const currentCount = abs[countFieldKey][b]
-                ? abs[countFieldKey][b] + 1
-                : 1;
-              abs[countFieldKey][b] = currentCount;
+              abs[countFieldKey][b] = abs[countFieldKey][b]
+                ? abs[countFieldKey][b] + scoreCount
+                : scoreCount;
             }
           }
         }
@@ -194,7 +207,6 @@ const CurrentDayResultsTable = (props) => {
     const symbols = Object.keys(aggregatedBySymbol);
     for (const symbol of symbols) {
       const thisAgg = aggregatedBySymbol[symbol];
-      const thisAggBefore = { ...thisAgg };
 
       const fields = [...Object.keys(thisAgg)];
 
@@ -205,11 +217,11 @@ const CurrentDayResultsTable = (props) => {
         if (field === 'scoreDates') {
           thisAgg[field] = _.orderBy(thisAgg[field], (d) => d);
         } else if (field === 'avgScore') {
-          if (thisAgg['scoreDates'].length > 0) {
-            thisAgg[field] =
+          if (thisAgg[`${field}${tempCountKeySuffix}`]) {
+            thisAgg.avgScore =
               Math.round(
-                (parseFloat(thisAgg[field]) * 100) /
-                  thisAgg['scoreDates'].length
+                (parseFloat(thisAgg.avgScore) * 100) /
+                  thisAgg[`${field}${tempCountKeySuffix}`]
               ) / 100;
           }
         } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
@@ -407,10 +419,17 @@ const CurrentDayResultsTable = (props) => {
     const newModeIsSingleSymbol = !props.singleSymbolMode;
     props.onModeChangeRequested(newModeIsSingleSymbol);
     if (newModeIsSingleSymbol) {
-      // single symbol mode
-      const firstSymbol =
+      const symbolCollection =
         selectedSymbols.length === 0 ? allSymbolsInGrid[0] : selectedSymbols[0];
-      setCurrentSingleSymbol(firstSymbol);
+
+      // if there's a selected symbol, bring them to that
+      const selectedRows = gridApi.getSelectedRows();
+      let focusOnSymbol = symbolCollection[0];
+      if (selectedRows && selectedRows.length > 0) {
+        focusOnSymbol = selectedRows[0].symbol;
+      }
+
+      setCurrentSingleSymbol(focusOnSymbol);
     } else {
       setCurrentSingleSymbol(null);
     }
@@ -418,6 +437,18 @@ const CurrentDayResultsTable = (props) => {
 
   const handleRevealHiddenSymbols = () => {
     setSelectedSymbols([]);
+  };
+
+  const handleHideCurrentSymbol = () => {
+    let syms = selectedSymbols.length ? selectedSymbols : allSymbolsInGrid;
+    let currentIdx = syms.indexOf(currentSingleSymbol);
+    if (currentIdx === syms.length) {
+      currentIdx--;
+    }
+    syms = syms.filter((s) => s !== currentSingleSymbol);
+
+    setCurrentSingleSymbol(syms[currentIdx]);
+    setSelectedSymbols(syms);
   };
 
   const handleHideUnselectedSymbols = () => {
@@ -857,6 +888,17 @@ const CurrentDayResultsTable = (props) => {
               : 'Switch to single symbol mode'}
           </Button>
         </Grid>
+        {props.singleSymbolMode && (
+          <Grid item>
+            <Button
+              variant="contained"
+              className={classes.button}
+              onClick={handleHideCurrentSymbol}
+            >
+              {'Hide current symbol'}
+            </Button>
+          </Grid>
+        )}
         {!props.singleSymbolMode && (
           <Grid item>
             <Button
@@ -881,17 +923,19 @@ const CurrentDayResultsTable = (props) => {
             </Button>
           </Grid>
         )}
-        {selectedSymbols && selectedSymbols.length > 0 && (
-          <Grid item>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={handleRevealHiddenSymbols}
-            >
-              {'Reveal hidden symbols'}
-            </Button>
-          </Grid>
-        )}
+        {!props.singleSymbolMode &&
+          selectedSymbols &&
+          selectedSymbols.length > 0 && (
+            <Grid item>
+              <Button
+                variant="contained"
+                className={classes.button}
+                onClick={handleRevealHiddenSymbols}
+              >
+                {'Reveal hidden symbols'}
+              </Button>
+            </Grid>
+          )}
         {props.singleSymbolMode && (
           <>
             <Grid item>
