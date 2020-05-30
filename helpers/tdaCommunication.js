@@ -59,15 +59,15 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   }
 };
 
-exports.getMostRecentEquityTradingDay = async () => {
-  let oneWeekAgo = moment().add(-7, 'days').format('YYYY-MM-DD');
+exports.getMostRecentEquityTradingDays = async () => {
+  let oneWeekAgo = moment().add(-10, 'days').format('YYYY-MM-DD');
   let today = moment().format('YYYY-MM-DD');
 
   const candles = await downloadHistoricalEquityData('SPY', oneWeekAgo, today);
-  const maxDate = _.max(
-    candles.filter((c) => c.date < today).map((c) => c.date)
+  return _.orderBy(
+    candles.map((c) => c.date),
+    (d) => d
   );
-  return maxDate;
 };
 
 const authenticateIfNecessary = async () => {

@@ -5,9 +5,9 @@ const axios = require('axios'),
   https = require('https'),
   { isCrypto } = require('./symbolData'),
   {
+    getMostRecentEquityTradingDays,
     downloadBulkCurrentEquityData,
     downloadHistoricalEquityData,
-    getMostRecentEquityTradingDay,
   } = require('./tdaCommunication');
 
 const downloadCryptoData = async (symbol, startDate, endDate) => {
@@ -64,13 +64,25 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     date: today,
   });
 
-  const mostRecentTradingDate = await getMostRecentEquityTradingDay();
-  const lastDayToDownloadEquities_theSlowWay = mostRecentTradingDate; // otherwise they're downloaded in bulk
+  const bulkDownloadDate = _.max(
+    (await downloadBulkCurrentEquityData(['SPY']))
+      .filter((c) => c.date < today)
+      .map((c) => c.date)
+  );
+  await Candle.deleteMany({
+    date: bulkDownloadDate,
+  });
+
+  const mostRecentEquityTradingDays = await getMostRecentEquityTradingDays();
+  const lastDayToDownloadEquities_theSlowWay = _.max(
+    mostRecentEquityTradingDays.filter((d) => d < bulkDownloadDate),
+    (d) => d
+  );
 
   // find any symbols that have the last trading date.  They'll be our bulk downloads
   const getTheseInBulk = (
     await Candle.find({
-      date: mostRecentTradingDate,
+      date: lastDayToDownloadEquities_theSlowWay,
     })
       .lean()
       .select({ symbol: 1 })
