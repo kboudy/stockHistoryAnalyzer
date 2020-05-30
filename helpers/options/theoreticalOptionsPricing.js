@@ -1,7 +1,7 @@
 const axios = require('axios'),
   bs = require('black-scholes'),
   mongoApi = require('../mongoApi'),
-  chalk = require('chalk'),
+  _ = require('lodash'),
   { calculateHV } = require('./historicVolatility'),
   { loadHistoricalDataForSymbol } = require('../symbolData'),
   { getOptionChainData } = require('../tdaCommunication');
@@ -16,7 +16,7 @@ const getProjectedHV = (candles, hvLength, daysHeld, sellPrice) => {
   const lastCandle = candles[candles.length - 1];
   let currentCloseValue = lastCandle.close;
   const stepIncrement = (sellPrice - lastCandle.close) / daysHeld;
-  for (const i = 0; i < daysHeld; i++) {
+  for (let i = 0; i < daysHeld; i++) {
     currentCloseValue = currentCloseValue + stepIncrement;
     projectedCandles.push({ close: currentCloseValue }); // the hv calc only needs a "close value"
   }
@@ -30,7 +30,7 @@ const getProjectedHV = (candles, hvLength, daysHeld, sellPrice) => {
 // - it does this by:
 //   - projecting/simulating historical volatility
 //   - plugging all factors into black/scholes to get estimated option price at sale date/price
-const rateOptionContractsByHistoricProfitLoss = async (
+exports.rateOptionContractsByHistoricProfitLoss = async (
   symbol,
   daysHeld,
   historicalProfitLosses
@@ -54,12 +54,12 @@ const rateOptionContractsByHistoricProfitLoss = async (
   for (const dateKey in optionChainData.callExpDateMap) {
     const expirationDate = dateKey.slice(0, 10);
     for (const strikePrice in optionChainData.callExpDateMap[dateKey]) {
+      const contractData =
+        optionChainData.callExpDateMap[dateKey][strikePrice][0];
       if (contractData.daysToExpiration < daysHeld) {
         // we don't want the contract expiring during the trade
         continue;
       }
-      const contractData =
-        optionChainData.callExpDateMap[dateKey][strikePrice][0];
 
       const optionValueAtPurchaseDate = bs.blackScholes(
         buyPrice,
@@ -103,9 +103,3 @@ const rateOptionContractsByHistoricProfitLoss = async (
   }
   return _.orderBy(results, (r) => -r.avgProfitLoss);
 };
-
-(async () => {
-  await mongoApi.connectMongoose();
-  await rateOptionContractsByHistoricProfitLoss('SLV', 1, []);
-  await mongoApi.disconnectMongoose();
-})();

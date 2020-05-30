@@ -25,21 +25,3 @@ const calculateHV = (candles, hvLength = candles.length) => {
   return annualizedVariance * 100;
 };
 exports.calculateHV = calculateHV;
-/* 
-(async () => {
-  await mongoApi.connectMongoose();
-  let candles = (await loadHistoricalDataForSymbol('SLV')).map((c) => {
-    return {
-      date: c.date,
-      close: c.close,
-    };
-  });
-  await mongoApi.disconnectMongoose();
-
-  // agrees with this site: https://www.ivolatility.com/options/SLV/NYSEArca/
-  const hv10 = calculateHV(candles, 10);
-  const hv20 = calculateHV(candles, 20);
-  const hv30 = calculateHV(candles, 30);
-
-})();
- */
