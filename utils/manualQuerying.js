@@ -187,11 +187,6 @@ const createPaperTrades = async () => {
 };
 
 const fillInPaperTradeSellDates = async () => {
-  const strToday = moment().format('YYYY-MM-DD');
-  const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
-    .utc()
-    .toDate();
-
   const res = await PaperTrade.find({ sellPrice_underlying: null });
   for (const pt of res) {
     const histData = await loadHistoricalDataForSymbol(pt.symbol);
@@ -233,6 +228,6 @@ const misc = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await createPaperTrades();
+  await fillInPaperTradeSellDates();
   await mongoApi.disconnectMongoose();
 })();

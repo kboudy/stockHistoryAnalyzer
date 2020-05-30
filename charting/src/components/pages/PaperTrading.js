@@ -15,13 +15,33 @@ import {
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
-import '../styles/currentDayGridStyles.css';
+import '../styles/paperTradingGridStyles.css';
 import { Typography, Grid } from '@material-ui/core';
 // import StringParseFloatingFilter from '../agGridFilters/StringParseFloatingFilter';
 
+const priceColumnStyleRules = {
+  liveProfit: (params) => {
+    return params.value.isLive && params.value.value > 0;
+  },
+  liveLoss: (params) => {
+    return params.value.isLive && params.value.value < 0;
+  },
+  profit: (params) => {
+    return !params.value.isLive && params.value.value > 0;
+  },
+  loss: (params) => {
+    return !params.value.isLive && params.value.value < 0;
+  },
+};
+
 const useStyles = makeStyles((theme) => ({
-  avgLabel: { margin: theme.spacing(2) },
+  avgLabel: { padding: theme.spacing(2) },
 }));
+
+const profitLossFormatter = (params) => {
+  const { value } = params.value;
+  return parseFloat(value).toFixed(1);
+};
 
 const PaperTrading = (props) => {
   const classes = useStyles();
@@ -52,6 +72,8 @@ const PaperTrading = (props) => {
       headerName: 'Profit/Loss %',
       field: 'pl_percent',
       type: 'rightAligned',
+      valueFormatter: profitLossFormatter,
+      cellClassRules: priceColumnStyleRules,
     },
   ];
 
@@ -101,7 +123,7 @@ const PaperTrading = (props) => {
           sellDate: formatDate(r.sellDate),
           buyPrice_underlying: buyPrice_underlying,
           sellPrice_underlying: sellPrice_underlying,
-          pl_percent,
+          pl_percent: { value: pl_percent, isLive: false },
         };
       });
       if (getLivePricesForThese.length > 0) {
@@ -123,11 +145,15 @@ const PaperTrading = (props) => {
             !isNullOrUndefined(symbolKeyed[row.symbol])
           ) {
             row.sellPrice_underlying = symbolKeyed[row.symbol];
-            row.pl_percent =
-              Math.round(
-                (1000 * (row.sellPrice_underlying - row.buyPrice_underlying)) /
-                  row.buyPrice_underlying
-              ) / 10;
+            row.pl_percent = {
+              value:
+                Math.round(
+                  (1000 *
+                    (row.sellPrice_underlying - row.buyPrice_underlying)) /
+                    row.buyPrice_underlying
+                ) / 10,
+              isLive: true,
+            };
           }
         }
       }
@@ -138,7 +164,8 @@ const PaperTrading = (props) => {
   }, []);
 
   const updateAverages = (rows) => {
-    const plp = rows.map((r) => r.pl_percent);
+    const plp = rows.map((r) => r.pl_percent.value);
+    debugger;
     const avg =
       Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
     setAvgPL({ avg, count: plp.length });
@@ -150,7 +177,7 @@ const PaperTrading = (props) => {
 
   return (
     <div>
-      <div className="ag-theme-balham" style={{ height: 600 }}>
+      <div className="ag-theme-balham" style={{ height: 1100 }}>
         <AgGridReact
           defaultColDef={{
             // floatingFilter: true,

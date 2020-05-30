@@ -65,10 +65,6 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   });
 
   const mostRecentTradingDate = await getMostRecentEquityTradingDay();
-  const mostRecentTradingCloseDateTime = moment(
-    mostRecentTradingDate,
-    'YYYY-MM-DD'
-  ).add(16, 'hours');
   const lastDayToDownloadEquities_theSlowWay = mostRecentTradingDate; // otherwise they're downloaded in bulk
 
   // find any symbols that have the last trading date.  They'll be our bulk downloads
@@ -146,6 +142,9 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
         }
 
         if (endDate === lastDayToDownloadEquities_theSlowWay) {
+          // this will include this historical download in the "current day"
+          // bulk download at the end
+          getTheseInBulk.push(symbol);
           break;
         }
         currentYear += 5;
