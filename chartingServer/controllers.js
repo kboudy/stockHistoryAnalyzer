@@ -84,9 +84,10 @@ exports.getPatternStatsJobRuns = async (req, res, next) => {
   }
 };
 
-exports.getMostRecentCurrentDayResults = async (req, res, next) => {
+exports.getCurrentDayEvaluationJobRun = async (req, res, next) => {
   try {
-    const results = await CurrentDayEvaluationJobRun.findOne({})
+    const { jobRunId } = req.query;
+    const results = await CurrentDayEvaluationJobRun.findById(jobRunId)
       .lean()
       .sort({
         created: -1,

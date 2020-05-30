@@ -3,6 +3,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 import nodeServer from '../helpers/nodeServer';
 import ViewColumnIcon from '@material-ui/icons/ViewColumn';
+import GridOnIcon from '@material-ui/icons/GridOn';
+import CenterFocusStrongIcon from '@material-ui/icons/CenterFocusStrong';
 import SkipNextIcon from '@material-ui/icons/SkipNext';
 import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import Button from '@material-ui/core/Button';
@@ -11,7 +13,11 @@ import Popper from '@material-ui/core/Popper';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
+import Tooltip from '@material-ui/core/Tooltip';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
+import DeleteSweepTwoToneIcon from '@material-ui/icons/DeleteSweepTwoTone';
+import GroupWorkIcon from '@material-ui/icons/GroupWork';
+import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import Checkbox from '@material-ui/core/Checkbox';
 import ListItemText from '@material-ui/core/ListItemText';
 import Grid from '@material-ui/core/Grid';
@@ -63,7 +69,7 @@ const CurrentDayResultsTable = (props) => {
   const classes = useStyles();
   const [columnDefs, setColumnDefs] = useState([]);
 
-  const [currentJobRunCreatedDate, setCurrentJobRunCreatedDate] = useState('');
+  const [currentDayJobRun, setCurrentDayJobRun] = useState(null);
   const [
     currentDayJobRuns_datesAndIds,
     setCurrentDayJobRuns_datesAndIds,
@@ -82,16 +88,12 @@ const CurrentDayResultsTable = (props) => {
 
   const [visibleColumns, setVisibleColumns] = useState(null);
 
-  const getLatestCurrentDayJobData = async () => {
-    const { results, created } = (
-      await nodeServer.get('getMostRecentCurrentDayResults')
-    ).data;
-    setCurrentJobRunCreatedDate(created);
-    const allSymbols = _.orderBy(Object.keys(results), (r) => r);
+  const convertToRowsAndSymbols = (queryResults) => {
+    const allSymbols = _.orderBy(Object.keys(queryResults), (r) => r);
     const rows = [];
-    for (const symbol in results) {
-      for (const numberOfBars in results[symbol]) {
-        const rowData = results[symbol][numberOfBars];
+    for (const symbol in queryResults) {
+      for (const numberOfBars in queryResults[symbol]) {
+        const rowData = queryResults[symbol][numberOfBars];
         rows.push({ symbol, numberOfBars, ...rowData });
       }
     }
@@ -99,7 +101,17 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const reloadData = async () => {
-    const { rows, allSymbols } = await getLatestCurrentDayJobData();
+    if (!currentDayJobRun) {
+      return { rows: [], allSymbols: [] };
+    }
+
+    const { results, created } = (
+      await nodeServer.get(
+        `currentDayEvaluationJobRun?jobRunId=${currentDayJobRun._id}`
+      )
+    ).data;
+    const { rows, allSymbols } = convertToRowsAndSymbols(results);
+
     setAllRows(rows);
     setGridData([...rows]);
     setAllSymbolsInGrid(allSymbols);
@@ -108,13 +120,17 @@ const CurrentDayResultsTable = (props) => {
 
   useEffect(() => {
     (async () => {
-      setCurrentDayJobRuns_datesAndIds(
-        (await nodeServer.get(`currentDayJobRunDates`)).data
-      );
-
-      await reloadData();
+      const result = (await nodeServer.get(`currentDayJobRunDates`)).data;
+      setCurrentDayJobRuns_datesAndIds(result);
+      setCurrentDayJobRun(result[result.length - 1]);
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      await reloadData();
+    })();
+  }, [currentDayJobRun]);
 
   const clone = (obj) => {
     return JSON.parse(JSON.stringify(obj));
@@ -269,7 +285,9 @@ const CurrentDayResultsTable = (props) => {
   }, [aggregateBySymbol, currentSingleSymbol, selectedSymbols]);
   //------------------------------------------------
 
-  const handleCurrentDayJobSelected = (e) => {};
+  const handleCurrentDayJobSelected = (e) => {
+    setCurrentDayJobRun(e.target.value);
+  };
 
   const handleCellClicked = (e) => {
     if (props.singleSymbolMode) {
@@ -741,16 +759,6 @@ const CurrentDayResultsTable = (props) => {
     })();
   }, []);
 
-  const getMenuItems = () => {
-    return currentDayJobRuns_datesAndIds.map((s) => {
-      return (
-        <MenuItem key={s._id} value={s._id}>
-          {s.created}
-        </MenuItem>
-      );
-    });
-  };
-
   const syms =
     selectedSymbols && selectedSymbols.length
       ? selectedSymbols
@@ -846,17 +854,23 @@ const CurrentDayResultsTable = (props) => {
         {!props.singleSymbolMode && (
           <Grid item>
             <FormControl className={classes.jobSelector}>
-              <InputLabel id="select-current-day-job">
-                {moment(currentJobRunCreatedDate).format('YYYY-MM-DD')}
-              </InputLabel>
+              <InputLabel id="select-current-day-job">Run date</InputLabel>
               <Select
-                displayEmpty
                 labelId="select-current-day-job"
                 id="cboCurrentDayJob"
-                value={currentJobRunCreatedDate}
+                value={currentDayJobRun ? currentDayJobRun : ''}
                 onChange={handleCurrentDayJobSelected}
               >
-                {getMenuItems()}
+                {currentDayJobRuns_datesAndIds.map((val, index) => {
+                  const strDate = moment(val.created).isValid()
+                    ? moment(val.created).format('YYYY-MM-DD')
+                    : '';
+                  return (
+                    <MenuItem key={index} value={val}>
+                      {strDate}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </Grid>
@@ -864,63 +878,80 @@ const CurrentDayResultsTable = (props) => {
 
         {!props.singleSymbolMode && (
           <Grid item>
-            <Button
-              variant="contained"
-              className={classes.button}
-              startIcon={<ViewColumnIcon />}
-              onClick={handleChooseColumnsClicked}
-            >
-              Choose columns
-            </Button>
+            <Tooltip title={'Choose columns'}>
+              <IconButton
+                className={classes.button}
+                onClick={handleChooseColumnsClicked}
+              >
+                <ViewColumnIcon />
+              </IconButton>
+            </Tooltip>
             <Popper open={Boolean(anchorEl)} anchorEl={anchorEl}>
               {getColumnChoices()}
             </Popper>
           </Grid>
         )}
+
         <Grid item>
-          <Button
-            variant="contained"
-            className={classes.button}
-            onClick={handleModeChange}
-          >
-            {props.singleSymbolMode
-              ? 'Switch to large grid mode'
-              : 'Switch to single symbol mode'}
-          </Button>
+          <Grid item>
+            <Tooltip
+              title={
+                props.singleSymbolMode
+                  ? 'Switch to large grid mode'
+                  : 'Switch to single symbol mode'
+              }
+            >
+              <IconButton className={classes.button} onClick={handleModeChange}>
+                {props.singleSymbolMode ? (
+                  <GridOnIcon />
+                ) : (
+                  <CenterFocusStrongIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Grid>
         </Grid>
-        {props.singleSymbolMode && (
-          <Grid item>
-            <Button
-              variant="contained"
+
+        <Grid item>
+          <Tooltip
+            title={
+              props.singleSymbolMode
+                ? 'Hide current symbol'
+                : 'Hide unselected Symbols'
+            }
+          >
+            <IconButton
               className={classes.button}
-              onClick={handleHideCurrentSymbol}
+              onClick={
+                props.singleSymbolMode
+                  ? handleHideCurrentSymbol
+                  : handleHideUnselectedSymbols
+              }
             >
-              {'Hide current symbol'}
-            </Button>
-          </Grid>
-        )}
+              <DeleteSweepTwoToneIcon />
+            </IconButton>
+          </Tooltip>
+        </Grid>
         {!props.singleSymbolMode && (
           <Grid item>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={handleHideUnselectedSymbols}
+            <Tooltip
+              title={
+                aggregateBySymbol
+                  ? 'Stop aggregating by symbol'
+                  : 'Aggregate by symbol'
+              }
             >
-              {'Hide unselected Symbols'}
-            </Button>
-          </Grid>
-        )}
-        {!props.singleSymbolMode && (
-          <Grid item>
-            <Button
-              variant="contained"
-              className={classes.button}
-              onClick={handleToggleAggregateBySymbol}
-            >
-              {aggregateBySymbol
-                ? 'Stop aggregating by symbol'
-                : 'Aggregate by symbol'}
-            </Button>
+              <IconButton
+                className={classes.button}
+                onClick={handleToggleAggregateBySymbol}
+              >
+                {aggregateBySymbol ? (
+                  <FiberManualRecordIcon />
+                ) : (
+                  <GroupWorkIcon />
+                )}
+              </IconButton>
+            </Tooltip>
           </Grid>
         )}
         {!props.singleSymbolMode &&
