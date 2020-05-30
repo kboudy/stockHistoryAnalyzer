@@ -111,11 +111,6 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       const startDate = existingMaxDate ? existingMaxDate : `2000-01-01`;
       const endDate = lastDayToDownloadEquities_theSlowWay;
 
-      // console.log(
-      //   `${symbol}: ${moment(startDate, 'YYYY-MM-DD')
-      //     .add(1, 'day')
-      //     .format('YYYY-MM-DD')}-${endDate}`
-      // );
       // for crypto, it's downloaded in 1 csv file
       await Candle.deleteMany({
         // probably not necessary to clear the range first, but it'll ensure no dupes
