@@ -114,7 +114,7 @@ const PaperTrading = (props) => {
         ).data;
         const symbolKeyed = {};
         for (const row of liveSymbolRows) {
-          symbolKeyed[row.symbol] = Math.round(row.mark * 100) / 100;
+          symbolKeyed[row.symbol] = Math.round(row.close * 100) / 100;
         }
 
         for (const row of mappedGridData) {

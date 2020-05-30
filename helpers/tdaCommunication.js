@@ -160,7 +160,6 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
       candle.date = candleDate;
       candle.symbol = symbol;
       candle.open = c.openPrice;
-      candle.mark = c.mark; // not stored in db, but used for live calculations
       candle.high = c.highPrice;
       candle.low = c.lowPrice;
       candle.close = c.mark; // for some reason, the closePrice reflects yesterday, until the next day.  Mark matched close wherever I looked (after 5pm)
