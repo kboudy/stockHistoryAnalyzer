@@ -35,7 +35,7 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
     candles.push({
       created: moment.utc(),
       date: parts[0],
-      fromBulkDownload: false,
+      settled: true, // "settled" means the prices won't change anymore
       symbol,
       open: parseFloat(parts[2]),
       high: parseFloat(parts[3]),
@@ -55,7 +55,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
   // NOTE: since bulk-downloaded candles are "current day", we'll get rid of them before assessing which to download
   // unless it's after market close (5PM or later), then we'll let them live in the db permanently
   await Candle.deleteMany({
-    fromBulkDownload: true,
+    settled: false,
   });
 
   const currentEasternTime = moment().tz('America/New_York');

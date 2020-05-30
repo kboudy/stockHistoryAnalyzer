@@ -87,39 +87,6 @@ const validateCandleDates = async () => {
     }
   }
 };
-
-const updatePaperTradePrices = async () => {
-  for (const pt of await PaperTrade.find({})) {
-    if (pt.buyDate) {
-      const strBuyDate = moment(pt.buyDate).format('YYYY-MM-DD');
-      const matchingCandle = await Candle.findOne({
-        symbol: pt.symbol,
-        date: strBuyDate,
-      });
-      if (matchingCandle && !matchingCandle.fromBulkDownload) {
-        await PaperTrade.updateOne(
-          { _id: pt._id },
-          { buyPrice_underlying: parseFloat(matchingCandle.close.toString()) }
-        );
-      }
-    }
-
-    if (pt.sellDate) {
-      const strSellDate = moment(pt.sellDate).format('YYYY-MM-DD');
-      const matchingCandle = await Candle.findOne({
-        symbol: pt.symbol,
-        date: strSellDate,
-      });
-      if (matchingCandle && !matchingCandle.fromBulkDownload) {
-        await PaperTrade.updateOne(
-          { _id: pt._id },
-          { sellPrice_underlying: parseFloat(matchingCandle.close.toString()) }
-        );
-      }
-    }
-  }
-};
-
 const createPaperTrades = async () => {
   const strToday = moment().format('YYYY-MM-DD');
   const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
@@ -183,30 +150,6 @@ const createPaperTrades = async () => {
       sellPrice_underlying: null,
       sellPrice_option: null,
     });
-  }
-};
-
-const fillInPaperTradeSellDates = async () => {
-  const res = await PaperTrade.find({ sellPrice_underlying: null });
-  for (const pt of res) {
-    const histData = await loadHistoricalDataForSymbol(pt.symbol);
-    const buyIndex = histData.indexOf(
-      histData.filter(
-        (d) => d.date === moment(pt.buyDate).format('YYYY-MM-DD')
-      )[0]
-    );
-    const sellIndex = buyIndex + pt.heldDays;
-    if (sellIndex < histData.length) {
-      const sellDate = moment(
-        `${histData[sellIndex].date} 4:00PM`,
-        'YYYY-MM-DD h:mmA'
-      ).toDate();
-
-      await PaperTrade.update(
-        { _id: pt._id },
-        { sellDate: sellDate, sellPrice_underlying: histData[sellIndex].close }
-      );
-    }
   }
 };
 
