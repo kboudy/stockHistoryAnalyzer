@@ -16,6 +16,7 @@ import ListItem from '@material-ui/core/ListItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import DeleteSweepTwoToneIcon from '@material-ui/icons/DeleteSweepTwoTone';
+import RestoreFromTrashIcon from '@material-ui/icons/RestoreFromTrash';
 import GroupWorkIcon from '@material-ui/icons/GroupWork';
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -41,6 +42,7 @@ import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './styles/currentDayGridStyles.css';
 import StringParseFloatingFilter from './agGridFilters/StringParseFloatingFilter';
+import { Typography } from '@material-ui/core';
 
 const currentDayTable_visibleColumnsKey = 'current_day_table.visible_columns';
 const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
@@ -55,7 +57,6 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(1),
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
-    minWidth: 150,
   },
   columnChoiceList: {
     height: '1000px',
@@ -438,7 +439,9 @@ const CurrentDayResultsTable = (props) => {
     props.onModeChangeRequested(newModeIsSingleSymbol);
     if (newModeIsSingleSymbol) {
       const symbolCollection =
-        selectedSymbols.length === 0 ? allSymbolsInGrid[0] : selectedSymbols[0];
+        selectedSymbols && selectedSymbols.length
+          ? selectedSymbols
+          : allSymbolsInGrid;
 
       // if there's a selected symbol, bring them to that
       const selectedRows = gridApi.getSelectedRows();
@@ -447,6 +450,7 @@ const CurrentDayResultsTable = (props) => {
         focusOnSymbol = selectedRows[0].symbol;
       }
 
+      console.log(focusOnSymbol);
       setCurrentSingleSymbol(focusOnSymbol);
     } else {
       setCurrentSingleSymbol(null);
@@ -850,7 +854,7 @@ const CurrentDayResultsTable = (props) => {
           rowSelection={props.singleSymbolMode ? 'single' : 'multiple'}
         ></AgGridReact>
       </div>
-      <Grid container className={classes.gridWrapper}>
+      <Grid container className={classes.gridWrapper} direction={'row'}>
         {!props.singleSymbolMode && (
           <Grid item>
             <FormControl className={classes.jobSelector}>
@@ -932,6 +936,22 @@ const CurrentDayResultsTable = (props) => {
             </IconButton>
           </Tooltip>
         </Grid>
+
+        {!props.singleSymbolMode &&
+          selectedSymbols &&
+          selectedSymbols.length > 0 && (
+            <Grid item>
+              <Tooltip title={'Reveal hidden symbols'}>
+                <IconButton
+                  className={classes.button}
+                  onClick={handleRevealHiddenSymbols}
+                >
+                  <RestoreFromTrashIcon />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          )}
+
         {!props.singleSymbolMode && (
           <Grid item>
             <Tooltip
@@ -954,38 +974,31 @@ const CurrentDayResultsTable = (props) => {
             </Tooltip>
           </Grid>
         )}
-        {!props.singleSymbolMode &&
-          selectedSymbols &&
-          selectedSymbols.length > 0 && (
-            <Grid item>
-              <Button
-                variant="contained"
-                className={classes.button}
-                onClick={handleRevealHiddenSymbols}
-              >
-                {'Reveal hidden symbols'}
-              </Button>
-            </Grid>
-          )}
         {props.singleSymbolMode && (
-          <>
-            <Grid item>
-              <IconButton
-                aria-label="previous"
-                onClick={handlePreviousSingleSymbol}
-              >
-                <SkipPreviousIcon />
-              </IconButton>
+          <Grid item>
+            <Grid container direction={'row'} alignItems={'center'}>
+              <Grid item>
+                <IconButton
+                  aria-label="previous"
+                  onClick={handlePreviousSingleSymbol}
+                >
+                  <SkipPreviousIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <Typography>
+                  {`${currentSingleSymbol} (${
+                    syms.indexOf(currentSingleSymbol) + 1
+                  }/${syms.length}) ${syms[0]}`}
+                </Typography>
+              </Grid>
+              <Grid item>
+                <IconButton aria-label="next" onClick={handleNextSingleSymbol}>
+                  <SkipNextIcon />
+                </IconButton>
+              </Grid>
             </Grid>
-            <Grid item>{`${currentSingleSymbol} (${
-              syms.indexOf(currentSingleSymbol) + 1
-            }/${syms.length})`}</Grid>
-            <Grid item>
-              <IconButton aria-label="next" onClick={handleNextSingleSymbol}>
-                <SkipNextIcon />
-              </IconButton>
-            </Grid>
-          </>
+          </Grid>
         )}
       </Grid>
     </div>
