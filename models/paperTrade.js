@@ -51,6 +51,13 @@ const PaperTradeSchema = new Schema({
   sellPrice_option_actual: {
     type: Schema.Types.Decimal128,
   },
+  buyDate_option_chains: {
+    type: Schema.Types.Mixed,
+  },
+  sellDate_option_chains: {
+    type: Schema.Types.Mixed,
+  },
+
   currentDayEvaluationJobRun: {
     // the currentDayEvaluationJobRun that they made the "buy" choices from
     type: Schema.Types.ObjectId,

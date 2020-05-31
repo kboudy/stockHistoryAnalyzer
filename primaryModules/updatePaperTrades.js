@@ -73,6 +73,130 @@ const populateUnderlyingPrices = async () => {
   }
 };
 
+const setActualOptionPrice_ifDateIsCurrent = async (
+  pt,
+  isBuyField,
+  mostRecentTradingDay,
+  today,
+  isAfter5PM
+) => {
+  if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
+    return;
+  }
+  const strOptionTradeDate = moment(
+    isBuyField ? pt.buyDate : pt.sellDate
+  ).format('YYYY-MM-DD');
+  if (
+    strOptionTradeDate === mostRecentTradingDay &&
+    (mostRecentTradingDay < today ||
+      (mostRecentTradingDay === today && isAfter5PM))
+  ) {
+    const strOptionExpiration = moment
+      .utc(pt.optionExpiration)
+      .format('YYYY-MM-DD');
+    if (pt.optionStrike) {
+      const optionChainData = await getOptionChainData(
+        pt.symbol,
+        pt.optionIsPut,
+        parseInt(pt.optionStrike),
+        null,
+        strOptionExpiration
+      );
+
+      for (const expDate in optionChainData.callExpDateMap) {
+        for (const strike in optionChainData.callExpDateMap[expDate]) {
+          // there should only be one contract here.  just using loops to get the first keys
+          const sellPriceOptionActual =
+            optionChainData.callExpDateMap[expDate][strike][0].mark;
+
+          const field = isBuyField
+            ? 'buyPrice_option_actual'
+            : 'sellPrice_option_actual';
+          await PaperTrade.updateOne(
+            { _id: pt._id },
+            {
+              [field]: sellPriceOptionActual,
+            }
+          );
+        }
+      }
+    }
+  }
+};
+
+const setOptionChains_ifDateIsCurrent = async (
+  pt,
+  isBuyField,
+  mostRecentTradingDay,
+  today,
+  isAfter5PM
+) => {
+  if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
+    return;
+  }
+  const strOptionTradeDate = moment(
+    isBuyField ? pt.buyDate : pt.sellDate
+  ).format('YYYY-MM-DD');
+  if (
+    strOptionTradeDate === mostRecentTradingDay &&
+    (mostRecentTradingDay < today ||
+      (mostRecentTradingDay === today && isAfter5PM))
+  ) {
+    const optionChainData = await getOptionChainData(
+      pt.symbol,
+      pt.optionIsPut,
+      null,
+      100,
+      null
+    );
+
+    const allOptionChains = [];
+    for (const expDate in optionChainData.callExpDateMap) {
+      for (const strike in optionChainData.callExpDateMap[expDate]) {
+        const contract = optionChainData.callExpDateMap[expDate][strike][0];
+        const strExpDate = expDate.slice(0, 10);
+        allOptionChains.push({
+          expirationDate: strExpDate,
+          strike,
+          isPut: contract.putCall.toUpperCase() === 'PUT',
+          bid: contract.bid,
+          ask: contract.ask,
+          mark: contract.mark,
+          closePrice: contract.closePrice,
+          volatility: contract.volatility,
+          delta: contract.delta,
+          gamma: contract.gamma,
+          theta: contract.theta,
+          vega: contract.vega,
+          openInterest: contract.openInterest,
+          theoreticalOptionValue: contract.theoreticalOptionValue,
+          theoreticalVolatility: contract.theoreticalVolatility,
+          strikePrice: contract.strikePrice,
+          daysToExpiration: contract.daysToExpiration,
+        });
+      }
+    }
+
+    const filteredByOpenInterest = _.take(
+      _.orderBy(
+        allOptionChains.filter((o) => parseFloat(o.openInterest) > 0),
+        (oc) => -parseFloat(oc.openInterest)
+      ),
+      100
+    );
+
+    const field = isBuyField
+      ? 'buyDate_option_chains'
+      : 'sellDate_option_chains';
+    await PaperTrade.updateOne(
+      { _id: pt._id },
+      {
+        [field]: filteredByOpenInterest,
+      }
+    );
+  }
+};
+
 const populateOptionPrices = async () => {
   // first pass: populate:
   //     - buyPrice_option_theoretical
@@ -179,7 +303,7 @@ const populateOptionPrices = async () => {
   }
 
   //-----------------------------------------------------------------
-  // third and final pass: populate actual option prices:
+  // third pass: populate actual option prices:
 
   const tradesThatNeedActualPrices = await PaperTrade.find({
     $or: [{ sellPrice_option_actual: null }, { buyPrice_option_actual: null }],
@@ -205,55 +329,32 @@ const populateOptionPrices = async () => {
       );
     }
   }
-};
 
-const setActualOptionPrice_ifDateIsCurrent = async (
-  pt,
-  isBuyField,
-  mostRecentTradingDay,
-  today,
-  isAfter5PM
-) => {
-  if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
-    return;
-  }
-  const strOptionTradeDate = moment(
-    isBuyField ? pt.buyDate : pt.sellDate
-  ).format('YYYY-MM-DD');
-  if (
-    strOptionTradeDate === mostRecentTradingDay &&
-    (mostRecentTradingDay < today ||
-      (mostRecentTradingDay === today && isAfter5PM))
-  ) {
-    const strOptionExpiration = moment
-      .utc(pt.optionExpiration)
-      .format('YYYY-MM-DD');
-    if (pt.optionStrike) {
-      const optionChainData = await getOptionChainData(
-        pt.symbol,
-        pt.optionIsPut,
-        parseInt(pt.optionStrike),
-        null,
-        strOptionExpiration
+  //-----------------------------------------------------------------
+  // fourth & final pass: populate the top 100 option buy & sell chains:
+
+  const tradesThatNeedOptionChains = await PaperTrade.find({
+    $or: [{ sellPrice_option_chains: null }, { buyPrice_option_chains: null }],
+  });
+
+  for (const pt of tradesThatNeedOptionChains) {
+    if (!pt.buyPrice_option_chains) {
+      await setOptionChains_ifDateIsCurrent(
+        pt,
+        true,
+        mostRecentTradingDay,
+        today,
+        isAfter5PM
       );
-
-      for (const expDate in optionChainData.callExpDateMap) {
-        for (const strike in optionChainData.callExpDateMap[expDate]) {
-          // there should only be one contract here.  just using loops to get the first keys
-          const sellPriceOptionActual =
-            optionChainData.callExpDateMap[expDate][strike][0].mark;
-
-          const field = isBuyField
-            ? 'buyPrice_option_actual'
-            : 'sellPrice_option_actual';
-          await PaperTrade.updateOne(
-            { _id: pt._id },
-            {
-              [field]: sellPriceOptionActual,
-            }
-          );
-        }
-      }
+    }
+    if (!pt.sellPrice_option_chains) {
+      await setOptionChains_ifDateIsCurrent(
+        pt,
+        false,
+        mostRecentTradingDay,
+        today,
+        isAfter5PM
+      );
     }
   }
 };
