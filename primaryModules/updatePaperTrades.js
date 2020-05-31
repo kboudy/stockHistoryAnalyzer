@@ -124,12 +124,27 @@ const setActualOptionPrice_ifDateIsCurrent = async (
   }
 };
 
+const optionSetHasMatch = (filterSet, option) => {
+  console.log(chalk.red('still need to test optionSetHasMatch method'));
+  const matches =
+    filterSet.filter(
+      (f) =>
+        f.expirationDate === option.expirationDate &&
+        f.strike === option.strike &&
+        f.isPut === option.isPut
+    ).length > 0;
+  console.log(chalk.red(`match count: ${matches.length}`));
+
+  return matches;
+};
+
 const setOptionChains_ifDateIsCurrent = async (
   pt,
   isBuyField,
   mostRecentTradingDay,
   today,
-  isAfter5PM
+  isAfter5PM,
+  filterSet // list of option chains to match
 ) => {
   if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
     return;
@@ -177,13 +192,23 @@ const setOptionChains_ifDateIsCurrent = async (
       }
     }
 
-    const filteredByOpenInterest = _.take(
-      _.orderBy(
-        allOptionChains.filter((o) => parseFloat(o.openInterest) > 0),
-        (oc) => -parseFloat(oc.openInterest)
-      ),
-      100
-    );
+    let filtered;
+    if (filterSet) {
+      const filteredByFilterSet = allOptionChains.filter((o) =>
+        optionSetHasMatch(filterSet, o)
+      );
+
+      filtered = filteredByFilterSet;
+    } else {
+      const filteredByOpenInterest = _.take(
+        _.orderBy(
+          allOptionChains.filter((o) => parseFloat(o.openInterest) > 0),
+          (oc) => -parseFloat(oc.openInterest)
+        ),
+        100
+      );
+      filtered = filteredByOpenInterest;
+    }
 
     const field = isBuyField
       ? 'buyDate_option_chains'
@@ -191,7 +216,7 @@ const setOptionChains_ifDateIsCurrent = async (
     await PaperTrade.updateOne(
       { _id: pt._id },
       {
-        [field]: filteredByOpenInterest,
+        [field]: filtered,
       }
     );
   }
@@ -331,31 +356,39 @@ const populateOptionPrices = async () => {
   }
 
   //-----------------------------------------------------------------
-  // fourth & final pass: populate the top 100 option buy & sell chains:
+  // fourth pass: populate the top 100 option buy option chains:
 
-  const tradesThatNeedOptionChains = await PaperTrade.find({
-    $or: [{ sellPrice_option_chains: null }, { buyPrice_option_chains: null }],
+  const tradesThatNeedOptionBuyChains = await PaperTrade.find({
+    buyDate_option_chains: null,
   });
 
-  for (const pt of tradesThatNeedOptionChains) {
-    if (!pt.buyPrice_option_chains) {
-      await setOptionChains_ifDateIsCurrent(
-        pt,
-        true,
-        mostRecentTradingDay,
-        today,
-        isAfter5PM
-      );
-    }
-    if (!pt.sellPrice_option_chains) {
-      await setOptionChains_ifDateIsCurrent(
-        pt,
-        false,
-        mostRecentTradingDay,
-        today,
-        isAfter5PM
-      );
-    }
+  for (const pt of tradesThatNeedOptionBuyChains) {
+    await setOptionChains_ifDateIsCurrent(
+      pt,
+      true,
+      mostRecentTradingDay,
+      today,
+      isAfter5PM,
+      null
+    );
+  }
+
+  //-----------------------------------------------------------------
+  // fifth & final pass: populate the top 100 option sell chains (or just match the buy chains, if they exist)
+
+  const tradesThatNeedOptionSellChains = await PaperTrade.find({
+    sellDate_option_chains: null,
+  });
+
+  for (const pt of tradesThatNeedOptionSellChains) {
+    await setOptionChains_ifDateIsCurrent(
+      pt,
+      false,
+      mostRecentTradingDay,
+      today,
+      isAfter5PM,
+      pt.buyDate_option_chains // we'll use the buyDate_option_chains as the filter set, if it exists
+    );
   }
 };
 
