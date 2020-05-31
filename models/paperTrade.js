@@ -27,19 +27,40 @@ const PaperTradeSchema = new Schema({
     type: Schema.Types.String,
     sparse: true,
   },
+  optionIsPut: {
+    type: Schema.Types.Boolean,
+  },
+  daysToExpiration_atPurchase: {
+    type: Schema.Types.Number,
+  },
   buyPrice_underlying: {
     type: Schema.Types.Decimal128,
   },
-  buyPrice_option: {
+  buyPrice_option_theoretical: {
+    type: Schema.Types.Decimal128,
+  },
+  buyPrice_option_actual: {
     type: Schema.Types.Decimal128,
   },
   sellPrice_underlying: {
     type: Schema.Types.Decimal128,
   },
-  sellPrice_option: {
+  sellPrice_option_theoretical: {
     type: Schema.Types.Decimal128,
   },
+  sellPrice_option_actual: {
+    type: Schema.Types.Decimal128,
+  },
+  currentDayEvaluationJobRun: {
+    // the currentDayEvaluationJobRun that they made the "buy" choices from
+    type: Schema.Types.ObjectId,
+    ref: 'CurrentDayEvaluationJobRun',
+    sparse: true,
+  },
 });
+
+// "currentDayEvaluationJobRun" : ObjectId("5ed0566ba336043340e3eea6"),  // 2020-05-28
+// "currentDayEvaluationJobRun" : ObjectId("5ed18b0a5f1efd6f32b7230a"),  // 2020-05-29
 
 const PaperTrade = mongoose.model('paperTrade', PaperTradeSchema);
 

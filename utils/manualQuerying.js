@@ -169,8 +169,25 @@ const misc = async () => {
   });
 };
 
+const updatePaperTrades_with_currentDayEvaluationJobRun = async () => {
+  for (const pt of await PaperTrade.find({})) {
+    const strBuyDate = moment(pt.buyDate).format('YYYY-MM-DD');
+    if (strBuyDate === '2020-05-28') {
+      await PaperTrade.updateOne(
+        { _id: pt._id },
+        { currentDayEvaluationJobRun: '5ed0566ba336043340e3eea6' }
+      );
+    } else if (strBuyDate === '2020-05-29') {
+      await PaperTrade.updateOne(
+        { _id: pt._id },
+        { currentDayEvaluationJobRun: '5ed18b0a5f1efd6f32b7230a' }
+      );
+    }
+  }
+};
+
 (async () => {
   await mongoApi.connectMongoose();
-  await fillInPaperTradeSellDates();
+  await updatePaperTrades_with_currentDayEvaluationJobRun();
   await mongoApi.disconnectMongoose();
 })();

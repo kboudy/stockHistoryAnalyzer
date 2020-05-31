@@ -1,14 +1,9 @@
-const axios = require('axios'),
-  bs = require('black-scholes'),
-  mongoApi = require('../mongoApi'),
+const bs = require('black-scholes'),
   _ = require('lodash'),
   { calculateHV } = require('./historicVolatility'),
   { loadHistoricalDataForSymbol } = require('../symbolData'),
+  { annualInterestRate } = require('../../helpers/constants'),
   { getOptionChainData } = require('../tdaCommunication');
-
-// "risk-free one-year Treasury rates"
-// https://www.treasury.gov/resource-center/data-chart-center/interest-rates/pages/textview.aspx?data=yield
-const annualInterestRate = 0.17;
 
 // add fake candles to the end, moving toward the sell price, to estimate hv
 const getProjectedHV = (candles, hvLength, daysHeld, sellPrice) => {
@@ -72,7 +67,7 @@ exports.rateOptionContractsByHistoricProfitLoss = async (
 
       const thisLoopResults = [];
       for (const historicalPL of historicalProfitLosses) {
-        // note I'm assuming the historicalPL comes as "90" and not ".9" for 90%
+        // note I'm assuming the historicalPL comes as "1" and not ".01" for 1% profit
         const sellPrice = (1 + historicalPL / 100) * buyPrice;
         const projectedHV = getProjectedHV(candles, 20, daysHeld, sellPrice);
 
@@ -98,6 +93,7 @@ exports.rateOptionContractsByHistoricProfitLoss = async (
         strikePrice,
         daysToExpiration: contractData.daysToExpiration,
         avgProfitLoss: _.mean(thisLoopResults),
+        optionValueAtPurchaseDate,
       });
     }
   }
