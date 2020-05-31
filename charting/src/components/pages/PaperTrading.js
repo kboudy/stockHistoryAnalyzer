@@ -62,18 +62,58 @@ const PaperTrading = (props) => {
       field: 'sellDate',
     },
     {
-      headerName: 'Buy Price',
+      headerName: 'Underlying Buy Price',
       field: 'buyPrice_underlying',
       type: 'rightAligned',
+      valueFormatter: numberFormatter,
     },
     {
-      headerName: 'Sell Price',
+      headerName: 'Underlying Sell Price',
       field: 'sellPrice_underlying',
       type: 'rightAligned',
+      valueFormatter: numberFormatter,
     },
     {
-      headerName: 'Profit/Loss %',
-      field: 'pl_percent',
+      headerName: 'Underlying Profit/Loss %',
+      field: 'underlying_pl_percent',
+      type: 'rightAligned',
+      valueFormatter: profitLossFormatter,
+      cellClassRules: priceColumnStyleRules,
+    },
+    {
+      headerName: 'Actual Option Buy Price',
+      field: 'buyPrice_option_actual',
+      type: 'rightAligned',
+      valueFormatter: numberFormatter,
+    },
+    {
+      headerName: 'Actual Option Sell Price',
+      field: 'sellPrice_option_actual',
+      type: 'rightAligned',
+      valueFormatter: numberFormatter,
+    },
+    {
+      headerName: 'Actual Option Profit/Loss %',
+      field: 'actual_option_pl_percent',
+      type: 'rightAligned',
+      valueFormatter: profitLossFormatter,
+      cellClassRules: priceColumnStyleRules,
+    },
+    {
+      headerName: 'Theoretical Option Buy Price',
+      field: 'buyPrice_option_theoretical',
+      type: 'rightAligned',
+      valueFormatter: numberFormatter,
+    },
+    {
+      headerName: 'Theoretical Option Sell Price',
+      field: 'sellPrice_option_theoretical',
+      type: 'rightAligned',
+      valueFormatter: numberFormatter,
+    },
+    {
+      headerName: 'Theoretical Option Profit/Loss %',
+      field: 'theoretical_option_pl_percent',
       type: 'rightAligned',
       valueFormatter: profitLossFormatter,
       cellClassRules: priceColumnStyleRules,
@@ -83,13 +123,8 @@ const PaperTrading = (props) => {
   const [gridData, setGridData] = useState([]);
   const [avgPL, setAvgPL] = useState(0);
 
-  const formatMongooseDecimal = (obj) => {
-    {
-      return obj
-        ? Math.round(parseFloat(obj['$numberDecimal']) * 100) / 100
-        : '';
-    }
-  };
+  const formatMongooseDecimal = (obj) =>
+    obj ? Math.round(parseFloat(obj['$numberDecimal']) * 100) / 100 : '';
 
   const formatDate = (d) => {
     return d ? moment(d).format('YYYY-MM-DD') : '';
@@ -113,12 +148,50 @@ const PaperTrading = (props) => {
             getLivePricesForThese.push(r.symbol);
           }
         }
-        const pl_percent = sellPrice_underlying
+
+        const underlying_pl_percent = sellPrice_underlying
           ? Math.round(
               (1000 * (sellPrice_underlying - buyPrice_underlying)) /
                 buyPrice_underlying
             ) / 10
           : '';
+
+        const buyPrice_option_theoretical = formatMongooseDecimal(
+          r.buyPrice_option_theoretical
+        );
+        const sellPrice_option_theoretical = formatMongooseDecimal(
+          r.sellPrice_option_theoretical
+        );
+        const theoretical_option_pl_percent =
+          buyPrice_option_theoretical && sellPrice_option_theoretical
+            ? sellPrice_underlying
+              ? Math.round(
+                  (1000 *
+                    (sellPrice_option_theoretical -
+                      buyPrice_option_theoretical)) /
+                    buyPrice_option_theoretical
+                ) / 10
+              : ''
+            : '';
+
+        const buyPrice_option_actual = formatMongooseDecimal(
+          r.buyPrice_option_actual
+        );
+        const sellPrice_option_actual = formatMongooseDecimal(
+          r.sellPrice_option_actual
+        );
+        if (r.symbol === 'AAOI') {
+          debugger;
+        }
+        const actual_option_pl_percent =
+          buyPrice_option_actual && sellPrice_option_actual
+            ? sellPrice_underlying
+              ? Math.round(
+                  (1000 * (sellPrice_option_actual - buyPrice_option_actual)) /
+                    buyPrice_option_actual
+                ) / 10
+              : ''
+            : '';
 
         return {
           ...r,
@@ -126,7 +199,18 @@ const PaperTrading = (props) => {
           sellDate: formatDate(r.sellDate),
           buyPrice_underlying: buyPrice_underlying,
           sellPrice_underlying: sellPrice_underlying,
-          pl_percent: { value: pl_percent, isLive: false },
+          underlying_pl_percent: {
+            value: underlying_pl_percent,
+            isLive: false,
+          },
+          actual_option_pl_percent: {
+            value: actual_option_pl_percent,
+            isLive: false,
+          },
+          theoretical_option_pl_percent: {
+            value: theoretical_option_pl_percent,
+            isLive: false,
+          },
         };
       });
       if (getLivePricesForThese.length > 0) {
@@ -147,8 +231,10 @@ const PaperTrading = (props) => {
             !row.sellPrice_underlying &&
             !isNullOrUndefined(symbolKeyed[row.symbol])
           ) {
+            row.actual_option_pl_percent = { value: null, isLive: false };
+            row.theoretical_option_pl_percent = { value: null, isLive: false };
             row.sellPrice_underlying = symbolKeyed[row.symbol];
-            row.pl_percent = {
+            row.underlying_pl_percent = {
               value:
                 Math.round(
                   (1000 *
@@ -167,7 +253,7 @@ const PaperTrading = (props) => {
   }, []);
 
   const updateAverages = (rows) => {
-    const plp = rows.map((r) => r.pl_percent.value);
+    const plp = rows.map((r) => r.underlying_pl_percent.value);
     const avg =
       Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
     setAvgPL({ avg, count: plp.length });

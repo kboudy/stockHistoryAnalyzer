@@ -59,9 +59,6 @@ const PaperTradeSchema = new Schema({
   },
 });
 
-// "currentDayEvaluationJobRun" : ObjectId("5ed0566ba336043340e3eea6"),  // 2020-05-28
-// "currentDayEvaluationJobRun" : ObjectId("5ed18b0a5f1efd6f32b7230a"),  // 2020-05-29
-
 const PaperTrade = mongoose.model('paperTrade', PaperTradeSchema);
 
 module.exports = PaperTrade;
