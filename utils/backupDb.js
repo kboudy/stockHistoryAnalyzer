@@ -22,7 +22,7 @@ fs.mkdirSync(destinationDir);
     'docker exec ubqt_mongo sh -c "cd /data && mongodump --db stock_analysis"'
   );
 
-  console.log('moving the dump to the backup dir');
+  console.log(`moving the dump to the backup dir (${destinationDir})`);
   const { stdoutCopy, stderrCopy } = await exec(
     `docker cp ubqt_mongo:/data/dump "${destinationDir}"`
   );

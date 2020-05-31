@@ -1,6 +1,7 @@
 const _ = require('lodash'),
   moment = require('moment-timezone'),
   mongoApi = require('../helpers/mongoApi'),
+  mongoApi2 = require('../helpers/mongoApi2'),
   mongoose = require('mongoose'),
   {
     getAvailableSymbolNames,
@@ -186,8 +187,24 @@ const updatePaperTrades_with_currentDayEvaluationJobRun = async () => {
   }
 };
 
+const copyCandlesFromAnotherDb = async () => {
+  let currentIdx = 0;
+  const incrementer = 10000;
+  while (true) {
+    await mongoApi2.connectMongoose();
+    let candles = await Candle.find({}).skip(currentIdx).limit(incrementer);
+    if (candles.length === 0) {
+      break;
+    }
+    candles = candles.filter((c) => c.date <= '2020-05-15');
+    await mongoApi2.disconnectMongoose();
+    await mongoApi.connectMongoose();
+    await Candle.insertMany(candles);
+    await mongoApi.disconnectMongoose();
+    currentIdx += incrementer;
+  }
+};
+
 (async () => {
-  await mongoApi.connectMongoose();
-  await updatePaperTrades_with_currentDayEvaluationJobRun();
-  await mongoApi.disconnectMongoose();
+  await copyCandlesFromAnotherDb();
 })();

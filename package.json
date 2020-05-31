@@ -32,6 +32,7 @@
     "mongoose": "^5.9.14",
     "opn": "^6.0.0",
     "option-pricing-tree": "^1.0.1",
+    "prompt-confirm": "^2.0.4",
     "yargs": "^15.3.1"
   }
 }
