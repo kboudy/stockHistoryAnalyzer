@@ -175,6 +175,9 @@ exports.getOptionChainData = async (
   strikeCount,
   date
 ) => {
+  if (strike && strikeCount) {
+    throw 'you should only supply strike or strikeCount, not both';
+  }
   await authenticateIfNecessary();
 
   let url = `https://api.tdameritrade.com/v1/marketdata/chains?apikey=${TDA_consumerKey}&symbol=${symbol}&contractType=${
