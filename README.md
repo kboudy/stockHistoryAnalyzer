@@ -76,6 +76,7 @@
   npm run charting
   ```
 
-# backing up the db
+# backing up & restoring the db
 
 node utils/backupDb.js
+node utils/restoreDb.js

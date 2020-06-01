@@ -1,5 +1,6 @@
 const util = require('util'),
   mongoose = require('mongoose'),
+  mongoApi = require('../helpers/mongoApi'),
   Confirm = require('prompt-confirm'),
   fs = require('fs'),
   exec = util.promisify(require('child_process').exec);
@@ -25,11 +26,15 @@ if (!fs.existsSync(sourceDir)) {
   if (await prompt.run()) {
     console.log('Copying mongo db to docker container');
     const { stdoutBackup, stderrBackup } = await exec(
-      `docker cp "${sourceDir}" ubqt_mongo:/data`
+      `docker cp "${sourceDir}/dump" ubqt_mongo:/data`
     );
 
     console.log(`Dropping db`);
-    mongoose.connection.db.dropDatabase(DB_NAME);
+    try {
+      await mongoApi.connectMongoose();
+      await mongoose.connection.db.dropDatabase();
+      await mongoApi.disconnectMongoose();
+    } catch (err) {}
 
     console.log(`Restoring`);
     const { stdoutCopy, stderrCopy } = await exec(
