@@ -35,7 +35,7 @@ const priceColumnStyleRules = {
 };
 
 const useStyles = makeStyles((theme) => ({
-  avgLabel: { padding: theme.spacing(2) },
+  avgLabel: { paddingTop: theme.spacing(2), paddingLeft: theme.spacing(2) },
 }));
 
 const profitLossFormatter = (params) => {
@@ -51,30 +51,36 @@ const PaperTrading = (props) => {
   const columnDefs = [
     {
       headerName: 'symbol',
+      headerTooltip: 'symbol',
       field: 'symbol',
     },
     {
       headerName: 'Buy Date',
+      headerTooltip: 'Buy Date',
       field: 'buyDate',
     },
     {
       headerName: 'Sell Date',
+      headerTooltip: 'Sell Date',
       field: 'sellDate',
     },
     {
       headerName: 'Underlying Buy Price',
+      headerTooltip: 'Underlying Buy Price',
       field: 'buyPrice_underlying',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Underlying Sell Price',
+      headerTooltip: 'Underlying Sell Price',
       field: 'sellPrice_underlying',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Underlying Profit/Loss %',
+      headerTooltip: 'Underlying Profit/Loss %',
       field: 'underlying_pl_percent',
       type: 'rightAligned',
       valueFormatter: profitLossFormatter,
@@ -82,18 +88,21 @@ const PaperTrading = (props) => {
     },
     {
       headerName: 'Actual Option Buy Price',
+      headerTooltip: 'Actual Option Buy Price',
       field: 'buyPrice_option_actual',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Actual Option Sell Price',
+      headerTooltip: 'Actual Option Sell Price',
       field: 'sellPrice_option_actual',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Actual Option Profit/Loss %',
+      headerTooltip: 'Actual Option Profit/Loss %',
       field: 'actual_option_pl_percent',
       type: 'rightAligned',
       valueFormatter: profitLossFormatter,
@@ -101,18 +110,21 @@ const PaperTrading = (props) => {
     },
     {
       headerName: 'Theoretical Option Buy Price',
+      headerTooltip: 'Theoretical Option Buy Price',
       field: 'buyPrice_option_theoretical',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Theoretical Option Sell Price',
+      headerTooltip: 'Theoretical Option Sell Price',
       field: 'sellPrice_option_theoretical',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
       headerName: 'Theoretical Option Profit/Loss %',
+      headerTooltip: 'Theoretical Option Profit/Loss %',
       field: 'theoretical_option_pl_percent',
       type: 'rightAligned',
       valueFormatter: profitLossFormatter,
@@ -292,7 +304,6 @@ const PaperTrading = (props) => {
         ></AgGridReact>
       </div>
       <Grid container className={classes.avgLabel}>
-        <Grid item></Grid>
         <Grid item>
           <Typography>{avgPL.count} trades </Typography>
           <Typography>avg pl%: {avgPL.avg}</Typography>
