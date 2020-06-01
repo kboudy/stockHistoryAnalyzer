@@ -989,7 +989,7 @@ const CurrentDayResultsTable = (props) => {
                 <Typography>
                   {`${currentSingleSymbol} (${
                     syms.indexOf(currentSingleSymbol) + 1
-                  }/${syms.length}) ${syms[0]}`}
+                  }/${syms.length}) `}
                 </Typography>
               </Grid>
               <Grid item>

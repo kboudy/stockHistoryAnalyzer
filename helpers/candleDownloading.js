@@ -64,16 +64,14 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     date: today,
   });
 
-  const bulkDownloadDate = _.max(
-    (await downloadBulkCurrentEquityData(['SPY']))
-      .filter((c) => c.date < today)
-      .map((c) => c.date)
-  );
+  const mostRecentEquityTradingDays = await getMostRecentEquityTradingDays();
+
+  const bulkDownloadDate =
+    mostRecentEquityTradingDays[mostRecentEquityTradingDays.length - 1];
   await Candle.deleteMany({
     date: bulkDownloadDate,
   });
 
-  const mostRecentEquityTradingDays = await getMostRecentEquityTradingDays();
   const lastDayToDownloadEquities_theSlowWay = _.max(
     mostRecentEquityTradingDays.filter((d) => d < bulkDownloadDate),
     (d) => d
@@ -92,7 +90,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     if (getTheseInBulk.includes(symbol)) {
       continue;
     }
-    console.log(` - Downloading ${symbol}`);
+    console.log(`    + downloading ${symbol}`);
     const symbolIsCrypto = isCrypto(symbol);
     let existingMaxDate = null;
     let currentYear = 1960;

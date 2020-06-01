@@ -1,7 +1,6 @@
 const _ = require('lodash'),
   moment = require('moment-timezone'),
   mongoApi = require('../helpers/mongoApi'),
-  mongoApi2 = require('../helpers/mongoApi2'),
   mongoose = require('mongoose'),
   {
     getAvailableSymbolNames,
@@ -95,44 +94,29 @@ const createPaperTrades = async () => {
     .toDate();
 
   const symbolsToBuy = [
-    'ADPT',
-    'CGC',
-    'CCLP',
+    'AES',
+    'AVNS',
+    'CHRS',
     'CLUB',
-    'CUE',
-    'DMRC',
-    'EOLS',
-    'EVER',
-    'EXAS',
-    'HIL',
-    'INFI',
-    'INMD',
+    'CTMX',
+    'EURN',
+    'EVBG',
+    'FLDM',
+    'FRBK',
+    'GOSS',
+    'HRC',
+    'HTHT',
+    'ICPT',
     'KRYS',
-    'LEVI',
-    'LITE',
-    'LQDA',
-    'MLCO',
-    'MNLO',
-    'MTCH',
-    'NBRV',
-    'ONEM',
-    'PLAY',
-    'PLT',
-    'PRPL',
-    'RCUS',
-    'RNG',
-    'SLDB',
-    'STNE',
-    'TARO',
-    'TDOC',
+    'MODN',
+    'SFUN',
+    'SOI',
+    'TIF',
     'TLRY',
-    'TPTX',
-    'TRIB',
-    'VOLT',
-    'XENT',
+    'TRIL',
+    'ZLAB',
   ];
 
-  //const currentDate = moment(date, 'YYYY-MM-DD');
   for (const symbol of symbolsToBuy) {
     const todayCandle = await Candle.findOne({
       symbol,
@@ -150,40 +134,8 @@ const createPaperTrades = async () => {
       buyPrice_option: null,
       sellPrice_underlying: null,
       sellPrice_option: null,
+      currentDayEvaluationJobRun: '5ed55ca82b803f3a5e82fe06',
     });
-  }
-};
-
-const misc = async () => {
-  const psjr = await PatternStatsJobRun.findOne({
-    sourceSymbol: 'TSLA',
-    numberOfBars: 15,
-    targetSymbols: { $size: 12 },
-  });
-
-  const ps = await PatternStats.find({
-    jobRun: psjr.id,
-    'percentProfitable_atBarX.30': { $gte: 60 },
-    'avg_maxUpsidePercent_byBarX.30': { $gte: 1 },
-    scoreCount: { $gte: 10 },
-    avgScore: { $lte: 10 },
-  });
-};
-
-const updatePaperTrades_with_currentDayEvaluationJobRun = async () => {
-  for (const pt of await PaperTrade.find({})) {
-    const strBuyDate = moment(pt.buyDate).format('YYYY-MM-DD');
-    if (strBuyDate === '2020-05-28') {
-      await PaperTrade.updateOne(
-        { _id: pt._id },
-        { currentDayEvaluationJobRun: '5ed0566ba336043340e3eea6' }
-      );
-    } else if (strBuyDate === '2020-05-29') {
-      await PaperTrade.updateOne(
-        { _id: pt._id },
-        { currentDayEvaluationJobRun: '5ed18b0a5f1efd6f32b7230a' }
-      );
-    }
   }
 };
 
@@ -206,5 +158,7 @@ const copyCandlesFromAnotherDb = async () => {
 };
 
 (async () => {
-  await copyCandlesFromAnotherDb();
+  await mongoApi.connectMongoose();
+  await createPaperTrades();
+  await mongoApi.disconnectMongoose();
 })();
