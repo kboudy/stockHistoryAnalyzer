@@ -108,14 +108,6 @@ const SimulationResultsTable = (props) => {
   const gridDataSource = {
     rowCount: null,
     getRows: async (params) => {
-      /*  
-
-      params.filterModel sample:
-      
-      {"criteria.includeOtherSymbolsTargets":{"value":"suen"}}
-
-      */
-      console.log(JSON.stringify(params.filterModel));
       const mongoFilter = transformFilterToMongo(params.filterModel);
       const mongoSort = transformSortToMongo(params.sortModel);
 
@@ -127,6 +119,7 @@ const SimulationResultsTable = (props) => {
         endRow,
       });
       const { results, isLastSet } = tsrQuertyResults.data;
+      debugger;
       let lastRow = null;
       if (isLastSet) {
         lastRow = startRow + results.length;
@@ -258,7 +251,14 @@ const SimulationResultsTable = (props) => {
             width: 120,
           }}
           columnDefs={columnDefs}
-          gridOptions={{ rowModelType: 'infinite', datasource: gridDataSource }}
+          // Together, getRowNodeId & deltaRowDataMode preserve the column filters
+          // https://stackoverflow.com/questions/45079166/column-filter-lost-when-updating-row-data-in-ag-grid
+          gridOptions={{
+            rowModelType: 'infinite',
+            datasource: gridDataSource,
+            deltaRowDataMode: true,
+          }}
+          getRowNodeId={(data) => data._id}
           rowData={props.data}
           frameworkComponents={{
             stringParseFloatingFilter: StringParseFloatingFilter,
