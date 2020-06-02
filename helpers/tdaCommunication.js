@@ -159,7 +159,7 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
       candle.open = c.openPrice;
       candle.high = c.highPrice;
       candle.low = c.lowPrice;
-      candle.close = c.mark; // for some reason, the closePrice reflects yesterday, until the next day.  Mark matched close wherever I looked (after 5pm)
+      candle.close = c.regularMarketLastPrice; // TODO: confirm that this gives us live prices (else use "mark" if before 5pm).  it does work for getting the close-of-day quote
       candle.volume = c.totalVolume;
       candles.push(candle);
     }

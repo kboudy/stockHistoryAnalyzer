@@ -152,6 +152,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
           getTheseInBulk.push(symbol);
           break;
         }
+
         currentYear += 5;
       }
     }
