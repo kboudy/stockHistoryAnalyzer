@@ -857,12 +857,15 @@ const CurrentDayResultsTable = (props) => {
               },
             },
           }}
+          // Together, getRowNodeId & deltaRowDataMode preserve the column filters
+          // https://stackoverflow.com/questions/45079166/column-filter-lost-when-updating-row-data-in-ag-grid
+          getRowNodeId={(data) => `${data.symbol}_${data.numberOfBars}`}
+          gridOptions={{ tooltipShowDelay: 0, deltaRowDataMode: true }}
           frameworkComponents={{
             stringParseFloatingFilter: StringParseFloatingFilter,
           }}
           columnDefs={columnDefs}
           toolPanel="columns"
-          gridOptions={{ tooltipShowDelay: 0 }}
           rowData={gridData}
           onFilterChanged={handleFilterChanged}
           onCellClicked={handleCellClicked}
