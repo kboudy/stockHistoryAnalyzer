@@ -39,7 +39,7 @@ exports.rateOptionContractsByHistoricProfitLoss = async (
   const optionChainData = await getOptionChainData(
     symbol,
     false,
-    Math.round(currentPrice),
+    null,
     20,
     null
   );

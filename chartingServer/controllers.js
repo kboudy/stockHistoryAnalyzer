@@ -4,6 +4,7 @@ const _ = require('lodash'),
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
   { downloadBulkCurrentEquityData } = require('../helpers/tdaCommunication'),
+  moment = require('moment'),
   { significantBarsArray } = require('../helpers/constants'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   Candle = require('../models/candle'),
@@ -153,6 +154,44 @@ exports.getPatternStatsJobRunSymbols = async (req, res, next) => {
       .lean()
       .distinct('sourceSymbol');
     res.json(_.orderBy(symbols, (s) => s));
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.createPaperTrades = async (req, res, next) => {
+  try {
+    const strToday = moment().format('YYYY-MM-DD');
+    const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA')
+      .utc()
+      .toDate();
+
+    const { symbolsToBuy, jobRunId } = req.body;
+
+    const results = [];
+    for (const symbol of symbolsToBuy) {
+      const todayCandle = await Candle.findOne({
+        symbol,
+        date: strToday,
+      });
+      results.push(
+        await PaperTrade.create({
+          created: moment.utc(),
+          symbol: symbol,
+          buyDate: buyDateTime,
+          sellDate: null,
+          heldDays: 1,
+          optionExpiration: null,
+          optionStrike: null,
+          buyPrice_underlying: todayCandle.close,
+          buyPrice_option: null,
+          sellPrice_underlying: null,
+          sellPrice_option: null,
+          currentDayEvaluationJobRun: jobRunId,
+        })
+      );
+    }
+    res.json({ results });
   } catch (error) {
     return next(error);
   }

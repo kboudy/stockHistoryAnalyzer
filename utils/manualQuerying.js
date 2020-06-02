@@ -11,6 +11,7 @@ const _ = require('lodash'),
   downloadBulkCurrentEquityData = require('../helpers/tdaCommunication'),
   PatternStats = require('../models/patternStats'),
   PaperTrade = require('../models/paperTrade'),
+  SymbolInfo = require('../models/symbolInfo'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
@@ -87,57 +88,6 @@ const validateCandleDates = async () => {
     }
   }
 };
-const createPaperTrades = async () => {
-  const strToday = moment().format('YYYY-MM-DD');
-  const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA') //, 'America/New_York')
-    .utc()
-    .toDate();
-
-  const symbolsToBuy = [
-    'AES',
-    'AVNS',
-    'CHRS',
-    'CLUB',
-    'CTMX',
-    'EURN',
-    'EVBG',
-    'FLDM',
-    'FRBK',
-    'GOSS',
-    'HRC',
-    'HTHT',
-    'ICPT',
-    'KRYS',
-    'MODN',
-    'SFUN',
-    'SOI',
-    'TIF',
-    'TLRY',
-    'TRIL',
-    'ZLAB',
-  ];
-
-  for (const symbol of symbolsToBuy) {
-    const todayCandle = await Candle.findOne({
-      symbol,
-      date: strToday,
-    });
-    await PaperTrade.create({
-      created: moment.utc(),
-      symbol: symbol,
-      buyDate: buyDateTime,
-      sellDate: null,
-      heldDays: 1,
-      optionExpiration: null,
-      optionStrike: null,
-      buyPrice_underlying: todayCandle.close,
-      buyPrice_option: null,
-      sellPrice_underlying: null,
-      sellPrice_option: null,
-      currentDayEvaluationJobRun: '5ed55ca82b803f3a5e82fe06',
-    });
-  }
-};
 
 const copyCandlesFromAnotherDb = async () => {
   let currentIdx = 0;
@@ -157,8 +107,32 @@ const copyCandlesFromAnotherDb = async () => {
   }
 };
 
+const removeSymbolsThatDontExistInSymbolInfo = async () => {
+  await mongoApi.connectMongoose();
+  const symbolInfoSymbols = (await SymbolInfo.find({})).map((s) => s.symbol);
+
+  const candleSymbolsToDelete = (await getAvailableSymbolNames()).filter(
+    (s) => !symbolInfoSymbols.includes(s)
+  );
+  for (const s of candleSymbolsToDelete) {
+    console.log(`Deleting candles for: ${s}`);
+    await Candle.deleteMany({ symbol: s });
+  }
+
+  const paperTradeSymbolsToDelete = (await PaperTrade.find({}))
+    .map((pt) => pt.symbol)
+    .filter((s) => !symbolInfoSymbols.includes(s));
+  for (const s of paperTradeSymbolsToDelete) {
+    console.log(`Deleting paperTrades for: ${s}`);
+    await PaperTrade.deleteMany({ symbol: s });
+  }
+
+  debugger;
+  await mongoApi.disconnectMongoose();
+};
+
 (async () => {
   await mongoApi.connectMongoose();
-  await createPaperTrades();
+  await removeSymbolsThatDontExistInSymbolInfo();
   await mongoApi.disconnectMongoose();
 })();

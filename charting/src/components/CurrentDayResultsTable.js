@@ -7,14 +7,16 @@ import GridOnIcon from '@material-ui/icons/GridOn';
 import CenterFocusStrongIcon from '@material-ui/icons/CenterFocusStrong';
 import SkipNextIcon from '@material-ui/icons/SkipNext';
 import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
-import Button from '@material-ui/core/Button';
+import MonetizationOnIcon from '@material-ui/icons/MonetizationOn';
 import IconButton from '@material-ui/core/IconButton';
 import Popper from '@material-ui/core/Popper';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Tooltip from '@material-ui/core/Tooltip';
+import Snackbar from '@material-ui/core/Snackbar';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
+import CloseIcon from '@material-ui/icons/Close';
 import DeleteSweepTwoToneIcon from '@material-ui/icons/DeleteSweepTwoTone';
 import RestoreFromTrashIcon from '@material-ui/icons/RestoreFromTrash';
 import GroupWorkIcon from '@material-ui/icons/GroupWork';
@@ -75,6 +77,7 @@ const CurrentDayResultsTable = (props) => {
     currentDayJobRuns_datesAndIds,
     setCurrentDayJobRuns_datesAndIds,
   ] = useState([]);
+  const [snackbarMessage, setSnackbarMessage] = useState(null);
 
   const [gridApi, setGridApi] = useState(null);
   const [columnApi, setColumnApi] = useState(null);
@@ -484,6 +487,20 @@ const CurrentDayResultsTable = (props) => {
         (r) => r
       );
       setSelectedSymbols(aggregatedSymbols);
+    }
+  };
+
+  const handleCreatePaperTrades = async () => {
+    if (selectedSymbols.length > 0) {
+      await nodeServer.post(`paperTrades`, {
+        symbolsToBuy: selectedSymbols,
+        jobRunId: currentDayJobRun._id,
+      });
+      setSnackbarMessage(
+        `${selectedSymbols.length} paper trade${
+          selectedSymbols.length === 1 ? '' : 's'
+        } created`
+      );
     }
   };
 
@@ -1000,6 +1017,37 @@ const CurrentDayResultsTable = (props) => {
             </Grid>
           </Grid>
         )}
+        <Grid item>
+          <Tooltip title={'Create paper trades from remaining symbols'}>
+            <IconButton
+              aria-label="paper trades"
+              onClick={handleCreatePaperTrades}
+              className={classes.button}
+            >
+              <MonetizationOnIcon />
+            </IconButton>
+          </Tooltip>
+          <Snackbar
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            open={!!snackbarMessage}
+            autoHideDuration={6000}
+            onClose={() => setSnackbarMessage(null)}
+            message={snackbarMessage}
+            action={
+              <IconButton
+                size="small"
+                aria-label="close"
+                color="inherit"
+                onClick={() => setSnackbarMessage(null)}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            }
+          />
+        </Grid>
       </Grid>
     </div>
   );

@@ -57,7 +57,7 @@ const populateUnderlyingPrices = async () => {
       }
     }
 
-    if (pt.sellDate && !sellPrice_underlying) {
+    if (pt.sellDate && !pt.sellPrice_underlying) {
       const strSellDate = moment(pt.sellDate).format('YYYY-MM-DD');
       const matchingCandle = await Candle.findOne({
         symbol: pt.symbol,
@@ -223,6 +223,7 @@ const setOptionChains_ifDateIsCurrent = async (
 };
 
 const populateOptionPrices = async () => {
+  //-----------------------------------------------------------------
   // first pass: populate:
   //     - buyPrice_option_theoretical
   //     - optionStrike
@@ -401,8 +402,8 @@ const { argv } = require('yargs')
 
 (async () => {
   await mongoApi.connectMongoose();
-  //  await populateSellDates();
-  // await populateUnderlyingPrices();
+  await populateSellDates();
+  await populateUnderlyingPrices();
   await populateOptionPrices();
   await mongoApi.disconnectMongoose();
 })();
