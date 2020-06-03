@@ -6,7 +6,6 @@ import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -18,6 +17,7 @@ import SkipNextIcon from '@material-ui/icons/SkipNext';
 import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import moment from 'moment';
 import nodeServer from '../../helpers/nodeServer';
+import ButtonCellRenderer from '../cellRenderers/buttonCellRenderer';
 
 import _ from 'lodash';
 import {
@@ -70,67 +70,103 @@ const profitLossFormatter = (params) => {
   return parseFloat(value).toFixed(1);
 };
 
+const handleShowOptionChains = (rowData) => {};
+
 const PaperTrading = (props) => {
   const classes = useStyles();
   const columnDefs = [
     {
-      headerName: 'symbol',
-      headerTooltip: 'symbol',
-      field: 'symbol',
+      headerName: 'Primary',
+      marryChildren: true,
+      children: [
+        {
+          headerName: 'symbol',
+          headerTooltip: 'symbol',
+          field: 'symbol',
+        },
+        {
+          headerName: 'Buy Date',
+          headerTooltip: 'Buy Date',
+          field: 'buyDate',
+        },
+        {
+          headerName: 'Sell Date',
+          headerTooltip: 'Sell Date',
+          field: 'sellDate',
+        },
+      ],
     },
     {
-      headerName: 'Buy Date',
-      headerTooltip: 'Buy Date',
-      field: 'buyDate',
+      headerName: 'Underlying',
+      marryChildren: true,
+      children: [
+        {
+          headerName: 'Buy Price',
+          headerTooltip: 'Buy Price',
+          field: 'buyPrice_underlying',
+          type: 'rightAligned',
+          valueFormatter: numberFormatter,
+        },
+        {
+          headerName: 'Sell Price',
+          headerTooltip: 'Sell Price',
+          field: 'sellPrice_underlying',
+          type: 'rightAligned',
+          valueFormatter: numberFormatter,
+        },
+        {
+          headerName: 'Profit/Loss %',
+          headerTooltip: 'Underlying Profit/Loss %',
+          field: 'underlying_pl_percent',
+          type: 'rightAligned',
+          valueFormatter: profitLossFormatter,
+          cellClassRules: priceColumnStyleRules,
+        },
+      ],
     },
     {
-      headerName: 'Sell Date',
-      headerTooltip: 'Sell Date',
-      field: 'sellDate',
-    },
-    {
-      headerName: 'Underlying Buy Price',
-      headerTooltip: 'Underlying Buy Price',
-      field: 'buyPrice_underlying',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Underlying Sell Price',
-      headerTooltip: 'Underlying Sell Price',
-      field: 'sellPrice_underlying',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Underlying Profit/Loss %',
-      headerTooltip: 'Underlying Profit/Loss %',
-      field: 'underlying_pl_percent',
-      type: 'rightAligned',
-      valueFormatter: profitLossFormatter,
-      cellClassRules: priceColumnStyleRules,
-    },
-    {
-      headerName: 'Option Buy Price',
-      headerTooltip: 'Option Buy Price',
-      field: 'buyPrice_option',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Option Sell Price',
-      headerTooltip: 'Option Sell Price',
-      field: 'sellPrice_option',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Option Profit/Loss %',
-      headerTooltip: 'Option Profit/Loss %',
-      field: 'option_pl_percent',
-      type: 'rightAligned',
-      valueFormatter: profitLossFormatter,
-      cellClassRules: priceColumnStyleRules,
+      headerName: 'Option',
+      marryChildren: true,
+      children: [
+        {
+          headerName: 'Option Contract',
+          headerTooltip: 'Option Contract',
+          field: 'chosen_option_contract',
+        },
+        {
+          headerName: 'Option Buy Price',
+          headerTooltip: 'Option Buy Price',
+          field: 'buyPrice_option',
+          type: 'rightAligned',
+          width: 130,
+          valueFormatter: numberFormatter,
+        },
+        {
+          headerName: 'Option Sell Price',
+          headerTooltip: 'Option Sell Price',
+          field: 'sellPrice_option',
+          type: 'rightAligned',
+          width: 130,
+          valueFormatter: numberFormatter,
+        },
+        {
+          headerName: 'Option Profit/Loss %',
+          headerTooltip: 'Option Profit/Loss %',
+          field: 'option_pl_percent',
+          type: 'rightAligned',
+          width: 150,
+          valueFormatter: profitLossFormatter,
+          cellClassRules: priceColumnStyleRules,
+        },
+        {
+          headerName: 'Choose Contract',
+          headerTooltip: 'Choose Contract',
+          cellRendererFramework: ButtonCellRenderer,
+          cellRendererParams: {
+            onClick: handleShowOptionChains,
+          },
+        },
+      ],
     },
   ];
 
@@ -268,10 +304,6 @@ const PaperTrading = (props) => {
     }
   };
 
-  const handleHeldDaysChanged = (e) => {
-    debugger;
-  };
-
   const handleGridReady = (e) => {
     setGridApi(e.api);
   };
@@ -315,7 +347,7 @@ const PaperTrading = (props) => {
           }}
           // Together, getRowNodeId & deltaRowDataMode preserve the column filters
           // https://stackoverflow.com/questions/45079166/column-filter-lost-when-updating-row-data-in-ag-grid
-          getRowNodeId={(data) => `${data.symbol}_${data.buyDate}`}
+          getRowNodeId={(data) => `${data._id}`}
           // frameworkComponents={{
           //   stringParseFloatingFilter: StringParseFloatingFilter,
           // }}
