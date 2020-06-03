@@ -57,7 +57,6 @@ const OptionChains = (props) => {
       }
       if (!isNullOrUndefined(parsedMinITMPercent)) {
         const underlyingPrice = props.rowdata.buyPrice_underlying;
-        debugger;
         const itmPercent = Math.round(
           ((buyRow.isPut
             ? buyRow.strikePrice - underlyingPrice
@@ -83,7 +82,24 @@ const OptionChains = (props) => {
       }
       matched.push({ buyRow, sellRow });
     }
-    setMatchedChains(_.orderBy(matched, (m) => -m.buyRow.delta));
+    const pl_added = [];
+    for (const m of matched) {
+      const mClone = { ...m };
+      if (
+        !isNullOrUndefined(m.buyRow) &&
+        !isNullOrUndefined(m.buyRow.mark) &&
+        !isNullOrUndefined(m.sellRow) &&
+        !isNullOrUndefined(m.sellRow.mark)
+      ) {
+        const pl =
+          Math.round(
+            (1000 * (m.sellRow.mark - m.buyRow.mark)) / m.buyRow.mark
+          ) / 10;
+        mClone.totalPL = pl;
+        pl_added.push(mClone);
+      }
+    }
+    setMatchedChains(_.orderBy(pl_added, (m) => -m.buyRow.delta));
 
     localStorage.setItem(
       optionChains_filterKey,
@@ -114,75 +130,107 @@ const OptionChains = (props) => {
           defaultColDef={{ width: 75, sortable: true, resizable: true }}
           columnDefs={[
             {
-              headerName: 'Expiration Date',
-              field: 'buyRow.expirationDate',
-              width: 120,
+              headerName: 'General',
+              headerClass: 'primary-header-group',
+              marryChildren: true,
+              children: [
+                {
+                  headerName: 'Expiration Date',
+                  field: 'buyRow.expirationDate',
+                  width: 120,
+                },
+                {
+                  headerName: 'Days to Exp',
+                  field: 'buyRow.daysToExpiration',
+                  width: 120,
+                },
+                {
+                  headerName: 'Strike',
+                  field: 'buyRow.strikePrice',
+                },
+              ],
             },
             {
-              headerName: 'Days to Exp',
-              field: 'buyRow.daysToExpiration',
-              width: 120,
+              headerName: 'Buy',
+              headerClass: 'primary-header-group',
+              marryChildren: true,
+              children: [
+                {
+                  headerName: 'delta',
+                  field: 'buyRow.delta',
+                },
+                // {
+                //   headerName: 'gamma',
+                //   field: 'gamma',
+                // },
+                {
+                  headerName: 'isPut',
+                  field: 'buyRow.isPut',
+                  cellRendererFramework: CheckboxCellRenderer,
+                },
+                {
+                  headerName: 'openInterest',
+                  field: 'buyRow.openInterest',
+                },
+                {
+                  headerName: 'volatility',
+                  field: 'buyRow.volatility',
+                },
+                {
+                  headerName: 'Bid',
+                  field: 'buyRow.bid',
+                },
+                {
+                  headerName: 'Ask',
+                  field: 'buyRow.ask',
+                },
+                {
+                  headerName: 'Mark',
+                  field: 'buyRow.mark',
+                },
+              ],
             },
             {
-              headerName: 'Strike',
-              field: 'buyRow.strikePrice',
+              headerName: 'Sell',
+              headerClass: 'primary-header-group',
+              marryChildren: true,
+              children: [
+                {
+                  headerName: 'delta',
+                  field: 'sellRow.delta',
+                },
+                {
+                  headerName: 'openInterest',
+                  field: 'sellRow.openInterest',
+                },
+                {
+                  headerName: 'volatility',
+                  field: 'sellRow.volatility',
+                },
+                {
+                  headerName: 'Bid',
+                  field: 'sellRow.bid',
+                },
+                {
+                  headerName: 'Ask',
+                  field: 'sellRow.ask',
+                },
+                {
+                  headerName: 'Mark',
+                  field: 'sellRow.mark',
+                },
+              ],
             },
             {
-              headerName: 'delta',
-              field: 'buyRow.delta',
-            },
-            // {
-            //   headerName: 'gamma',
-            //   field: 'gamma',
-            // },
-            {
-              headerName: 'isPut',
-              field: 'buyRow.isPut',
-              cellRendererFramework: CheckboxCellRenderer,
-            },
-            {
-              headerName: 'openInterest',
-              field: 'buyRow.openInterest',
-            },
-            {
-              headerName: 'volatility',
-              field: 'buyRow.volatility',
-            },
-            {
-              headerName: 'Bid',
-              field: 'buyRow.bid',
-            },
-            {
-              headerName: 'Ask',
-              field: 'buyRow.ask',
-            },
-            {
-              headerName: 'Mark',
-              field: 'buyRow.mark',
-            },
-            {
-              headerName: 'delta',
-              field: 'sellRow.delta',
-            },
-            {
-              headerName: 'openInterest',
-              field: 'sellRow.openInterest',
-            },
-            {
-              headerName: 'volatility',
-              field: 'sellRow.volatility',
-            },
-            {
-              headerName: 'Bid',
-              field: 'sellRow.bid',
-            },
-            {
-              headerName: 'Ask',
-              field: 'sellRow.ask',
-            },
-            {
-              headerName: 'Mark',
-              field: 'sellRow.mark',
+              headerName: 'Total',
+              headerClass: 'primary-header-group',
+              marryChildren: true,
+              children: [
+                {
+                  headerName: 'P/L %',
+                  field: 'totalPL',
+                },
+              ],
             },
           ]}
           // getRowNodeId={(data) => data._id}

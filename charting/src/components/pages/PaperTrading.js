@@ -63,7 +63,7 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(3),
   },
   plTable: {
-    width: '180px',
+    width: '250px',
     marginLeft: theme.spacing(3),
     marginRight: theme.spacing(3),
   },
@@ -92,8 +92,7 @@ const PaperTrading = (props) => {
     const updatedGridData = [];
     for (const row of gridData) {
       if (row._id === chosenId) {
-        debugger;
-        const plPercent = '';
+        let plPercent = '';
         if (sellMark) {
           plPercent = ((sellMark - buyMark) * 100) / buyMark;
         }
@@ -285,15 +284,13 @@ const PaperTrading = (props) => {
 
         const buyPrice_option = formatMongooseDecimal(r.buyPrice_option);
         const sellPrice_option = formatMongooseDecimal(r.sellPrice_option);
-        const option_pl_percent =
-          buyPrice_option && sellPrice_option
-            ? sellPrice_underlying
-              ? Math.round(
-                  (1000 * (sellPrice_option - buyPrice_option)) /
-                    buyPrice_option
-                ) / 10
-              : ''
-            : '';
+        let option_pl_percent = '';
+        if (buyPrice_option && sellPrice_option) {
+          option_pl_percent =
+            Math.round(
+              (1000 * (sellPrice_option - buyPrice_option)) / buyPrice_option
+            ) / 10;
+        }
 
         return {
           ...r,
@@ -354,11 +351,21 @@ const PaperTrading = (props) => {
 
   const updateAverages = (rows) => {
     const plp = rows.map((r) => r.underlying_pl_percent.value);
+    let avg_underlying = null;
     if (plp.length > 0) {
-      const avg =
+      avg_underlying =
         Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
-      setAvgPL({ avg, count: plp.length });
     }
+
+    let avg_option = null;
+    const plp_option = rows.map((r) => r.option_pl_percent.value);
+    if (plp_option.length > 0) {
+      avg_option =
+        Math.round(
+          (plp_option.reduce((a, b) => a + b) / plp_option.length) * 100
+        ) / 100;
+    }
+    setAvgPL({ avg_underlying, avg_option, count: plp.length });
   };
 
   const handleGridReady = (e) => {
@@ -495,9 +502,15 @@ const PaperTrading = (props) => {
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">
-                    Avg P/L%
+                    Avg underlying P/L%
                   </TableCell>
-                  <TableCell align="right">{avgPL.avg}</TableCell>
+                  <TableCell align="right">{avgPL.avg_underlying}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">
+                    Avg option P/L%
+                  </TableCell>
+                  <TableCell align="right">{avgPL.avg_option}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
