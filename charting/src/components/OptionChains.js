@@ -96,10 +96,11 @@ const OptionChains = (props) => {
             (1000 * (m.sellRow.mark - m.buyRow.mark)) / m.buyRow.mark
           ) / 10;
         mClone.totalPL = pl;
-        pl_added.push(mClone);
       }
+      pl_added.push(mClone);
     }
-    setMatchedChains(_.orderBy(pl_added, (m) => -m.buyRow.delta));
+    const mc = _.orderBy(pl_added, (m) => -m.buyRow.delta);
+    setMatchedChains(mc);
 
     localStorage.setItem(
       optionChains_filterKey,
