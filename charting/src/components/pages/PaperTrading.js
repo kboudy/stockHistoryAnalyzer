@@ -67,6 +67,8 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(3),
     marginRight: theme.spacing(3),
   },
+  heldDaysSelector: { margin: theme.spacing(2), padding: theme.spacing(1) },
+  dateSelector: { margin: theme.spacing(2), padding: theme.spacing(1) },
 }));
 
 const profitLossFormatter = (params) => {
@@ -413,55 +415,59 @@ const PaperTrading = (props) => {
         alignItems={'center'}
       >
         <Grid item>
-          <Grid container direction={'row'} alignItems={'center'}>
-            <Grid item>
-              <IconButton
-                color="primary"
-                aria-label="previous"
-                onClick={handlePrevDateClicked}
-              >
-                <SkipPreviousIcon />
-              </IconButton>
+          <Paper className={classes.dateSelector}>
+            <Grid container direction={'row'} alignItems={'center'}>
+              <Grid item>
+                <IconButton
+                  color="primary"
+                  aria-label="previous"
+                  onClick={handlePrevDateClicked}
+                >
+                  <SkipPreviousIcon />
+                </IconButton>
+              </Grid>
+              <Grid item>
+                <TextField
+                  label="Buy date filter"
+                  size="small"
+                  style={{ width: '110px' }}
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value);
+                  }}
+                />
+              </Grid>
+              <Grid item>
+                <IconButton
+                  color="primary"
+                  aria-label="next"
+                  onClick={handleNextDateClicked}
+                >
+                  <SkipNextIcon />
+                </IconButton>
+              </Grid>
             </Grid>
-            <Grid item>
-              <TextField
-                label="Buy date filter"
-                size="small"
-                style={{ width: '110px' }}
-                value={dateFilter}
-                onChange={(e) => {
-                  setDateFilter(e.target.value);
-                }}
-              />
-            </Grid>
-            <Grid item>
-              <IconButton
-                color="primary"
-                aria-label="next"
-                onClick={handleNextDateClicked}
-              >
-                <SkipNextIcon />
-              </IconButton>
-            </Grid>
-          </Grid>
+          </Paper>
         </Grid>
         <Grid item>
-          <FormControl className={classes.jobSelector}>
-            <InputLabel id="select-current-day-job">Held days</InputLabel>
-            <Select
-              className={classes.filterControl}
-              value={heldDaysFilter}
-              onChange={(e) => setHeldDaysFilter(e.target.value)}
-            >
-              {distinctHeldDays.map((val, index) => {
-                return (
-                  <MenuItem key={index} value={val}>
-                    {val}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
+          <Paper className={classes.heldDaysSelector}>
+            <FormControl>
+              <InputLabel id="select-current-day-job">Held days</InputLabel>
+              <Select
+                className={classes.filterControl}
+                value={heldDaysFilter}
+                onChange={(e) => setHeldDaysFilter(e.target.value)}
+              >
+                {distinctHeldDays.map((val, index) => {
+                  return (
+                    <MenuItem key={index} value={val}>
+                      {val}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
+          </Paper>
         </Grid>
         <Grid item>
           <TableContainer component={Paper} className={classes.plTable}>
