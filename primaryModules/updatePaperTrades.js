@@ -1,6 +1,7 @@
 const _ = require('lodash'),
   moment = require('moment-timezone'),
   mongoApi = require('../helpers/mongoApi'),
+  chalk = require('chalk'),
   bs = require('black-scholes'),
   {
     rateOptionContractsByHistoricProfitLoss,
@@ -73,69 +74,16 @@ const populateUnderlyingPrices = async () => {
   }
 };
 
-const setActualOptionPrice_ifDateIsCurrent = async (
-  pt,
-  isBuyField,
-  mostRecentTradingDay,
-  today,
-  isAfter5PM
-) => {
-  if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
-    return;
-  }
-  const strOptionTradeDate = moment(
-    isBuyField ? pt.buyDate : pt.sellDate
-  ).format('YYYY-MM-DD');
-  if (
-    strOptionTradeDate === mostRecentTradingDay &&
-    (mostRecentTradingDay < today ||
-      (mostRecentTradingDay === today && isAfter5PM))
-  ) {
-    const strOptionExpiration = moment
-      .utc(pt.optionExpiration)
-      .format('YYYY-MM-DD');
-    if (pt.optionStrike) {
-      const optionChainData = await getOptionChainData(
-        pt.symbol,
-        pt.optionIsPut,
-        parseInt(pt.optionStrike),
-        null,
-        strOptionExpiration
-      );
-
-      for (const expDate in optionChainData.callExpDateMap) {
-        for (const strike in optionChainData.callExpDateMap[expDate]) {
-          // there should only be one contract here.  just using loops to get the first keys
-          const sellPriceOptionActual =
-            optionChainData.callExpDateMap[expDate][strike][0].mark;
-
-          const field = isBuyField
-            ? 'buyPrice_option_actual'
-            : 'sellPrice_option_actual';
-          await PaperTrade.updateOne(
-            { _id: pt._id },
-            {
-              [field]: sellPriceOptionActual,
-            }
-          );
-        }
-      }
-    }
-  }
-};
-
 const optionSetHasMatch = (filterSet, option) => {
-  console.log(chalk.red('still need to test optionSetHasMatch method'));
-  const matches =
+  const hasMatches =
     filterSet.filter(
       (f) =>
         f.expirationDate === option.expirationDate &&
         f.strike === option.strike &&
         f.isPut === option.isPut
     ).length > 0;
-  console.log(chalk.red(`match count: ${matches.length}`));
 
-  return matches;
+  return hasMatches;
 };
 
 const setOptionChains_ifDateIsCurrent = async (
@@ -329,35 +277,7 @@ const populateOptionPrices = async () => {
   }
 
   //-----------------------------------------------------------------
-  // third pass: populate actual option prices:
-
-  const tradesThatNeedActualPrices = await PaperTrade.find({
-    $or: [{ sellPrice_option_actual: null }, { buyPrice_option_actual: null }],
-  });
-
-  for (const pt of tradesThatNeedActualPrices) {
-    if (!pt.buyPrice_option_actual) {
-      await setActualOptionPrice_ifDateIsCurrent(
-        pt,
-        true,
-        mostRecentTradingDay,
-        today,
-        isAfter5PM
-      );
-    }
-    if (!pt.sellPrice_option_actual) {
-      await setActualOptionPrice_ifDateIsCurrent(
-        pt,
-        false,
-        mostRecentTradingDay,
-        today,
-        isAfter5PM
-      );
-    }
-  }
-
-  //-----------------------------------------------------------------
-  // fourth pass: populate the top 100 option buy option chains:
+  // third pass: populate the top 100 option buy option chains:
 
   const tradesThatNeedOptionBuyChains = await PaperTrade.find({
     buyDate_option_chains: null,
@@ -375,7 +295,7 @@ const populateOptionPrices = async () => {
   }
 
   //-----------------------------------------------------------------
-  // fifth & final pass: populate the top 100 option sell chains (or just match the buy chains, if they exist)
+  // fourth & final pass: populate the top 100 option sell chains (or just match the buy chains, if they exist)
 
   const tradesThatNeedOptionSellChains = await PaperTrade.find({
     sellDate_option_chains: null,
@@ -401,6 +321,7 @@ const { argv } = require('yargs')
   .options(argOptions);
 
 (async () => {
+  console.log('Updating paper trades...');
   await mongoApi.connectMongoose();
   await populateSellDates();
   await populateUnderlyingPrices();

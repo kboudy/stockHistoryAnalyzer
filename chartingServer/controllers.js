@@ -166,7 +166,7 @@ exports.createPaperTrades = async (req, res, next) => {
       .utc()
       .toDate();
 
-    const { symbolsToBuy, jobRunId } = req.body;
+    const { symbolsToBuy, jobRunId, heldDays } = req.body;
 
     const results = [];
     for (const symbol of symbolsToBuy) {
@@ -180,7 +180,7 @@ exports.createPaperTrades = async (req, res, next) => {
           symbol: symbol,
           buyDate: buyDateTime,
           sellDate: null,
-          heldDays: 1,
+          heldDays,
           optionExpiration: null,
           optionStrike: null,
           buyPrice_underlying: todayCandle.close,

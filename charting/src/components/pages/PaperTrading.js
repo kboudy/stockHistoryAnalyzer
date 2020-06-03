@@ -87,28 +87,6 @@ const PaperTrading = (props) => {
       cellClassRules: priceColumnStyleRules,
     },
     {
-      headerName: 'Actual Option Buy Price',
-      headerTooltip: 'Actual Option Buy Price',
-      field: 'buyPrice_option_actual',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Actual Option Sell Price',
-      headerTooltip: 'Actual Option Sell Price',
-      field: 'sellPrice_option_actual',
-      type: 'rightAligned',
-      valueFormatter: numberFormatter,
-    },
-    {
-      headerName: 'Actual Option Profit/Loss %',
-      headerTooltip: 'Actual Option Profit/Loss %',
-      field: 'actual_option_pl_percent',
-      type: 'rightAligned',
-      valueFormatter: profitLossFormatter,
-      cellClassRules: priceColumnStyleRules,
-    },
-    {
       headerName: 'Theoretical Option Buy Price',
       headerTooltip: 'Theoretical Option Buy Price',
       field: 'buyPrice_option_theoretical',
@@ -186,25 +164,6 @@ const PaperTrading = (props) => {
               : ''
             : '';
 
-        const buyPrice_option_actual = formatMongooseDecimal(
-          r.buyPrice_option_actual
-        );
-        const sellPrice_option_actual = formatMongooseDecimal(
-          r.sellPrice_option_actual
-        );
-        if (r.symbol === 'AAOI') {
-          debugger;
-        }
-        const actual_option_pl_percent =
-          buyPrice_option_actual && sellPrice_option_actual
-            ? sellPrice_underlying
-              ? Math.round(
-                  (1000 * (sellPrice_option_actual - buyPrice_option_actual)) /
-                    buyPrice_option_actual
-                ) / 10
-              : ''
-            : '';
-
         return {
           ...r,
           buyDate: formatDate(r.buyDate),
@@ -213,10 +172,6 @@ const PaperTrading = (props) => {
           sellPrice_underlying: sellPrice_underlying,
           underlying_pl_percent: {
             value: underlying_pl_percent,
-            isLive: false,
-          },
-          actual_option_pl_percent: {
-            value: actual_option_pl_percent,
             isLive: false,
           },
           theoretical_option_pl_percent: {
@@ -243,7 +198,6 @@ const PaperTrading = (props) => {
             !row.sellPrice_underlying &&
             !isNullOrUndefined(symbolKeyed[row.symbol])
           ) {
-            row.actual_option_pl_percent = { value: null, isLive: false };
             row.theoretical_option_pl_percent = { value: null, isLive: false };
             row.sellPrice_underlying = symbolKeyed[row.symbol];
             row.underlying_pl_percent = {

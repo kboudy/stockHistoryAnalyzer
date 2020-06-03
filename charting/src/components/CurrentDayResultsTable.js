@@ -51,7 +51,14 @@ const currentDayTable_columnFiltersKey = 'current_day_table.column_filters';
 
 const tempCountKeySuffix = '_tempCount';
 const useStyles = makeStyles((theme) => ({
-  button: {
+  footerControl: {
+    marginTop: theme.spacing(1),
+    marginLeft: theme.spacing(1),
+  },
+  skipNextControl: {
+    marginTop: theme.spacing(1),
+  },
+  skipNextControlLeft: {
     marginTop: theme.spacing(1),
     marginLeft: theme.spacing(1),
   },
@@ -491,9 +498,21 @@ const CurrentDayResultsTable = (props) => {
   };
 
   const handleCreatePaperTrades = async () => {
+    // we'll require them to be focused on one of the "bar" columns, which will allow us to set "held days"
+    let chosenBars = visibleColumns['Bar Groups'].map((bgName) =>
+      parseInt(bgName.split(' ')[1])
+    );
+    if (chosenBars.length !== 1) {
+      setSnackbarMessage(
+        `Please focus on 1 bar length first, so I can set "held days"`
+      );
+      return;
+    }
+
     if (selectedSymbols.length > 0) {
       await nodeServer.post(`paperTrades`, {
         symbolsToBuy: selectedSymbols,
+        heldDays: chosenBars[0],
         jobRunId: currentDayJobRun._id,
       });
       setSnackbarMessage(
@@ -904,7 +923,7 @@ const CurrentDayResultsTable = (props) => {
           <Grid item>
             <Tooltip title={'Choose columns'}>
               <IconButton
-                className={classes.button}
+                className={classes.footerControl}
                 onClick={handleChooseColumnsClicked}
               >
                 <ViewColumnIcon />
@@ -925,7 +944,10 @@ const CurrentDayResultsTable = (props) => {
                   : 'Switch to single symbol mode'
               }
             >
-              <IconButton className={classes.button} onClick={handleModeChange}>
+              <IconButton
+                className={classes.footerControl}
+                onClick={handleModeChange}
+              >
                 {props.singleSymbolMode ? (
                   <GridOnIcon />
                 ) : (
@@ -945,7 +967,7 @@ const CurrentDayResultsTable = (props) => {
             }
           >
             <IconButton
-              className={classes.button}
+              className={classes.footerControl}
               onClick={
                 props.singleSymbolMode
                   ? handleHideCurrentSymbol
@@ -963,7 +985,7 @@ const CurrentDayResultsTable = (props) => {
             <Grid item>
               <Tooltip title={'Reveal hidden symbols'}>
                 <IconButton
-                  className={classes.button}
+                  className={classes.footerControl}
                   onClick={handleRevealHiddenSymbols}
                 >
                   <RestoreFromTrashIcon />
@@ -982,7 +1004,7 @@ const CurrentDayResultsTable = (props) => {
               }
             >
               <IconButton
-                className={classes.button}
+                className={classes.footerControl}
                 onClick={handleToggleAggregateBySymbol}
               >
                 {aggregateBySymbol ? (
@@ -999,58 +1021,67 @@ const CurrentDayResultsTable = (props) => {
             <Grid container direction={'row'} alignItems={'center'}>
               <Grid item>
                 <IconButton
+                  color="primary"
                   aria-label="previous"
+                  className={classes.skipNextControlLeft}
                   onClick={handlePreviousSingleSymbol}
                 >
                   <SkipPreviousIcon />
                 </IconButton>
               </Grid>
               <Grid item>
-                <Typography>
+                <Typography className={classes.skipNextControl} color="primary">
                   {`${currentSingleSymbol} (${
                     syms.indexOf(currentSingleSymbol) + 1
                   }/${syms.length}) `}
                 </Typography>
               </Grid>
               <Grid item>
-                <IconButton aria-label="next" onClick={handleNextSingleSymbol}>
+                <IconButton
+                  color="primary"
+                  aria-label="next"
+                  onClick={handleNextSingleSymbol}
+                  className={classes.skipNextControl}
+                >
                   <SkipNextIcon />
                 </IconButton>
               </Grid>
             </Grid>
           </Grid>
         )}
-        <Grid item>
-          <Tooltip title={'Create paper trades from remaining symbols'}>
-            <IconButton
-              aria-label="paper trades"
-              onClick={handleCreatePaperTrades}
-              className={classes.button}
-            >
-              <MonetizationOnIcon />
-            </IconButton>
-          </Tooltip>
-          <Snackbar
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            open={!!snackbarMessage}
-            autoHideDuration={6000}
-            onClose={() => setSnackbarMessage(null)}
-            message={snackbarMessage}
-            action={
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <Tooltip title={'Create paper trades from remaining symbols'}>
               <IconButton
-                size="small"
-                aria-label="close"
-                color="inherit"
-                onClick={() => setSnackbarMessage(null)}
+                aria-label="paper trades"
+                onClick={handleCreatePaperTrades}
+                className={classes.footerControl}
               >
-                <CloseIcon fontSize="small" />
+                <MonetizationOnIcon />
               </IconButton>
-            }
-          />
-        </Grid>
+            </Tooltip>
+            <Snackbar
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              open={!!snackbarMessage}
+              autoHideDuration={6000}
+              onClose={() => setSnackbarMessage(null)}
+              message={snackbarMessage}
+              action={
+                <IconButton
+                  size="small"
+                  aria-label="close"
+                  color="inherit"
+                  onClick={() => setSnackbarMessage(null)}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              }
+            />
+          </Grid>
+        )}
       </Grid>
     </div>
   );

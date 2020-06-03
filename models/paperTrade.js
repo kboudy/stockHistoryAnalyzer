@@ -39,16 +39,10 @@ const PaperTradeSchema = new Schema({
   buyPrice_option_theoretical: {
     type: Schema.Types.Decimal128,
   },
-  buyPrice_option_actual: {
-    type: Schema.Types.Decimal128,
-  },
   sellPrice_underlying: {
     type: Schema.Types.Decimal128,
   },
   sellPrice_option_theoretical: {
-    type: Schema.Types.Decimal128,
-  },
-  sellPrice_option_actual: {
     type: Schema.Types.Decimal128,
   },
   buyDate_option_chains: {
