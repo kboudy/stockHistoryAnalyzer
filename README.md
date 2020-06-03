@@ -80,3 +80,9 @@
 
 node utils/backupDb.js
 node utils/restoreDb.js
+
+# TODO
+
+- clear the graph when changing symbols (in single-symbol mode) on the current day page
+- text area for "journal entry" within the currentDayJobRun. A place to keep notes about how the set was created
+- using these journal notes, carefully build an **automated** way of selecting best 1 & 5 day trades from the Current Day page.

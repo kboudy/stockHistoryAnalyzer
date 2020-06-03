@@ -85,7 +85,7 @@ const setOptionChains_ifDateIsCurrent = async (
   isBuyField,
   mostRecentTradingDay,
   today,
-  isAfter5PM,
+  isAfter4PM,
   filterSet // list of option chains to match
 ) => {
   if ((isBuyField && !pt.buyDate) || (!isBuyField && !pt.sellDate)) {
@@ -97,7 +97,7 @@ const setOptionChains_ifDateIsCurrent = async (
   if (
     strOptionTradeDate === mostRecentTradingDay &&
     (mostRecentTradingDay < today ||
-      (mostRecentTradingDay === today && isAfter5PM))
+      (mostRecentTradingDay === today && isAfter4PM))
   ) {
     const optionChainData = await getOptionChainData(
       pt.symbol,
@@ -167,7 +167,7 @@ const setOptionChains_ifDateIsCurrent = async (
 const populateOptionChains = async () => {
   const currentEasternTime = moment().tz('America/New_York');
   const today = currentEasternTime.format('YYYY-MM-DD');
-  const isAfter5PM = currentEasternTime.hour() >= 17;
+  const isAfter4PM = currentEasternTime.hour() >= 16;
   const mostRecentTradingDays = await getMostRecentEquityTradingDays();
   const mostRecentTradingDay =
     mostRecentTradingDays[mostRecentTradingDays.length - 1];
@@ -185,7 +185,7 @@ const populateOptionChains = async () => {
       true,
       mostRecentTradingDay,
       today,
-      isAfter5PM,
+      isAfter4PM,
       null
     );
   }
@@ -203,7 +203,7 @@ const populateOptionChains = async () => {
       false,
       mostRecentTradingDay,
       today,
-      isAfter5PM,
+      isAfter4PM,
       pt.buyDate_option_chains // we'll use the buyDate_option_chains as the filter set, if it exists
     );
   }

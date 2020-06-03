@@ -236,9 +236,22 @@ const PaperTrading = (props) => {
     if (!gridData || gridData.length === 0) {
       return;
     }
+    const dbd = _.uniq(
+      gridData
+        .filter((m) => m.heldDays === heldDaysFilter)
+        .map((m) => m.buyDate)
+    );
+    setDistinctBuyDates(dbd);
+    const dhd = _.uniq(gridData.map((m) => m.heldDays));
+    setDistinctHeldDays(dhd);
+
     let filtered = gridData.filter((r) => r.heldDays === heldDaysFilter);
-    if (distinctBuyDates.includes(dateFilter)) {
+    if (dbd.includes(dateFilter)) {
       filtered = filtered.filter((r) => r.buyDate === dateFilter);
+    } else {
+      if (dbd.length > 0) {
+        setDateFilter(dbd[0]);
+      }
     }
     updateAverages(filtered);
     gridApi.setRowData([...filtered]);
@@ -335,9 +348,6 @@ const PaperTrading = (props) => {
         setDateFilter(mappedGridData[mappedGridData.length - 1].buyDate);
       }
       updateAverages(mappedGridData);
-      setDistinctBuyDates(_.uniq(mappedGridData.map((m) => m.buyDate)));
-      setDistinctHeldDays(_.uniq(mappedGridData.map((m) => m.heldDays)));
-
       setGridData(mappedGridData);
     })();
   }, []);

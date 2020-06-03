@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 import _ from 'lodash';
-import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 import { isNullOrUndefined } from '../helpers/commonMethods';
+import CheckboxCellRenderer from './cellRenderers/checkboxCellRenderer';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
@@ -138,6 +138,7 @@ const OptionChains = (props) => {
             {
               headerName: 'isPut',
               field: 'buyRow.isPut',
+              cellRendererFramework: CheckboxCellRenderer,
             },
             {
               headerName: 'openInterest',
