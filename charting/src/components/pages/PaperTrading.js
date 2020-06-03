@@ -1,6 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
+import IconButton from '@material-ui/core/IconButton';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormControl from '@material-ui/core/FormControl';
+import SkipNextIcon from '@material-ui/icons/SkipNext';
+import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import moment from 'moment';
 import nodeServer from '../../helpers/nodeServer';
 
@@ -36,6 +51,15 @@ const priceColumnStyleRules = {
 
 const useStyles = makeStyles((theme) => ({
   avgLabel: { paddingTop: theme.spacing(2), paddingLeft: theme.spacing(2) },
+  filterControl: {
+    marginLeft: theme.spacing(3),
+    marginRight: theme.spacing(3),
+  },
+  plTable: {
+    width: '180px',
+    marginLeft: theme.spacing(3),
+    marginRight: theme.spacing(3),
+  },
 }));
 
 const profitLossFormatter = (params) => {
@@ -110,8 +134,13 @@ const PaperTrading = (props) => {
     },
   ];
 
+  const [gridApi, setGridApi] = useState(null);
   const [gridData, setGridData] = useState([]);
   const [avgPL, setAvgPL] = useState(0);
+  const [dateFilter, setDateFilter] = useState('');
+  const [distinctBuyDates, setDistinctBuyDates] = useState([]);
+  const [distinctHeldDays, setDistinctHeldDays] = useState([]);
+  const [heldDaysFilter, setHeldDaysFilter] = useState(1);
 
   const formatMongooseDecimal = (obj) =>
     obj ? Math.round(parseFloat(obj['$numberDecimal']) * 100) / 100 : '';
@@ -119,6 +148,18 @@ const PaperTrading = (props) => {
   const formatDate = (d) => {
     return d ? moment(d).format('YYYY-MM-DD') : '';
   };
+
+  useEffect(() => {
+    if (!gridData || gridData.length === 0) {
+      return;
+    }
+    let filtered = gridData.filter((r) => r.heldDays === heldDaysFilter);
+    if (distinctBuyDates.includes(dateFilter)) {
+      filtered = filtered.filter((r) => r.buyDate === dateFilter);
+    }
+    updateAverages(filtered);
+    gridApi.setRowData([...filtered]);
+  }, [dateFilter, gridData, heldDaysFilter]);
 
   useEffect(() => {
     (async () => {
@@ -213,16 +254,51 @@ const PaperTrading = (props) => {
         }
       }
 
+      if (mappedGridData.length > 0) {
+        setDateFilter(mappedGridData[mappedGridData.length - 1].buyDate);
+      }
       updateAverages(mappedGridData);
+      setDistinctBuyDates(_.uniq(mappedGridData.map((m) => m.buyDate)));
+      setDistinctHeldDays(_.uniq(mappedGridData.map((m) => m.heldDays)));
+
       setGridData(mappedGridData);
     })();
   }, []);
 
   const updateAverages = (rows) => {
     const plp = rows.map((r) => r.underlying_pl_percent.value);
-    const avg =
-      Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
-    setAvgPL({ avg, count: plp.length });
+    if (plp.length > 0) {
+      const avg =
+        Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
+      setAvgPL({ avg, count: plp.length });
+    }
+  };
+
+  const handleHeldDaysChanged = (e) => {
+    debugger;
+  };
+
+  const handleGridReady = (e) => {
+    setGridApi(e.api);
+  };
+
+  const handleNextDateClicked = (e) => {
+    if (distinctBuyDates.includes(dateFilter)) {
+      let nextIdx = distinctBuyDates.indexOf(dateFilter) + 1;
+      if (nextIdx === distinctBuyDates.length) {
+        nextIdx = 0;
+      }
+      setDateFilter(distinctBuyDates[nextIdx]);
+    }
+  };
+  const handlePrevDateClicked = (e) => {
+    if (distinctBuyDates.includes(dateFilter)) {
+      let prevIdx = distinctBuyDates.indexOf(dateFilter) - 1;
+      if (prevIdx < 0) {
+        prevIdx = distinctBuyDates.length - 1;
+      }
+      setDateFilter(distinctBuyDates[prevIdx]);
+    }
   };
 
   const handleSelectionChanged = (e) => {
@@ -231,7 +307,7 @@ const PaperTrading = (props) => {
 
   return (
     <div>
-      <div className="ag-theme-balham" style={{ height: 1100 }}>
+      <div className="ag-theme-balham" style={{ height: 800 }}>
         <AgGridReact
           defaultColDef={{
             // floatingFilter: true,
@@ -243,24 +319,102 @@ const PaperTrading = (props) => {
             width: 120,
             enableValue: true,
           }}
+          // Together, getRowNodeId & deltaRowDataMode preserve the column filters
+          // https://stackoverflow.com/questions/45079166/column-filter-lost-when-updating-row-data-in-ag-grid
+          getRowNodeId={(data) => `${data.symbol}_${data.buyDate}`}
           // frameworkComponents={{
           //   stringParseFloatingFilter: StringParseFloatingFilter,
           // }}
           columnDefs={columnDefs}
           gridOptions={{ tooltipShowDelay: 0 }}
-          rowData={gridData}
           // onFilterChanged={handleFilterChanged}
           // onCellClicked={handleCellClicked}
-          // onGridReady={handleGridReady}
+          onGridReady={handleGridReady}
           sortingOrder={['asc', 'desc']}
           rowSelection={'multiple'}
           onSelectionChanged={handleSelectionChanged}
         ></AgGridReact>
       </div>
-      <Grid container className={classes.avgLabel}>
+      <Grid
+        container
+        className={classes.avgLabel}
+        direction={'row'}
+        alignItems={'center'}
+      >
         <Grid item>
-          <Typography>{avgPL.count} trades </Typography>
-          <Typography>avg pl%: {avgPL.avg}</Typography>
+          <Grid container direction={'row'} alignItems={'center'}>
+            <Grid item>
+              <IconButton
+                color="primary"
+                aria-label="previous"
+                onClick={handlePrevDateClicked}
+              >
+                <SkipPreviousIcon />
+              </IconButton>
+            </Grid>
+            <Grid item>
+              <TextField
+                label="Buy date filter"
+                size="small"
+                style={{ width: '110px' }}
+                value={dateFilter}
+                onChange={(e) => {
+                  setDateFilter(e.target.value);
+                }}
+              />
+            </Grid>
+            <Grid item>
+              <IconButton
+                color="primary"
+                aria-label="next"
+                onClick={handleNextDateClicked}
+              >
+                <SkipNextIcon />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item>
+          <FormControl className={classes.jobSelector}>
+            <InputLabel id="select-current-day-job">Held days</InputLabel>
+            <Select
+              className={classes.filterControl}
+              value={heldDaysFilter}
+              onChange={(e) => setHeldDaysFilter(e.target.value)}
+            >
+              {distinctHeldDays.map((val, index) => {
+                return (
+                  <MenuItem key={index} value={val}>
+                    {val}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item>
+          <TableContainer component={Paper} className={classes.plTable}>
+            <Table
+              className={classes.table}
+              size="small"
+              aria-label="a dense table"
+            >
+              <TableBody>
+                <TableRow>
+                  <TableCell component="th" scope="row">
+                    Trade count
+                  </TableCell>
+                  <TableCell align="right">{avgPL.count}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell component="th" scope="row">
+                    Avg P/L%
+                  </TableCell>
+                  <TableCell align="right">{avgPL.avg}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Grid>
       </Grid>
     </div>
