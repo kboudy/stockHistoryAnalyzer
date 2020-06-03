@@ -503,9 +503,6 @@ const PaperTrading = (props) => {
       >
         <DialogTitle id="max-width-dialog-title">Option chains</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Choose the option chain pair for this paper trade
-          </DialogContentText>
           <OptionChains
             rowdata={dialogOptionChains}
             onOptionSelected={handleOptionSelected}

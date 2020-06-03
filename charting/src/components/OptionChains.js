@@ -2,21 +2,74 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { AgGridReact } from 'ag-grid-react';
 import _ from 'lodash';
+import Paper from '@material-ui/core/Paper';
+import TextField from '@material-ui/core/TextField';
+import Grid from '@material-ui/core/Grid';
+import { isNullOrUndefined } from '../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 
-const useStyles = makeStyles((theme) => ({}));
+const useStyles = makeStyles((theme) => ({
+  filterControl: {
+    marginLeft: theme.spacing(3),
+    marginRight: theme.spacing(3),
+  },
+}));
 
 const OptionChains = (props) => {
+  const optionChains_filterKey = 'optionChains.filterKey';
   const classes = useStyles();
+  const [matchedChains, setMatchedChains] = useState([]);
+  const [minITMPercent, setMinITMPercent] = useState('');
+  const [minDaysToExp, setMinDaysToExp] = useState('');
+
+  useEffect(() => {
+    const strLs = localStorage.getItem(optionChains_filterKey);
+    if (strLs) {
+      const objLs = JSON.parse(strLs);
+      setMinDaysToExp(objLs.minDaysToExp);
+      setMinITMPercent(objLs.minITMPercent);
+    }
+  }, []);
+
   useEffect(() => {
     if (!props.rowdata || props.rowdata.buyDate_option_chains.length == 0) {
       setMatchedChains([]);
       return;
     }
     const matched = [];
+    let parsedMinDaysToExp = null;
+    let parsedMinITMPercent = null;
+    if (!isNaN(minDaysToExp)) {
+      parsedMinDaysToExp = parseInt(minDaysToExp);
+    }
+    if (!isNaN(minITMPercent)) {
+      parsedMinITMPercent = parseInt(minITMPercent);
+    }
+
     for (const buyRow of props.rowdata.buyDate_option_chains) {
+      if (
+        !isNullOrUndefined(parsedMinDaysToExp) &&
+        buyRow.daysToExpiration < parsedMinDaysToExp
+      ) {
+        continue;
+      }
+      if (!isNullOrUndefined(parsedMinITMPercent)) {
+        const underlyingPrice = props.rowdata.buyPrice_underlying;
+        debugger;
+        const itmPercent = Math.round(
+          ((buyRow.isPut
+            ? buyRow.strikePrice - underlyingPrice
+            : underlyingPrice - buyRow.strikePrice) /
+            underlyingPrice) *
+            100
+        );
+
+        if (itmPercent < parsedMinITMPercent) {
+          continue;
+        }
+      }
       let sellRow = {};
       if (props.rowdata.sellDate_option_chains) {
         const matchingSellRows = props.rowdata.sellDate_option_chains.filter(
@@ -30,10 +83,16 @@ const OptionChains = (props) => {
       }
       matched.push({ buyRow, sellRow });
     }
-    setMatchedChains(matched);
-  }, [props.rowdata]);
+    setMatchedChains(_.orderBy(matched, (m) => -m.buyRow.delta));
 
-  const [matchedChains, setMatchedChains] = useState([]);
+    localStorage.setItem(
+      optionChains_filterKey,
+      JSON.stringify({
+        minDaysToExp: parsedMinDaysToExp,
+        minITMPercent: parsedMinITMPercent,
+      })
+    );
+  }, [props.rowdata, minDaysToExp, minITMPercent]);
 
   const handleSelectionChanged = (e) => {
     const selectedRows = e.api.getSelectedRows();
@@ -50,13 +109,18 @@ const OptionChains = (props) => {
 
   return (
     <div>
-      <div className="ag-theme-balham" style={{ height: '400px' }}>
+      <div className="ag-theme-balham" style={{ height: '800px' }}>
         <AgGridReact
           defaultColDef={{ width: 75, sortable: true, resizable: true }}
           columnDefs={[
             {
               headerName: 'Expiration Date',
               field: 'buyRow.expirationDate',
+              width: 120,
+            },
+            {
+              headerName: 'Days to Exp',
+              field: 'buyRow.daysToExpiration',
               width: 120,
             },
             {
@@ -129,6 +193,37 @@ const OptionChains = (props) => {
           rowSelection="single"
         ></AgGridReact>
       </div>
+
+      <Grid
+        container
+        className={classes.avgLabel}
+        direction={'row'}
+        alignItems={'center'}
+        spacing={3}
+      >
+        <Grid item>
+          <TextField
+            label="Min ITM %"
+            size="small"
+            style={{ width: '110px' }}
+            value={minITMPercent}
+            onChange={(e) => {
+              setMinITMPercent(e.target.value);
+            }}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label="Min days to exp"
+            size="small"
+            style={{ width: '150px' }}
+            value={minDaysToExp}
+            onChange={(e) => {
+              setMinDaysToExp(e.target.value);
+            }}
+          />
+        </Grid>
+      </Grid>
     </div>
   );
 };
