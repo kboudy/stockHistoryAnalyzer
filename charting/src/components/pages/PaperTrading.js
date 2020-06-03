@@ -83,6 +83,41 @@ const PaperTrading = (props) => {
     setDialogOptionChains(rowData);
   };
 
+  const handleOptionSelected = async (optionContract) => {
+    const { expirationDate, buyMark, sellMark, strikePrice } = optionContract;
+    const chosenOptionContract = `${expirationDate} ${strikePrice.toFixed(1)}`;
+    const chosenId = dialogOptionChains._id;
+    const updatedGridData = [];
+    for (const row of gridData) {
+      if (row._id === chosenId) {
+        debugger;
+        const plPercent = '';
+        if (sellMark) {
+          plPercent = ((sellMark - buyMark) * 100) / buyMark;
+        }
+        const updateObj = {
+          chosen_option_contract: chosenOptionContract,
+          buyPrice_option: buyMark,
+          sellPrice_option: sellMark,
+          option_pl_percent: plPercent,
+        };
+        updatedGridData.push({
+          ...row,
+          ...updateObj,
+        });
+        await nodeServer.post('updatePaperTradeOptionChoice', {
+          ...updateObj,
+          id: chosenId,
+        });
+      } else {
+        updatedGridData.push(row);
+      }
+    }
+
+    setGridData(updatedGridData);
+    setDialogOptionChains(null);
+  };
+
   const columnDefs = [
     {
       headerName: 'Primary',
@@ -138,29 +173,29 @@ const PaperTrading = (props) => {
       marryChildren: true,
       children: [
         {
-          headerName: 'Option Contract',
-          headerTooltip: 'Option Contract',
+          headerName: 'Contract',
+          headerTooltip: 'Contract',
           field: 'chosen_option_contract',
         },
         {
-          headerName: 'Option Buy Price',
-          headerTooltip: 'Option Buy Price',
+          headerName: 'Buy Price',
+          headerTooltip: 'Buy Price',
           field: 'buyPrice_option',
           type: 'rightAligned',
           width: 130,
           valueFormatter: numberFormatter,
         },
         {
-          headerName: 'Option Sell Price',
-          headerTooltip: 'Option Sell Price',
+          headerName: 'Sell Price',
+          headerTooltip: 'Sell Price',
           field: 'sellPrice_option',
           type: 'rightAligned',
           width: 130,
           valueFormatter: numberFormatter,
         },
         {
-          headerName: 'Option Profit/Loss %',
-          headerTooltip: 'Option Profit/Loss %',
+          headerName: 'Profit/Loss %',
+          headerTooltip: 'Profit/Loss %',
           field: 'option_pl_percent',
           type: 'rightAligned',
           width: 150,
@@ -465,7 +500,10 @@ const PaperTrading = (props) => {
           <DialogContentText>
             Choose the option chain pair for this paper trade
           </DialogContentText>
-          <OptionChains rowdata={dialogOptionChains} />
+          <OptionChains
+            rowdata={dialogOptionChains}
+            onOptionSelected={handleOptionSelected}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOptionChains(null)} color="primary">

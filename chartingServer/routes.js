@@ -14,6 +14,10 @@ module.exports = (app) => {
   app.post('/runTradeSimulation', controllers.runTradeSimulation);
   app.post('/tradeSimulationRuns', controllers.queryTradeSimulationRuns);
   app.post('/paperTrades', controllers.createPaperTrades);
+  app.post(
+    '/updatePaperTradeOptionChoice',
+    controllers.updatePaperTradeOptionChoice
+  );
 
   app.get(
     '/multipleCurrentUnderlyingQuotes',

@@ -159,6 +159,29 @@ exports.getPatternStatsJobRunSymbols = async (req, res, next) => {
   }
 };
 
+exports.updatePaperTradeOptionChoice = async (req, res, next) => {
+  try {
+    const {
+      id,
+      chosen_option_contract,
+      buyPrice_option,
+      sellPrice_option,
+      option_pl_percent,
+    } = req.body;
+
+    const results = await PaperTrade.findByIdAndUpdate(id, {
+      chosen_option_contract,
+      buyPrice_option,
+      sellPrice_option,
+      option_pl_percent,
+    });
+
+    res.json({ results });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.createPaperTrades = async (req, res, next) => {
   try {
     const strToday = moment().format('YYYY-MM-DD');

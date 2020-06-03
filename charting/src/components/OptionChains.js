@@ -35,6 +35,19 @@ const OptionChains = (props) => {
 
   const [matchedChains, setMatchedChains] = useState([]);
 
+  const handleSelectionChanged = (e) => {
+    const selectedRows = e.api.getSelectedRows();
+    if (selectedRows.length === 1) {
+      const { buyRow, sellRow } = selectedRows[0];
+      props.onOptionSelected({
+        expirationDate: buyRow.expirationDate,
+        strikePrice: buyRow.strikePrice,
+        buyMark: buyRow.mark,
+        sellMark: sellRow ? sellRow.mark : null,
+      });
+    }
+  };
+
   return (
     <div>
       <div className="ag-theme-balham" style={{ height: '400px' }}>
@@ -111,7 +124,7 @@ const OptionChains = (props) => {
           rowData={matchedChains}
           sortingOrder={['asc', 'desc']}
           // onGridReady={handleGridReady}
-          // onSelectionChanged={handleSelectionChanged}
+          onSelectionChanged={handleSelectionChanged}
           // onSortChanged={handleSortChanged}
           rowSelection="single"
         ></AgGridReact>
