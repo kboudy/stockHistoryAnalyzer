@@ -8,6 +8,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import Button from '@material-ui/core/Button';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
@@ -18,6 +19,12 @@ import SkipPreviousIcon from '@material-ui/icons/SkipPrevious';
 import moment from 'moment';
 import nodeServer from '../../helpers/nodeServer';
 import ButtonCellRenderer from '../cellRenderers/buttonCellRenderer';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import OptionChains from '../OptionChains';
 
 import _ from 'lodash';
 import {
@@ -70,10 +77,12 @@ const profitLossFormatter = (params) => {
   return parseFloat(value).toFixed(1);
 };
 
-const handleShowOptionChains = (rowData) => {};
-
 const PaperTrading = (props) => {
   const classes = useStyles();
+  const handleShowOptionChains = (rowData) => {
+    setDialogOptionChains(rowData);
+  };
+
   const columnDefs = [
     {
       headerName: 'Primary',
@@ -170,6 +179,7 @@ const PaperTrading = (props) => {
     },
   ];
 
+  const [dialogOptionChains, setDialogOptionChains] = useState(null);
   const [gridApi, setGridApi] = useState(null);
   const [gridData, setGridData] = useState([]);
   const [avgPL, setAvgPL] = useState(0);
@@ -443,6 +453,26 @@ const PaperTrading = (props) => {
           </TableContainer>
         </Grid>
       </Grid>
+      <Dialog
+        fullWidth={true}
+        maxWidth={'xl'}
+        open={!!dialogOptionChains}
+        onClose={() => setDialogOptionChains(null)}
+        aria-labelledby="max-width-dialog-title"
+      >
+        <DialogTitle id="max-width-dialog-title">Option chains</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Choose the option chain pair for this paper trade
+          </DialogContentText>
+          <OptionChains rowdata={dialogOptionChains} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOptionChains(null)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
