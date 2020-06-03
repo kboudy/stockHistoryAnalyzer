@@ -3,16 +3,10 @@ const _ = require('lodash'),
   mongoApi = require('../helpers/mongoApi'),
   chalk = require('chalk'),
   bs = require('black-scholes'),
-  {
-    rateOptionContractsByHistoricProfitLoss,
-  } = require('../helpers/options/theoreticalOptionsPricing'),
   { loadHistoricalDataForSymbol } = require('../helpers/symbolData'),
   { getMostRecentEquityTradingDays } = require('../helpers/tdaCommunication'),
-  { calculateHV } = require('../helpers/options/historicVolatility'),
   { getOptionChainData } = require('../helpers/tdaCommunication'),
-  { annualInterestRate } = require('../helpers/constants'),
   Candle = require('../models/candle'),
-  CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PaperTrade = require('../models/paperTrade');
 
 const populateSellDates = async () => {
@@ -170,56 +164,7 @@ const setOptionChains_ifDateIsCurrent = async (
   }
 };
 
-const populateOptionPrices = async () => {
-  //-----------------------------------------------------------------
-  // first pass: populate:
-  //     - buyPrice_option_theoretical
-  //     - optionStrike
-  //     - optionExpiration
-  //     - daysToExpiration_atPurchase
-  const tradesThatNeedTheoreticalBuyPrices = await PaperTrade.find({
-    buyPrice_option_theoretical: null,
-  });
-  for (const pt of tradesThatNeedTheoreticalBuyPrices) {
-    // Load the currentDayJobEvaluationRun associated with this paperTrade, and get the avgPL from each numberOfBar, and include them here
-    if (pt.currentDayEvaluationJobRun && !pt.buyPrice_option_theoretical) {
-      const cdejr = await CurrentDayEvaluationJobRun.findById(
-        pt.currentDayEvaluationJobRun
-      );
-      const cdejrSymbol = cdejr.results[pt.symbol];
-      const avgPLs = [];
-      for (const numberOfBars in cdejrSymbol) {
-        avgPLs.push(
-          cdejrSymbol[numberOfBars].avg_profitLossPercent_atBarX[pt.heldDays]
-        );
-      }
-      const ratedContracts = await rateOptionContractsByHistoricProfitLoss(
-        pt.symbol,
-        pt.heldDays,
-        avgPLs
-      );
-      if (ratedContracts.length === 0) {
-        continue;
-      }
-
-      const bestRatedContract = ratedContracts[0];
-      await PaperTrade.updateOne(
-        { _id: pt._id },
-        {
-          buyPrice_option_theoretical:
-            Math.round(bestRatedContract.optionValueAtPurchaseDate * 100) / 100,
-          optionExpiration: moment
-            .utc(bestRatedContract.expirationDate)
-            .toDate(),
-          optionStrike: parseFloat(bestRatedContract.strikePrice),
-          daysToExpiration_atPurchase: parseInt(
-            bestRatedContract.daysToExpiration
-          ),
-        }
-      );
-    }
-  }
-
+const populateOptionChains = async () => {
   const currentEasternTime = moment().tz('America/New_York');
   const today = currentEasternTime.format('YYYY-MM-DD');
   const isAfter5PM = currentEasternTime.hour() >= 17;
@@ -227,57 +172,8 @@ const populateOptionPrices = async () => {
   const mostRecentTradingDay =
     mostRecentTradingDays[mostRecentTradingDays.length - 1];
 
-  //-----------------------------------------------------------------
-  // second pass: populate:
-  //     - sellPrice_option_theoretical
-  const tradesThatNeedTheoreticalSellPrices = await PaperTrade.find({
-    sellPrice_option_theoretical: null,
-  });
-  for (const pt of tradesThatNeedTheoreticalSellPrices) {
-    const strSellDate = moment(pt.sellDate).format('YYYY-MM-DD');
-    if (
-      pt.optionStrike &&
-      pt.daysToExpiration_atPurchase &&
-      (strSellDate < mostRecentTradingDay ||
-        (strSellDate === mostRecentTradingDay && isAfter5PM))
-    ) {
-      const histData = await loadHistoricalDataForSymbol(pt.symbol);
-      const sellDateCandle = histData.filter((c) => c.date === strSellDate);
-      if (sellDateCandle.length > 0) {
-        const histDataCropped = histData.filter((hd) => hd.date <= strSellDate);
-
-        const daysToExpiration_atSell =
-          (parseFloat(pt.daysToExpiration_atPurchase) - pt.heldDays) / 365;
-        if (daysToExpiration_atSell < 0) {
-          // should never happen
-          continue;
-        }
-
-        const optionValueAtSellDate =
-          Math.round(
-            100 *
-              bs.blackScholes(
-                sellDateCandle[0].close,
-                pt.optionStrike,
-                daysToExpiration_atSell,
-                calculateHV(histDataCropped, 20) / 100,
-                annualInterestRate,
-                'call'
-              )
-          ) / 100;
-
-        await PaperTrade.updateOne(
-          { _id: pt._id },
-          {
-            sellPrice_option_theoretical: optionValueAtSellDate,
-          }
-        );
-      }
-    }
-  }
-
-  //-----------------------------------------------------------------
-  // third pass: populate the top 100 option buy option chains:
+  //-----------------------------------------------
+  // populate the top 100 option buy option chains:
 
   const tradesThatNeedOptionBuyChains = await PaperTrade.find({
     buyDate_option_chains: null,
@@ -294,8 +190,8 @@ const populateOptionPrices = async () => {
     );
   }
 
-  //-----------------------------------------------------------------
-  // fourth & final pass: populate the top 100 option sell chains (or just match the buy chains, if they exist)
+  //--------------------------------------------------------------------------------------
+  // populate the top 100 option sell chains (or just match the buy chains, if they exist)
 
   const tradesThatNeedOptionSellChains = await PaperTrade.find({
     sellDate_option_chains: null,
@@ -325,6 +221,6 @@ const { argv } = require('yargs')
   await mongoApi.connectMongoose();
   await populateSellDates();
   await populateUnderlyingPrices();
-  await populateOptionPrices();
+  await populateOptionChains();
   await mongoApi.disconnectMongoose();
 })();

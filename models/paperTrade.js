@@ -19,31 +19,23 @@ const PaperTradeSchema = new Schema({
     type: Schema.Types.Date,
     sparse: true,
   },
-  optionExpiration: {
-    type: Schema.Types.Date,
-    sparse: true,
-  },
-  optionStrike: {
-    type: Schema.Types.String,
-    sparse: true,
-  },
-  optionIsPut: {
-    type: Schema.Types.Boolean,
-  },
   daysToExpiration_atPurchase: {
     type: Schema.Types.Number,
   },
   buyPrice_underlying: {
     type: Schema.Types.Decimal128,
   },
-  buyPrice_option_theoretical: {
-    type: Schema.Types.Decimal128,
-  },
   sellPrice_underlying: {
     type: Schema.Types.Decimal128,
   },
-  sellPrice_option_theoretical: {
+  buyPrice_option: {
     type: Schema.Types.Decimal128,
+  },
+  sellPrice_option: {
+    type: Schema.Types.Decimal128,
+  },
+  chosen_option_contract: {
+    type: Schema.Types.String,
   },
   buyDate_option_chains: {
     type: Schema.Types.Mixed,

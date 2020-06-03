@@ -111,23 +111,23 @@ const PaperTrading = (props) => {
       cellClassRules: priceColumnStyleRules,
     },
     {
-      headerName: 'Theoretical Option Buy Price',
-      headerTooltip: 'Theoretical Option Buy Price',
-      field: 'buyPrice_option_theoretical',
+      headerName: 'Option Buy Price',
+      headerTooltip: 'Option Buy Price',
+      field: 'buyPrice_option',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
-      headerName: 'Theoretical Option Sell Price',
-      headerTooltip: 'Theoretical Option Sell Price',
-      field: 'sellPrice_option_theoretical',
+      headerName: 'Option Sell Price',
+      headerTooltip: 'Option Sell Price',
+      field: 'sellPrice_option',
       type: 'rightAligned',
       valueFormatter: numberFormatter,
     },
     {
-      headerName: 'Theoretical Option Profit/Loss %',
-      headerTooltip: 'Theoretical Option Profit/Loss %',
-      field: 'theoretical_option_pl_percent',
+      headerName: 'Option Profit/Loss %',
+      headerTooltip: 'Option Profit/Loss %',
+      field: 'option_pl_percent',
       type: 'rightAligned',
       valueFormatter: profitLossFormatter,
       cellClassRules: priceColumnStyleRules,
@@ -187,20 +187,14 @@ const PaperTrading = (props) => {
             ) / 10
           : '';
 
-        const buyPrice_option_theoretical = formatMongooseDecimal(
-          r.buyPrice_option_theoretical
-        );
-        const sellPrice_option_theoretical = formatMongooseDecimal(
-          r.sellPrice_option_theoretical
-        );
-        const theoretical_option_pl_percent =
-          buyPrice_option_theoretical && sellPrice_option_theoretical
+        const buyPrice_option = formatMongooseDecimal(r.buyPrice_option);
+        const sellPrice_option = formatMongooseDecimal(r.sellPrice_option);
+        const option_pl_percent =
+          buyPrice_option && sellPrice_option
             ? sellPrice_underlying
               ? Math.round(
-                  (1000 *
-                    (sellPrice_option_theoretical -
-                      buyPrice_option_theoretical)) /
-                    buyPrice_option_theoretical
+                  (1000 * (sellPrice_option - buyPrice_option)) /
+                    buyPrice_option
                 ) / 10
               : ''
             : '';
@@ -215,8 +209,8 @@ const PaperTrading = (props) => {
             value: underlying_pl_percent,
             isLive: false,
           },
-          theoretical_option_pl_percent: {
-            value: theoretical_option_pl_percent,
+          option_pl_percent: {
+            value: option_pl_percent,
             isLive: false,
           },
         };
@@ -239,7 +233,7 @@ const PaperTrading = (props) => {
             !row.sellPrice_underlying &&
             !isNullOrUndefined(symbolKeyed[row.symbol])
           ) {
-            row.theoretical_option_pl_percent = { value: null, isLive: false };
+            row.option_pl_percent = { value: null, isLive: false };
             row.sellPrice_underlying = symbolKeyed[row.symbol];
             row.underlying_pl_percent = {
               value:
