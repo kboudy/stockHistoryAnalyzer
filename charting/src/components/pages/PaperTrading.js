@@ -312,7 +312,6 @@ const PaperTrading = (props) => {
         const symbolKeyed = {};
         for (const row of liveSymbolRows) {
           symbolKeyed[row.symbol] = row.close;
-          debugger;
         }
 
         for (const row of mappedGridData) {

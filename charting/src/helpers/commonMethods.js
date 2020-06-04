@@ -292,14 +292,14 @@ export const getSignificantBars = async () => {
 };
 
 export const numberFormatter = (params) => {
-  if (isNaN(params.value)) {
+  if (params.value === null || params.value === '' || isNaN(params.value)) {
     return '';
   }
   return Math.round(params.value * 10) / 10;
 };
 
 export const currencyFormatter = (params) => {
-  if (isNaN(params.value)) {
+  if (params.value === null || params.value === '' || isNaN(params.value)) {
     return '';
   }
   return parseFloat(`${params.value}`).toFixed(2);
