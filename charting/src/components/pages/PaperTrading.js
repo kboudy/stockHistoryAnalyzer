@@ -163,6 +163,9 @@ const PaperTrading = (props) => {
           field: 'underlying_pl_percent',
           type: 'rightAligned',
           valueFormatter: profitLossFormatter,
+          comparator: (valueA, valueB) => {
+            return valueA.value - valueB.value;
+          },
           cellClassRules: priceColumnStyleRules,
         },
       ],
@@ -199,6 +202,9 @@ const PaperTrading = (props) => {
           type: 'rightAligned',
           width: 150,
           valueFormatter: profitLossFormatter,
+          comparator: (valueA, valueB) => {
+            return valueA.value - valueB.value;
+          },
           cellClassRules: priceColumnStyleRules,
         },
         {
