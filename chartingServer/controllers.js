@@ -183,6 +183,7 @@ exports.updatePaperTradeOptionChoice = async (req, res, next) => {
 };
 
 exports.createPaperTrades = async (req, res, next) => {
+  let symForErrorMsg = null;
   try {
     const strToday = moment().format('YYYY-MM-DD');
     const buyDateTime = moment(`${strToday} 4:00PM`, 'YYYY-MM-DD h:mmA')
@@ -193,6 +194,7 @@ exports.createPaperTrades = async (req, res, next) => {
 
     const results = [];
     for (const symbol of symbolsToBuy) {
+      symForErrorMsg = symbol;
       const todayCandle = await Candle.findOne({
         symbol,
         date: strToday,
@@ -216,6 +218,7 @@ exports.createPaperTrades = async (req, res, next) => {
     }
     res.json({ results });
   } catch (error) {
+    console.log(`Symbol that caused error: ${symForErrorMsg}`);
     return next(error);
   }
 };

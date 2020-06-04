@@ -28,11 +28,8 @@ import OptionChains from '../OptionChains';
 
 import _ from 'lodash';
 import {
-  getSignificantBars,
-  getMongoFilter,
-  isObject,
   isNullOrUndefined,
-  numberFormatter,
+  currencyFormatter,
 } from '../../helpers/commonMethods';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -150,14 +147,15 @@ const PaperTrading = (props) => {
           headerTooltip: 'Buy Price',
           field: 'buyPrice_underlying',
           type: 'rightAligned',
-          valueFormatter: numberFormatter,
+          valueFormatter: currencyFormatter,
         },
         {
-          headerName: 'Sell Price',
-          headerTooltip: 'Sell Price',
+          headerName: 'Current/Sold Price',
+          headerTooltip: 'Current/Sold Price',
           field: 'sellPrice_underlying',
           type: 'rightAligned',
-          valueFormatter: numberFormatter,
+          width: 140,
+          valueFormatter: currencyFormatter,
         },
         {
           headerName: 'Profit/Loss %',
@@ -184,7 +182,7 @@ const PaperTrading = (props) => {
           field: 'buyPrice_option',
           type: 'rightAligned',
           width: 130,
-          valueFormatter: numberFormatter,
+          valueFormatter: currencyFormatter,
         },
         {
           headerName: 'Sell Price',
@@ -192,7 +190,7 @@ const PaperTrading = (props) => {
           field: 'sellPrice_option',
           type: 'rightAligned',
           width: 130,
-          valueFormatter: numberFormatter,
+          valueFormatter: currencyFormatter,
         },
         {
           headerName: 'Profit/Loss %',
@@ -275,10 +273,9 @@ const PaperTrading = (props) => {
           }
         }
 
-        const underlying_pl_percent = sellPrice_underlying
-          ? (100 * (sellPrice_underlying - buyPrice_underlying)) /
-            buyPrice_underlying
-          : '';
+        const sp = toTwoDecimals(sellPrice_underlying);
+        const bp = toTwoDecimals(buyPrice_underlying);
+        const underlying_pl_percent = sp ? (100 * (sp - bp)) / bp : '';
 
         const buyPrice_option = formatMongooseDecimal(r.buyPrice_option);
         const sellPrice_option = formatMongooseDecimal(r.sellPrice_option);
@@ -315,6 +312,7 @@ const PaperTrading = (props) => {
         const symbolKeyed = {};
         for (const row of liveSymbolRows) {
           symbolKeyed[row.symbol] = row.close;
+          debugger;
         }
 
         for (const row of mappedGridData) {
@@ -324,10 +322,10 @@ const PaperTrading = (props) => {
           ) {
             row.option_pl_percent = { value: null, isLive: false };
             row.sellPrice_underlying = symbolKeyed[row.symbol];
+            const bp = toTwoDecimals(row.buyPrice_underlying);
+            const sp = toTwoDecimals(symbolKeyed[row.symbol]);
             row.underlying_pl_percent = {
-              value:
-                (100 * (row.sellPrice_underlying - row.buyPrice_underlying)) /
-                row.buyPrice_underlying,
+              value: (100 * (sp - bp)) / bp,
               isLive: true,
             };
           }

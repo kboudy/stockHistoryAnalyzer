@@ -34,7 +34,7 @@ const OptionChains = (props) => {
   }, []);
 
   useEffect(() => {
-    if (!props.rowdata || props.rowdata.buyDate_option_chains.length == 0) {
+    if (!props.rowdata || props.rowdata.buyDate_option_chains.length === 0) {
       setMatchedChains([]);
       return;
     }

@@ -5,7 +5,7 @@
 const cluster = require('cluster'),
   _ = require('lodash'),
   { runCurrentDayJob } = require('../helpers/currentDayJobRunEngine'),
-  { getAvailableSymbolNames } = require('../helpers/symbolData'),
+  { getAvailableSymbolNames, isCrypto } = require('../helpers/symbolData'),
   {
     downloadAndSaveMultipleSymbolHistory,
   } = require('../helpers/candleDownloading'),
@@ -30,7 +30,9 @@ const { argv } = require('yargs')
 if (cluster.isMaster) {
   (async () => {
     await mongoApi.connectMongoose();
-    let allSymbols = await getAvailableSymbolNames();
+    let allSymbols = (await getAvailableSymbolNames()).filter(
+      (s) => !isCrypto(s)
+    );
     let lastLoggedPercentComplete = 0;
     let symbolsLeftToProcess = allSymbols.length;
     let symbolChunks = chunkArray(allSymbols, SYMBOL_CHUNK_SIZE);

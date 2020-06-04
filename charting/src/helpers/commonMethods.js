@@ -294,8 +294,25 @@ export const getSignificantBars = async () => {
 export const numberFormatter = (params) => {
   if (isObject(params.value)) {
     const firstKey = Object.keys(params.value)[0];
-    return params.value[firstKey];
+    return isNullOrUndefined(params.value[firstKey])
+      ? ''
+      : parseFloat(`${params.value[firstKey]}`).toFixed(1);
   } else {
-    return params.value;
+    return isNullOrUndefined(params.value)
+      ? ''
+      : parseFloat(`${params.value}`).toFixed(1);
+  }
+};
+
+export const currencyFormatter = (params) => {
+  if (isObject(params.value)) {
+    const firstKey = Object.keys(params.value)[0];
+    return isNullOrUndefined(params.value[firstKey])
+      ? ''
+      : parseFloat(`${params.value[firstKey]}`).toFixed(2);
+  } else {
+    return isNullOrUndefined(params.value)
+      ? ''
+      : parseFloat(`${params.value}`).toFixed(2);
   }
 };
