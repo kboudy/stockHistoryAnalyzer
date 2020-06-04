@@ -25,6 +25,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import { toTwoDecimals } from '../../helpers/commonMethods';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import OptionChains from '../OptionChains';
+import OptionContractCellRenderer from '../cellRenderers/optionContractCellRenderer';
 
 import _ from 'lodash';
 import {
@@ -178,6 +179,7 @@ const PaperTrading = (props) => {
           headerName: 'Contract',
           headerTooltip: 'Contract',
           field: 'chosen_option_contract',
+          cellRendererFramework: OptionContractCellRenderer,
         },
         {
           headerName: 'Buy Price',
