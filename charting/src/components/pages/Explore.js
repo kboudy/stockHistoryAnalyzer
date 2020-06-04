@@ -56,7 +56,9 @@ const useStyles = makeStyles((theme) => ({
   },
   title: { flexGrow: 1 },
   addChartGrid: { padding: theme.spacing(3) },
-  chartGridWrapper: { padding: theme.spacing(2) },
+  chartGridWrapper: {
+    padding: theme.spacing(2),
+  },
 }));
 
 function Explore(props) {
@@ -197,7 +199,10 @@ function Explore(props) {
       { name: ['% profitable'], value: data.percentProfitable },
       { name: ['days evaluated'], value: data.daysEvaluatedCount },
       { name: ['trade count'], value: data.tradeCount },
-      { name: ['trade count per year'], value: data.tradeCountPerYear },
+      {
+        name: ['trade count per year'],
+        value: Math.round(data.tradeCountPerYear * 10) / 10,
+      },
     ]);
 
     const cData = [];
@@ -337,7 +342,7 @@ function Explore(props) {
         </Grid>
         <Grid item xs={12}>
           <SimulationResultsTable
-            height={550}
+            height={475}
             selectionChanged={handleSimulationTableSelectionChanged}
           />
         </Grid>

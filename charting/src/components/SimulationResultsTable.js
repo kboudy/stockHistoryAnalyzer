@@ -119,7 +119,6 @@ const SimulationResultsTable = (props) => {
         endRow,
       });
       const { results, isLastSet } = tsrQuertyResults.data;
-      debugger;
       let lastRow = null;
       if (isLastSet) {
         lastRow = startRow + results.length;
