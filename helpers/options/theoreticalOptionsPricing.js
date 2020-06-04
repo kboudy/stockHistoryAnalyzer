@@ -80,10 +80,8 @@ exports.rateOptionContractsByHistoricProfitLoss = async (
           'call'
         );
         const optionProfitLoss =
-          Math.round(
-            (1000 * (optionValueAtSaleDate - optionValueAtPurchaseDate)) /
-              optionValueAtPurchaseDate
-          ) / 10;
+          (100 * (optionValueAtSaleDate - optionValueAtPurchaseDate)) /
+          optionValueAtPurchaseDate;
         thisLoopResults.push(optionProfitLoss);
       }
 

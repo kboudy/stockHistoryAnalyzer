@@ -4,7 +4,6 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   { std } = require('mathjs'),
   { significantBarsArray } = require('./constants'),
-  { toTwoDecimals } = require('./commonMethods'),
   moment = require('moment'),
   mongoose = require('mongoose'),
   patternMatching = require('./patternMatching'),
@@ -145,24 +144,18 @@ exports.discoverPatternsForSymbol = async (
         .map((s) => s.profitLossPercent_atBarX[sb]);
 
       if (mup_by.length > 0) {
-        patternStat.avg_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
-          mup_by.reduce((a, b) => a + b) / mup_by.length
-        );
-        patternStat.stdDev_maxUpsidePercent_byBarX[sb] = toTwoDecimals(
-          std(mup_by)
-        );
+        patternStat.avg_maxUpsidePercent_byBarX[sb] =
+          mup_by.reduce((a, b) => a + b) / mup_by.length;
+        patternStat.stdDev_maxUpsidePercent_byBarX[sb] = std(mup_by);
       } else {
         patternStat.avg_maxUpsidePercent_byBarX[sb] = null;
         patternStat.stdDev_maxUpsidePercent_byBarX[sb] = null;
       }
 
       if (mdp_by.length > 0) {
-        patternStat.avg_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
-          -mdp_by.reduce((a, b) => a + b) / mdp_by.length
-        );
-        patternStat.stdDev_maxDownsidePercent_byBarX[sb] = toTwoDecimals(
-          std(mdp_by)
-        );
+        patternStat.avg_maxDownsidePercent_byBarX[sb] =
+          -mdp_by.reduce((a, b) => a + b) / mdp_by.length;
+        patternStat.stdDev_maxDownsidePercent_byBarX[sb] = std(mdp_by);
       } else {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = null;
         patternStat.stdDev_maxDownsidePercent_byBarX[sb] = null;
@@ -171,10 +164,9 @@ exports.discoverPatternsForSymbol = async (
         patternStat.avg_maxUpsidePercent_byBarX[sb] !== null &&
         patternStat.avg_maxDownsidePercent_byBarX[sb] !== null
       ) {
-        patternStat.upsideDownsideRatio_byBarX[sb] = toTwoDecimals(
+        patternStat.upsideDownsideRatio_byBarX[sb] =
           patternStat.avg_maxUpsidePercent_byBarX[sb] /
-            patternStat.avg_maxDownsidePercent_byBarX[sb]
-        );
+          patternStat.avg_maxDownsidePercent_byBarX[sb];
         if (
           patternStat.upsideDownsideRatio_byBarX[sb] ===
           Number.NEGATIVE_INFINITY
@@ -186,27 +178,19 @@ exports.discoverPatternsForSymbol = async (
       }
 
       if (plp_at.length > 0) {
-        patternStat.avg_profitLossPercent_atBarX[sb] = toTwoDecimals(
-          plp_at.reduce((a, b) => a + b) / plp_at.length
-        );
-        patternStat.percentProfitable_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a > 0).length * 100) / plp_at.length
-        );
-        patternStat.percentProfitable_by_1_percent_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a >= 1).length * 100) / plp_at.length
-        );
-        patternStat.percentProfitable_by_2_percent_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a >= 2).length * 100) / plp_at.length
-        );
-        patternStat.percentProfitable_by_5_percent_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a >= 5).length * 100) / plp_at.length
-        );
-        patternStat.percentProfitable_by_10_percent_atBarX[sb] = toTwoDecimals(
-          (plp_at.filter((a) => a >= 10).length * 100) / plp_at.length
-        );
-        patternStat.stdDev_profitLossPercent_atBarX[sb] = toTwoDecimals(
-          std(plp_at)
-        );
+        patternStat.avg_profitLossPercent_atBarX[sb] =
+          plp_at.reduce((a, b) => a + b) / plp_at.length;
+        patternStat.percentProfitable_atBarX[sb] =
+          (plp_at.filter((a) => a > 0).length * 100) / plp_at.length;
+        patternStat.percentProfitable_by_1_percent_atBarX[sb] =
+          (plp_at.filter((a) => a >= 1).length * 100) / plp_at.length;
+        patternStat.percentProfitable_by_2_percent_atBarX[sb] =
+          (plp_at.filter((a) => a >= 2).length * 100) / plp_at.length;
+        patternStat.percentProfitable_by_5_percent_atBarX[sb] =
+          (plp_at.filter((a) => a >= 5).length * 100) / plp_at.length;
+        patternStat.percentProfitable_by_10_percent_atBarX[sb] =
+          (plp_at.filter((a) => a >= 10).length * 100) / plp_at.length;
+        patternStat.stdDev_profitLossPercent_atBarX[sb] = std(plp_at);
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_atBarX[sb] = null;
@@ -227,10 +211,8 @@ exports.discoverPatternsForSymbol = async (
             sourcePriceHistory[i + (numberOfBars - 1)];
 
           patternStat.actualProfitLossPercent_atBarX[sb] =
-            Math.round(
-              (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
-                1000
-            ) / 10;
+            (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
+            100;
           patternStat.actualProfitLossSellDate_atBarX[sb] =
             actualTradeSellCandle.date;
         } else {
@@ -240,9 +222,8 @@ exports.discoverPatternsForSymbol = async (
       }
       //------------------------------------------------------------------------------------
     }
-    patternStat.avgScore = toTwoDecimals(
-      scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length
-    );
+    patternStat.avgScore =
+      scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length;
 
     if (mostRecentResultOnly && !writeToDb) {
       // patternStat.scoreDates would take up too much space in the db

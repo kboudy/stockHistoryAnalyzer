@@ -246,10 +246,8 @@ const CurrentDayResultsTable = (props) => {
         } else if (field === 'avgScore') {
           if (thisAgg[`${field}${tempCountKeySuffix}`]) {
             thisAgg.avgScore =
-              Math.round(
-                (parseFloat(thisAgg.avgScore) * 100) /
-                  thisAgg[`${field}${tempCountKeySuffix}`]
-              ) / 100;
+              parseFloat(thisAgg.avgScore) /
+              thisAgg[`${field}${tempCountKeySuffix}`];
           }
         } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
           const countFieldKey = `${field}${tempCountKeySuffix}`;
@@ -262,10 +260,8 @@ const CurrentDayResultsTable = (props) => {
               thisAgg[countFieldKey][b] > 0
             ) {
               const val =
-                Math.round(
-                  (parseFloat(thisAgg[field][b]) * 100) /
-                    parseFloat(thisAgg[countFieldKey][b])
-                ) / 100;
+                parseFloat(thisAgg[field][b]) /
+                parseFloat(thisAgg[countFieldKey][b]);
               //console.log(`${field}/${countFieldKey}: ${val}`);
               thisAgg[field][b] = val;
             }

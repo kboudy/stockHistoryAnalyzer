@@ -8,8 +8,6 @@ exports.isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;
 };
 
-exports.toTwoDecimals = (n) => Math.round(n * 100) / 100;
-
 exports.sleep = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };

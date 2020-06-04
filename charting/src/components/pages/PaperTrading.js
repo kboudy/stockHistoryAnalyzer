@@ -22,7 +22,7 @@ import ButtonCellRenderer from '../cellRenderers/buttonCellRenderer';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
+import { toTwoDecimals } from '../../helpers/commonMethods';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import OptionChains from '../OptionChains';
 
@@ -276,10 +276,8 @@ const PaperTrading = (props) => {
         }
 
         const underlying_pl_percent = sellPrice_underlying
-          ? Math.round(
-              (1000 * (sellPrice_underlying - buyPrice_underlying)) /
-                buyPrice_underlying
-            ) / 10
+          ? (100 * (sellPrice_underlying - buyPrice_underlying)) /
+            buyPrice_underlying
           : '';
 
         const buyPrice_option = formatMongooseDecimal(r.buyPrice_option);
@@ -287,9 +285,7 @@ const PaperTrading = (props) => {
         let option_pl_percent = '';
         if (buyPrice_option && sellPrice_option) {
           option_pl_percent =
-            Math.round(
-              (1000 * (sellPrice_option - buyPrice_option)) / buyPrice_option
-            ) / 10;
+            (100 * (sellPrice_option - buyPrice_option)) / buyPrice_option;
         }
 
         return {
@@ -318,7 +314,7 @@ const PaperTrading = (props) => {
         ).data;
         const symbolKeyed = {};
         for (const row of liveSymbolRows) {
-          symbolKeyed[row.symbol] = Math.round(row.close * 100) / 100;
+          symbolKeyed[row.symbol] = row.close;
         }
 
         for (const row of mappedGridData) {
@@ -330,11 +326,8 @@ const PaperTrading = (props) => {
             row.sellPrice_underlying = symbolKeyed[row.symbol];
             row.underlying_pl_percent = {
               value:
-                Math.round(
-                  (1000 *
-                    (row.sellPrice_underlying - row.buyPrice_underlying)) /
-                    row.buyPrice_underlying
-                ) / 10,
+                (100 * (row.sellPrice_underlying - row.buyPrice_underlying)) /
+                row.buyPrice_underlying,
               isLive: true,
             };
           }
@@ -353,17 +346,13 @@ const PaperTrading = (props) => {
     const plp = rows.map((r) => r.underlying_pl_percent.value);
     let avg_underlying = null;
     if (plp.length > 0) {
-      avg_underlying =
-        Math.round((plp.reduce((a, b) => a + b) / plp.length) * 100) / 100;
+      avg_underlying = plp.reduce((a, b) => a + b) / plp.length;
     }
 
     let avg_option = null;
     const plp_option = rows.map((r) => r.option_pl_percent.value);
     if (plp_option.length > 0) {
-      avg_option =
-        Math.round(
-          (plp_option.reduce((a, b) => a + b) / plp_option.length) * 100
-        ) / 100;
+      avg_option = plp_option.reduce((a, b) => a + b) / plp_option.length;
     }
     setAvgPL({ avg_underlying, avg_option, count: plp.length });
   };
@@ -504,13 +493,17 @@ const PaperTrading = (props) => {
                   <TableCell component="th" scope="row">
                     Avg underlying P/L%
                   </TableCell>
-                  <TableCell align="right">{avgPL.avg_underlying}</TableCell>
+                  <TableCell align="right">
+                    {toTwoDecimals(avgPL.avg_underlying)}
+                  </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell component="th" scope="row">
                     Avg option P/L%
                   </TableCell>
-                  <TableCell align="right">{avgPL.avg_option}</TableCell>
+                  <TableCell align="right">
+                    {toTwoDecimals(avgPL.avg_option)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

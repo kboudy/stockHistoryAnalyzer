@@ -159,21 +159,18 @@ exports.getMatches = (
           maxUpsidePercent_byBarX[sb] = null;
         } else {
           maxUpsidePercent_byBarX[sb] =
-            Math.round(
-              (highestOfXBars[sb] / targetPriceHistory[lastBarIndex].close -
-                1) *
-                1000
-            ) / 10;
+            ((highestOfXBars[sb] / targetPriceHistory[lastBarIndex].close - 1) *
+              1000) /
+            10;
         }
 
         if (targetPriceHistory.length > lastBarIndex + sb) {
           profitLossPercent_atBarX[sb] =
-            Math.round(
-              (targetPriceHistory[lastBarIndex + sb].close /
-                targetPriceHistory[lastBarIndex].close -
-                1) *
-                1000
-            ) / 10;
+            ((targetPriceHistory[lastBarIndex + sb].close /
+              targetPriceHistory[lastBarIndex].close -
+              1) *
+              1000) /
+            10;
         } else {
           profitLossPercent_atBarX[sb] = null;
         }
@@ -188,10 +185,8 @@ exports.getMatches = (
           maxDownsidePercent_byBarX[sb] = null;
         } else {
           maxDownsidePercent_byBarX[sb] =
-            Math.round(
-              (lowestOfXBars[sb] / targetPriceHistory[lastBarIndex].close - 1) *
-                1000
-            ) / 10;
+            (lowestOfXBars[sb] / targetPriceHistory[lastBarIndex].close - 1) *
+            100;
         }
       }
 

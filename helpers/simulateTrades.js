@@ -148,24 +148,18 @@ const runTradeSimulation = async (
   const profitableCount = patternStats.filter(
     (p) => p.actualProfitLossPercent_atBarX[significantBar] > 0
   ).length;
-  const avgProfitLossPercent =
-    Math.round(
-      10 *
-        _.meanBy(
-          patternStats,
-          (p) => p.actualProfitLossPercent_atBarX[significantBar]
-        )
-    ) / 10;
+  const avgProfitLossPercent = _.meanBy(
+    patternStats,
+    (p) => p.actualProfitLossPercent_atBarX[significantBar]
+  );
 
-  const percentProfitable =
-    Math.round((1000 * profitableCount) / tradeCount) / 10;
+  const percentProfitable = (100 * profitableCount) / tradeCount;
 
   const daysEvaluatedCount = moment(
     candles[candles.length - 1].date,
     'YYYY-MM-DD'
   ).diff(moment(candles[0].date, 'YYYY-MM-DD'), 'days');
-  const tradeCountPerYear =
-    Math.round((10 * tradeCount) / (daysEvaluatedCount / 365.25)) / 10;
+  const tradeCountPerYear = tradeCount / (daysEvaluatedCount / 365.25);
 
   const tradeResults = {
     avgProfitLossPercent,

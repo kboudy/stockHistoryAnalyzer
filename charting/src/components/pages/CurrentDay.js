@@ -95,28 +95,18 @@ function CurrentDay(props) {
     }
 
     // aggregate those results for the table
-    const tableData = [];
-
     const percentProfitable =
-      Math.round(
-        (10000 *
-          rechartsFormattedData.filter(
-            (r) => Math.round(r['p/l %'] * 10) / 10 > 0
-          ).length) /
-          rechartsFormattedData.length
-      ) / 100;
+      (100 *
+        rechartsFormattedData.filter(
+          (r) => Math.round(r['p/l %'] * 10) / 10 > 0
+        ).length) /
+      rechartsFormattedData.length;
     setTableData([
       {
         name: ['avg pl %'],
         value:
-          Math.round(
-            (10 *
-              _.sumBy(
-                rechartsFormattedData,
-                (r) => Math.round(r['p/l %'] * 10) / 10
-              )) /
-              rechartsFormattedData.length
-          ) / 10,
+          _.sumBy(rechartsFormattedData, (r) => r['p/l %']) /
+          rechartsFormattedData.length,
       },
       {
         name: ['% profitable'],

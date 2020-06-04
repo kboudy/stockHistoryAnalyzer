@@ -48,9 +48,7 @@ const getPLAveragesAcrossAllNumberOfBars = (
   }
 
   const avgPL = pl_sum / pl_count;
-  const avgPercentProfitable = Math.round(
-    (100 * pl_profitable_count) / pl_count
-  );
+  const avgPercentProfitable = (100 * pl_profitable_count) / pl_count;
   return { avgPL, avgPercentProfitable };
 };
 

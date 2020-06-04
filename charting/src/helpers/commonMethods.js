@@ -18,7 +18,8 @@ export const isEmptyObject = (obj) => {
   return isObject(obj) && Object.keys(obj).length === 0;
 };
 
-export const toTwoDecimals = (n) => Math.round(n * 100) / 100;
+export const toTwoDecimals = (n) =>
+  isNullOrUndefined(n) ? '' : Math.round(n * 100) / 100;
 
 export const getMongoFilter = (filterString) => {
   const parseValue = (v) => {

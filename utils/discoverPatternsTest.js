@@ -44,7 +44,7 @@ const confirm_profitLossAtBarX = async () => {
           const buyClose = candles[buyDateIndex].close;
           const sellClose = candles[sellDateIndex].close;
 
-          const plPercent = Math.round((sellClose / buyClose - 1) * 1000) / 10;
+          const plPercent = (sellClose / buyClose - 1) * 100;
 
           plPercentTotal += plPercent;
           plDivisor++;
