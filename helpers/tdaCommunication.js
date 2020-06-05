@@ -1,17 +1,34 @@
 const axios = require('axios'),
-  { TDA_consumerKey, TDA_refreshToken } = require('./constants'),
+  { TDA_consumerKey, configDir } = require('./constants'),
   qs = require('qs'),
   chalk = require('chalk'),
   _ = require('lodash'),
   moment = require('moment-timezone'),
-  { isNullOrUndefined, sleep } = require('./commonMethods'),
-  opn = require('opn');
+  { Builder } = require('selenium-webdriver'),
+  fs = require('fs'),
+  path = require('path'),
+  chrome = require('selenium-webdriver/chrome'),
+  chromedriver = require('chromedriver'),
+  { isNullOrUndefined, sleep } = require('./commonMethods');
 
 let current_access_token = null;
 let lastAuthenticated = null;
 let requestDateTimes_inLast5Seconds = [];
 let requestDateTimes_inLast60Seconds = [];
 let requestDateTimes = [];
+
+const tdaConfigFilepath = path.join(configDir, 'tdaConfig.json');
+if (!fs.existsSync(tdaConfigFilepath)) {
+  console.log(
+    chalk.red(
+      `Expected the file [${tdaConfigFilepath}] to exist.  Run "node primaryModules/authenticateTDA.js" to generate it`
+    )
+  );
+  process.exit(1);
+}
+const TDA_refreshToken = JSON.parse(fs.readFileSync(tdaConfigFilepath))
+  .refresh_token;
+
 const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   let res;
   let retryCount = 4;
@@ -210,13 +227,29 @@ exports.getOptionChainData = async (
 };
 
 // use this if you need to generate a new auth token (in theory, you shouldn't - just need to make a request within 90 days)
-const getAuthCode = async () => {
+exports.getAuthCode = async () => {
+  let code, driver;
   // opens a browser, requests authentication, then you'll see the auth code in the url
-  opn(
-    `https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=https://127.0.0.1&client_id=${TDA_consumerKey}%40AMER.OAUTHAP`
-  );
+  try {
+    driver = await new Builder().forBrowser('chrome').build();
+    await driver.get(
+      `https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=https://127.0.0.1&client_id=${TDA_consumerKey}%40AMER.OAUTHAP`
+    );
+    let currentUrl = '';
+    while (!currentUrl.includes('?code=') && !currentUrl.includes('&code=')) {
+      currentUrl = await driver.getCurrentUrl();
+      await sleep(500);
+    }
+    code = currentUrl.slice(currentUrl.indexOf('code=') + 5);
+    if (code.includes('&')) {
+      code = code.split('&')[0];
+    }
+  } catch (err) {
+  } finally {
+    await driver.quit();
+  }
+  return code;
 };
-exports.getAuthCode = getAuthCode;
 
 const getAccessToken_fromRefreshToken = async () => {
   const data = {
@@ -239,6 +272,32 @@ const getAccessToken_fromRefreshToken = async () => {
   }
 };
 exports.getAccessToken = getAccessToken_fromRefreshToken;
+
+// you can use request this once (then you'll have to use getAuthCode & verify with the browser again)
+exports.getAccessToken_fromAuthCode = async (authCode) => {
+  try {
+    const data = {
+      grant_type: 'authorization_code',
+      refresh_token: null,
+      access_type: 'offline',
+      code: decodeURIComponent(authCode),
+      client_id: TDA_consumerKey,
+      redirect_uri: 'https://127.0.0.1',
+    };
+
+    const options = {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      data: qs.stringify(data),
+      url: 'https://api.tdameritrade.com/v1/oauth2/token',
+    };
+
+    const res = await axios(options);
+    return res.data;
+  } catch (err) {
+    debugger;
+  }
+};
 
 // this is called internally the first time a request is made
 // (uses a refresh token to get & store-in-memory)

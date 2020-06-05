@@ -1,3 +1,4 @@
 node_modules/
 analysisResults/
 .env
+tdaConfig.json

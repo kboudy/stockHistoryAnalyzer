@@ -78,6 +78,14 @@
 node utils/backupDb.js
 node utils/restoreDb.js
 
+# Generating TDAmeritrade authentication
+
+- Run this to generate a refreshToken in `/config/tdaConfig.json`
+
+```sh
+node primaryModules/authenticateTDA.js
+```
+
 # TODO
 
 - clear the graph when changing symbols (in single-symbol mode) on the current day page
