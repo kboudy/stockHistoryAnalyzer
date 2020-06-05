@@ -114,9 +114,7 @@ exports.discoverPatternsForSymbol = async (
       patternStat.actualProfitLossSellDate_atBarX = {};
     }
     patternStat.avg_maxUpsidePercent_byBarX = {};
-    patternStat.stdDev_maxUpsidePercent_byBarX = {};
     patternStat.avg_maxDownsidePercent_byBarX = {};
-    patternStat.stdDev_maxDownsidePercent_byBarX = {};
     patternStat.upsideDownsideRatio_byBarX = {};
     patternStat.avg_profitLossPercent_atBarX = {};
     patternStat.percentProfitable_atBarX = {};
@@ -124,7 +122,6 @@ exports.discoverPatternsForSymbol = async (
     patternStat.percentProfitable_by_2_percent_atBarX = {};
     patternStat.percentProfitable_by_5_percent_atBarX = {};
     patternStat.percentProfitable_by_10_percent_atBarX = {};
-    patternStat.stdDev_profitLossPercent_atBarX = {};
 
     if (scores.length === 0) {
       continue;
@@ -146,19 +143,15 @@ exports.discoverPatternsForSymbol = async (
       if (mup_by.length > 0) {
         patternStat.avg_maxUpsidePercent_byBarX[sb] =
           mup_by.reduce((a, b) => a + b) / mup_by.length;
-        patternStat.stdDev_maxUpsidePercent_byBarX[sb] = std(mup_by);
       } else {
         patternStat.avg_maxUpsidePercent_byBarX[sb] = null;
-        patternStat.stdDev_maxUpsidePercent_byBarX[sb] = null;
       }
 
       if (mdp_by.length > 0) {
         patternStat.avg_maxDownsidePercent_byBarX[sb] =
           -mdp_by.reduce((a, b) => a + b) / mdp_by.length;
-        patternStat.stdDev_maxDownsidePercent_byBarX[sb] = std(mdp_by);
       } else {
         patternStat.avg_maxDownsidePercent_byBarX[sb] = null;
-        patternStat.stdDev_maxDownsidePercent_byBarX[sb] = null;
       }
       if (
         patternStat.avg_maxUpsidePercent_byBarX[sb] !== null &&
@@ -190,11 +183,9 @@ exports.discoverPatternsForSymbol = async (
           (plp_at.filter((a) => a >= 5).length * 100) / plp_at.length;
         patternStat.percentProfitable_by_10_percent_atBarX[sb] =
           (plp_at.filter((a) => a >= 10).length * 100) / plp_at.length;
-        patternStat.stdDev_profitLossPercent_atBarX[sb] = std(plp_at);
       } else {
         patternStat.avg_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_atBarX[sb] = null;
-        patternStat.stdDev_profitLossPercent_atBarX[sb] = null;
         patternStat.percentProfitable_by_1_percent_atBarX[sb] = null;
         patternStat.percentProfitable_by_2_percent_atBarX[sb] = null;
         patternStat.percentProfitable_by_5_percent_atBarX[sb] = null;
