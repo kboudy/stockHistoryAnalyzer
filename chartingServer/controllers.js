@@ -193,6 +193,7 @@ exports.createPaperTrades = async (req, res, next) => {
     const { symbolsToBuy, jobRunId, heldDays } = req.body;
 
     const results = [];
+    const todayUTC = moment.utc();
     for (const symbol of symbolsToBuy) {
       symForErrorMsg = symbol;
       const todayCandle = await Candle.findOne({
@@ -201,7 +202,7 @@ exports.createPaperTrades = async (req, res, next) => {
       });
       results.push(
         await PaperTrade.create({
-          created: moment.utc(),
+          created: todayUTC,
           symbol: symbol,
           buyDate: buyDateTime,
           sellDate: null,

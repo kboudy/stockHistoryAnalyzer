@@ -117,9 +117,10 @@ const downloadHistoricalEquityData = async (symbol, startDate, endDate) => {
     return await axios(options);
   });
 
+  const todayUTC = moment.utc();
   const { candles } = res.data;
   for (const candle of candles) {
-    candle.created = moment.utc();
+    candle.created = todayUTC;
     candle.settled = true;
     candle.date = moment(candle.datetime).format('YYYY-MM-DD');
     candle.symbol = symbol;
@@ -163,13 +164,14 @@ exports.downloadBulkCurrentEquityData = async (symbols) => {
       return await axios(options);
     });
 
+    const todayUTC = moment.utc();
     for (const symbol in res.data) {
       const c = res.data[symbol];
       const candleDate = moment(c.regularMarketTradeTimeInLong).format(
         'YYYY-MM-DD'
       );
       const candle = {};
-      candle.created = moment.utc();
+      candle.created = todayUTC;
       candle.settled = isAfter4PM || candleDate !== today;
       candle.date = candleDate;
       candle.symbol = symbol;

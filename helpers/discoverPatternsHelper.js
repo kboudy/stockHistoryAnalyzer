@@ -28,6 +28,7 @@ exports.discoverPatternsForSymbol = async (
   let preExistingMaxDate = null;
 
   let jobRun;
+  const todayUTC = moment.utc();
   if (writeToDb) {
     // PatternStatsJobRuns should be unique per these fields
     jobRun = await PatternStatsJobRun.findOne({
@@ -44,11 +45,11 @@ exports.discoverPatternsForSymbol = async (
       if (psWithMaxDate) {
         preExistingMaxDate = psWithMaxDate.sourceDate;
       }
-      jobRun.updated = moment.utc();
+      jobRun.updated = todayUTC;
       await jobRun.save();
     } else {
       jobRun = await PatternStatsJobRun.create({
-        created: moment.utc(),
+        created: todayUTC,
         numberOfBars,
         significantBars: significantBarsArray,
         ignoreMatchesAboveThisScore,

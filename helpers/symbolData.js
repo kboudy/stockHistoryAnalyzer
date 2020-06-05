@@ -26,6 +26,7 @@ exports.loadHistoricalDataForSymbol = async (symbol) => {
 };
 
 exports.repopulateSymbolInfo = async () => {
+  const todayUTC = moment.utc();
   for (const symbol of await getAvailableSymbolNames()) {
     console.log(`getting symbol info for ${symbol}`);
     const startDate = (
@@ -75,7 +76,7 @@ exports.repopulateSymbolInfo = async () => {
     });
 
     await SymbolInfo.create({
-      created: moment.utc(),
+      created: todayUTC,
       symbol,
       startDate,
       highestOptionContractOpenInterest,

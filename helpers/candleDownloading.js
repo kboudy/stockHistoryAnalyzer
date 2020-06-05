@@ -26,6 +26,7 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
 
   const lines = res.data.split('\n');
   const candles = [];
+  const todayUTC = moment.utc();
   for (const l of lines) {
     if (!l.startsWith('2')) {
       continue;
@@ -33,7 +34,7 @@ const downloadCryptoData = async (symbol, startDate, endDate) => {
     //Date,Symbol,Open,High,Low,Close,Volume BTC,Volume USD
     const parts = l.split(',');
     candles.push({
-      created: moment.utc(),
+      created: todayUTC,
       date: parts[0],
       settled: true, // "settled" means the prices won't change anymore
       symbol,
