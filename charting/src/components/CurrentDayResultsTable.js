@@ -507,10 +507,6 @@ const CurrentDayResultsTable = (props) => {
     if (syms.length > 0) {
       await nodeServer.post(`paperTrades`, {
         symbolsToBuy: syms,
-        settingsUsed: {
-          filterModel: JSON.stringify(gridApi.getFilterModel()),
-          aggregateBySymbol,
-        }, // so we can come back to data sets & see how they were created // aggregated >=15   >=4  >=60
         heldDays: chosenBars[0],
         jobRunId: currentDayJobRun._id,
       });

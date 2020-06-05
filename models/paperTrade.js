@@ -4,9 +4,6 @@ const Schema = mongoose.Schema;
 
 const PaperTradeSchema = new Schema({
   created: { type: Date },
-  settings_used: {
-    type: Schema.Types.Mixed,
-  },
   symbol: {
     type: Schema.Types.String,
     sparse: true,
