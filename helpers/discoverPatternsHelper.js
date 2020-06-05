@@ -77,6 +77,7 @@ exports.discoverPatternsForSymbol = async (
     }
 
     if (
+      // allows us to efficiently add to existing patternStatsJobRuns
       preExistingMaxDate &&
       sourcePriceHistory[i].date <= preExistingMaxDate
     ) {
@@ -99,7 +100,6 @@ exports.discoverPatternsForSymbol = async (
       numberOfBars,
       targetPriceHistories,
       targetSymbols, // the list of symbols which matches targetPriceHistories'
-      //          (for now, we're just comparing an equity against itself)
       significantBarsArray,
       ignoreMatchesAboveThisScore
     );
