@@ -232,8 +232,11 @@ exports.getAuthCode = async () => {
   // opens a browser, requests authentication, then you'll see the auth code in the url
   try {
     driver = await new Builder().forBrowser('chrome').build();
+    // scope is undocumented. possible values: [PlaceTrades,AccountAccess,MoveMoney].  see: https://thegoodpew.com/tag/tda/
+    // use "+" (as opposed to comma) as a delimiter for multiple
+    const scope = 'AccountAccess+MoveMoney+PlaceTrades';
     await driver.get(
-      `https://auth.tdameritrade.com/auth?response_type=code&redirect_uri=https://127.0.0.1&client_id=${TDA_consumerKey}%40AMER.OAUTHAP`
+      `https://auth.tdameritrade.com/auth?scope=${scope}&response_type=code&redirect_uri=https://127.0.0.1&client_id=${TDA_consumerKey}%40AMER.OAUTHAP`
     );
     let currentUrl = '';
     while (!currentUrl.includes('?code=') && !currentUrl.includes('&code=')) {

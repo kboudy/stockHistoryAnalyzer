@@ -207,9 +207,6 @@ const CurrentDayResultsTable = (props) => {
         } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
           const bars = Object.keys(abs[field]);
           for (const b of bars) {
-            if (row.numberOfBars < 10) {
-              continue; // for the weighted averages, ignoring the small pattern matches
-            }
             if (!isNullOrUndefined(row[field][b])) {
               const scoreCount = row.scoreCount;
               abs[field][b] = abs[field][b] + row[field][b] * scoreCount;
@@ -504,9 +501,16 @@ const CurrentDayResultsTable = (props) => {
       return;
     }
 
-    if (selectedSymbols.length > 0) {
+    let syms = selectedSymbols.length ? selectedSymbols : allSymbolsInGrid;
+
+    debugger;
+    if (syms.length > 0) {
       await nodeServer.post(`paperTrades`, {
-        symbolsToBuy: selectedSymbols,
+        symbolsToBuy: syms,
+        settingsUsed: {
+          filterModel: JSON.stringify(gridApi.getFilterModel()),
+          aggregateBySymbol,
+        }, // so we can come back to data sets & see how they were created // aggregated >=15   >=4  >=60
         heldDays: chosenBars[0],
         jobRunId: currentDayJobRun._id,
       });
@@ -624,6 +628,7 @@ const CurrentDayResultsTable = (props) => {
               headerName: 'avgScore',
               field: 'avgScore',
               headerClass: 'primary-header',
+              valueFormatter: numberFormatter,
             },
           ],
         },
