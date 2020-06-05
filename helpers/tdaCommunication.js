@@ -35,45 +35,7 @@ const delayIfNecessary_forTDALimit = async (asyncMethod) => {
   while (retryCount > 0) {
     try {
       res = await asyncMethod();
-
-      retryCount = 0;
-      // attempt to avoid a 429 "too many requests per second" from TDAmeritrade
-      const currentDateTime = new Date().getTime();
-      requestDateTimes.push(currentDateTime);
-      requestDateTimes_inLast5Seconds = requestDateTimes.filter(
-        (d) => d >= currentDateTime - 5000
-      );
-      requestDateTimes_inLast60Seconds = requestDateTimes.filter(
-        (d) => d >= currentDateTime - 60000
-      );
-      requestDateTimes = requestDateTimes.filter(
-        (d) => d >= currentDateTime - 90000
-      );
-      const throttle = requestDateTimes_inLast5Seconds.length > 10;
-      // abandoning the conditional throttle for now - was maxxing out on 429's (too many requests)
-      const sleepTime = 550;
-      await sleep(sleepTime);
-      return res;
-    } catch (err) {
-      retryCount--;
-      if (retryCount > 0) {
-        if (err.response && err.response.status === 429) {
-          console.log(
-            chalk.red(
-              `Error 429 - too many requests - waiting 5 seconds & retrying.  request count in last 5 seconds: ${requestDateTimes_inLast5Seconds.length}, 60 seconds: ${requestDateTimes_inLast60Seconds.length}`
-            )
-          );
-        } else if (err.response && err.response.status === 404) {
-          console.log(chalk.red(`Error 404 - retrying`));
-        } else {
-          console.log(chalk.red(`Error - retrying: ${err.message}`));
-        }
-        await sleep(5000);
-      } else {
-        throw err;
-      }
-    }
-  }
+      >
 };
 
 exports.getMostRecentEquityTradingDays = async () => {
