@@ -26,13 +26,7 @@ const PatternStatsSchema = new Schema({
   avg_maxUpsidePercent_byBarX: {
     type: Schema.Types.Mixed,
   },
-  stdDev_maxUpsidePercent_byBarX: {
-    type: Schema.Types.Mixed,
-  },
   avg_maxDownsidePercent_byBarX: {
-    type: Schema.Types.Mixed,
-  },
-  stdDev_maxDownsidePercent_byBarX: {
     type: Schema.Types.Mixed,
   },
   avg_profitLossPercent_atBarX: {
@@ -56,9 +50,6 @@ const PatternStatsSchema = new Schema({
   scoreDates: {
     type: Schema.Types.Mixed,
     sparse: true,
-  },
-  stdDev_profitLossPercent_atBarX: {
-    type: Schema.Types.Mixed,
   },
   avgScore: {
     type: Number,

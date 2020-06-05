@@ -19,9 +19,7 @@
   - `actualProfitLossPercent_atBarX`
   - `actualProfitLossSellDate_atBarX`
   - `avg_maxUpsidePercent_byBarX`
-  - `stdDev_maxUpsidePercent_byBarX`
   - `avg_maxDownsidePercent_byBarX`
-  - `stdDev_maxDownsidePercent_byBarX`
   - `upsideDownsideRatio_byBarX`
   - `avg_profitLossPercent_atBarX`
   - `percentProfitable_atBarX`
@@ -29,4 +27,3 @@
   - `percentProfitable_by_2_percent_atBarX`
   - `percentProfitable_by_5_percent_atBarX`
   - `percentProfitable_by_10_percent_atBarX`
-  - `stdDev_profitLossPercent_atBarX`
