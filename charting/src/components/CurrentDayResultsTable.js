@@ -637,23 +637,9 @@ const CurrentDayResultsTable = (props) => {
           marryChildren: true,
           children: [
             {
-              headerName: `stdDev_maxUpsidePercent_byBarX.${sb}`,
-              field: `stdDev_maxUpsidePercent_byBarX.${sb}`,
-              headerTooltip: `stdDev_maxUpsidePercent_byBarX.${sb}`,
-              headerClass: `header-${rotatingCssIndex}`,
-              valueFormatter: numberFormatter,
-            },
-            {
               headerName: `avg_maxDownsidePercent_byBarX.${sb}`,
               field: `avg_maxDownsidePercent_byBarX.${sb}`,
               headerTooltip: `avg_maxDownsidePercent_byBarX.${sb}`,
-              headerClass: `header-${rotatingCssIndex}`,
-              valueFormatter: numberFormatter,
-            },
-            {
-              headerName: `stdDev_maxDownsidePercent_byBarX.${sb}`,
-              field: `stdDev_maxDownsidePercent_byBarX.${sb}`,
-              headerTooltip: `stdDev_maxDownsidePercent_byBarX.${sb}`,
               headerClass: `header-${rotatingCssIndex}`,
               valueFormatter: numberFormatter,
             },
@@ -750,13 +736,6 @@ const CurrentDayResultsTable = (props) => {
               headerName: `percentProfitable_by_10_percent_atBarX.${sb}`,
               field: `percentProfitable_by_10_percent_atBarX.${sb}`,
               headerTooltip: `percentProfitable_by_10_percent_atBarX.${sb}`,
-              valueFormatter: numberFormatter,
-              headerClass: `header-${rotatingCssIndex}`,
-            },
-            {
-              headerName: `stdDev_profitLossPercent_atBarX.${sb}`,
-              field: `stdDev_profitLossPercent_atBarX.${sb}`,
-              headerTooltip: `stdDev_profitLossPercent_atBarX.${sb}`,
               valueFormatter: numberFormatter,
               headerClass: `header-${rotatingCssIndex}`,
             },
