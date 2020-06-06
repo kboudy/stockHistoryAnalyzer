@@ -22,7 +22,7 @@ import ButtonCellRenderer from '../cellRenderers/buttonCellRenderer';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import { toTwoDecimals } from '../../helpers/commonMethods';
+import { toXDecimals } from '../../helpers/commonMethods';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import OptionChains from '../OptionChains';
 import OptionContractCellRenderer from '../cellRenderers/optionContractCellRenderer';
@@ -281,8 +281,8 @@ const PaperTrading = (props) => {
           }
         }
 
-        const sp = toTwoDecimals(sellPrice_underlying);
-        const bp = toTwoDecimals(buyPrice_underlying);
+        const sp = toXDecimals(sellPrice_underlying);
+        const bp = toXDecimals(buyPrice_underlying);
         const underlying_pl_percent = sp ? (100 * (sp - bp)) / bp : '';
 
         const buyPrice_option = formatMongooseDecimal(r.buyPrice_option);
@@ -329,8 +329,8 @@ const PaperTrading = (props) => {
           ) {
             row.option_pl_percent = { value: null, isLive: false };
             row.sellPrice_underlying = symbolKeyed[row.symbol];
-            const bp = toTwoDecimals(row.buyPrice_underlying);
-            const sp = toTwoDecimals(symbolKeyed[row.symbol]);
+            const bp = toXDecimals(row.buyPrice_underlying);
+            const sp = toXDecimals(symbolKeyed[row.symbol]);
             row.underlying_pl_percent = {
               value: (100 * (sp - bp)) / bp,
               isLive: true,
@@ -499,7 +499,7 @@ const PaperTrading = (props) => {
                     Avg underlying P/L%
                   </TableCell>
                   <TableCell align="right">
-                    {toTwoDecimals(avgPL.avg_underlying)}
+                    {toXDecimals(avgPL.avg_underlying)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -507,7 +507,7 @@ const PaperTrading = (props) => {
                     Avg option P/L%
                   </TableCell>
                   <TableCell align="right">
-                    {toTwoDecimals(avgPL.avg_option)}
+                    {toXDecimals(avgPL.avg_option)}
                   </TableCell>
                 </TableRow>
               </TableBody>

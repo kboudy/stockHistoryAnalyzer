@@ -14,7 +14,7 @@
     - `maxDownsidePercent_byBarX`
     - `profitLossPercent_atBarX`
 
-## need to make aggregate field generation dynamic
+## TODO: make aggregate field generation dynamic
 
 - these fields are calculated by `discoverPatternsHelper.js`.`discoverPatternsForSymbol` after calling `getMatches`. `discoverPatternsForSymbol` should calculate them all with dynamic methods, that are passed in to discoverPatternsForSymbol (`futureResults.profitLossPercent_atBarX` & `futureResults.profitLossSellDate_atBarX` wouldn't be passed in by `currentDayJobRunEngine`)
 
@@ -29,3 +29,24 @@
   - `pastResults.percentProfitable_by_2_percent_atBarX`
   - `pastResults.percentProfitable_by_5_percent_atBarX`
   - `pastResults.percentProfitable_by_10_percent_atBarX`
+
+## TODO: automate currentDay selection
+
+- using averages from all `numberOfBars`, weighted by score count:
+  - for Bar 1 Paper Trades:
+    - `avg_profitLossPercent_atBarX` >= 1
+    - `percentProfitable_atBarX` >= 60
+    - `scoreCount` >= 15
+  - for Bar 5 Paper Trades:
+    - `avg_profitLossPercent_atBarX` >= 3
+    - `percentProfitable_atBarX` >= 60
+    - `scoreCount` >= 15
+  - then, take the resulting symbols, eliminate:
+    - any symbols with:
+      - non-aggregated rows that have `avg_profitLossPercent_atBarX` <= (Bar 1: -.5, Bar 5: 0)
+        - unless it's just from 1 score
+      - non-aggregated rows that have `percentProfitable_atBarX` <= 50
+        - unless it's just from 1 score
+  - return the top x symbols, sorted by aggregated `percentProfitable_atBarX` descending
+
+## TODO: Use that automated selection (above) to be able to test historic CurrentDay jobs, back in time

@@ -91,7 +91,6 @@ const CurrentDayResultsTable = (props) => {
   const [currentSingleSymbol, setCurrentSingleSymbol] = useState(null);
   const [allSymbolsInGrid, setAllSymbolsInGrid] = useState([]);
   const [selectedSymbols, setSelectedSymbols] = useState([]);
-  const [aggregateBySymbol, setAggregateBySymbol] = useState(false);
 
   const [gridData, setGridData] = useState([]);
   const [allRows, setAllRows] = useState([]);
@@ -117,7 +116,7 @@ const CurrentDayResultsTable = (props) => {
 
     const { results, created } = (
       await nodeServer.get(
-        `currentDayEvaluationJobRun?jobRunId=${currentDayJobRun._id}`
+        `currentDayEvaluationJobRun?jobRunId=${currentDayJobRun._id}&applyStringentFilterForHeldDays=1`
       )
     ).data;
     const { rows, allSymbols } = convertToRowsAndSymbols(results);
@@ -146,138 +145,11 @@ const CurrentDayResultsTable = (props) => {
     return JSON.parse(JSON.stringify(obj));
   };
 
-  const getAggregatedBySymbolData = () => {
-    if (allRows.length === 0) {
-      return [];
-    }
-
-    // set up a zero-d out template
-    const aggregated = clone(allRows[0]);
-    const fields = Object.keys(aggregated);
-    for (const field of fields) {
-      if (field === 'symbol') {
-      } else if (field === 'numberOfBars') {
-        aggregated[field] = -1;
-      } else if (field === 'sourceDate') {
-        aggregated[field] = '----';
-      } else if (field === 'scoreDates') {
-        aggregated[field] = [];
-      } else if (field === 'scoreCount' || field === 'avgScore') {
-        aggregated[field] = 0;
-      } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
-        aggregated[field] = clone(aggregated[field]);
-        const bars = Object.keys(aggregated[field]);
-        for (const b of bars) {
-          aggregated[field][b] = 0;
-        }
-      } else {
-        debugger;
-      }
-    }
-
-    // add everything up (if it needs to be avg'd, we'll do that next loop)
-    const aggregatedBySymbol = {};
-    for (const row of allRows) {
-      const { symbol } = row;
-      if (selectedSymbols.length > 0 && !selectedSymbols.includes(symbol)) {
-        continue;
-      }
-      if (!aggregatedBySymbol[symbol]) {
-        aggregatedBySymbol[symbol] = clone(aggregated);
-        aggregatedBySymbol[symbol].symbol = symbol; // looks weird, but we're only temporarily grouping by symbol here
-      }
-      const abs = aggregatedBySymbol[symbol];
-      const fields = Object.keys(row);
-      for (const field of fields) {
-        if (field === 'numberOfBars') {
-          abs[field] = -1;
-        } else if (field === 'scoreDates') {
-          abs[field] = [...abs[field], ...row[field]];
-        } else if (field === 'scoreCount') {
-          abs[field] = abs[field] + row[field];
-        } else if (field === 'avgScore') {
-          if (row.numberOfBars >= 10) {
-            // weighting avgScore against scoreCount
-            abs.avgScore = abs.avgScore + row.avgScore * row.scoreCount;
-            if (!abs[`${field}${tempCountKeySuffix}`]) {
-              abs[`${field}${tempCountKeySuffix}`] = 0;
-            }
-            abs[`${field}${tempCountKeySuffix}`] += row.scoreCount;
-          }
-        } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
-          const bars = Object.keys(abs[field]);
-          for (const b of bars) {
-            if (!isNullOrUndefined(row[field][b])) {
-              const scoreCount = row.scoreCount;
-              abs[field][b] = abs[field][b] + row[field][b] * scoreCount;
-
-              // NOTE: these averages are weighted by score count
-              const countFieldKey = `${field}${tempCountKeySuffix}`;
-              if (!abs[countFieldKey]) {
-                abs[countFieldKey] = {};
-              }
-              abs[countFieldKey][b] = abs[countFieldKey][b]
-                ? abs[countFieldKey][b] + scoreCount
-                : scoreCount;
-            }
-          }
-        }
-      }
-    }
-
-    // finally, average it out
-    const flattenedRows = [];
-    const symbols = Object.keys(aggregatedBySymbol);
-    for (const symbol of symbols) {
-      const thisAgg = aggregatedBySymbol[symbol];
-
-      const fields = [...Object.keys(thisAgg)];
-
-      for (const field of fields) {
-        if (field === 'symbol' || field.endsWith(tempCountKeySuffix)) {
-          continue;
-        }
-        if (field === 'scoreDates') {
-          thisAgg[field] = _.orderBy(thisAgg[field], (d) => d);
-        } else if (field === 'avgScore') {
-          if (thisAgg[`${field}${tempCountKeySuffix}`]) {
-            thisAgg.avgScore =
-              parseFloat(thisAgg.avgScore) /
-              thisAgg[`${field}${tempCountKeySuffix}`];
-          }
-        } else if (field.endsWith('_byBarX') || field.endsWith('_atBarX')) {
-          const countFieldKey = `${field}${tempCountKeySuffix}`;
-          const bars = Object.keys(thisAgg[field]);
-          for (const b of bars) {
-            if (
-              !isNullOrUndefined(thisAgg[field][b]) &&
-              !isNullOrUndefined(thisAgg[countFieldKey]) &&
-              !isNullOrUndefined(thisAgg[countFieldKey][b]) &&
-              thisAgg[countFieldKey][b] > 0
-            ) {
-              const val =
-                parseFloat(thisAgg[field][b]) /
-                parseFloat(thisAgg[countFieldKey][b]);
-              //console.log(`${field}/${countFieldKey}: ${val}`);
-              thisAgg[field][b] = val;
-            }
-          }
-          //delete thisAgg[countFieldKey];
-        }
-      }
-      flattenedRows.push(thisAgg);
-    }
-
-    return flattenedRows;
-  };
-
   //------------------------------------------------
   // All filtering takes place here
   useEffect(() => {
     if (currentSingleSymbol) {
       setGridData(allRows.filter((r) => r.symbol === currentSingleSymbol));
-    } else if (aggregateBySymbol) {
-      setGridData(getAggregatedBySymbolData());
     } else {
       setGridData([
         ...allRows.filter(
@@ -285,7 +157,7 @@ const CurrentDayResultsTable = (props) => {
         ),
       ]);
     }
-  }, [aggregateBySymbol, currentSingleSymbol, selectedSymbols]);
+  }, [currentSingleSymbol, selectedSymbols]);
   //------------------------------------------------
 
   const handleCurrentDayJobSelected = (e) => {
@@ -339,11 +211,7 @@ const CurrentDayResultsTable = (props) => {
       vcFromStorageString
     );
     setVisibleColumns(vc);
-    const hiddenWhereNecessary = addHideWhereNecessary(
-      columnDefs,
-      vc,
-      aggregateBySymbol
-    );
+    const hiddenWhereNecessary = addHideWhereNecessary(columnDefs, vc);
     setColumnDefs(hiddenWhereNecessary);
   };
 
@@ -404,31 +272,6 @@ const CurrentDayResultsTable = (props) => {
           })}
         </List>
       </ClickAwayListener>
-    );
-  };
-
-  const handleToggleAggregateBySymbol = () => {
-    const newAggregateBySymbolValue = !aggregateBySymbol;
-    setAggregateBySymbol(newAggregateBySymbolValue);
-    let vcFromStorage = localStorage.getItem(currentDayTable_visibleColumnsKey);
-    if (!vcFromStorage) {
-      vcFromStorage = {
-        ['Bar Groups']: columnDefs
-          .map((c) => c.headerName)
-          .filter((c) => c.toLowerCase().startsWith('bar')),
-        ['Bar Fields']: columnDefs[1].children.map(
-          (c) => c.headerName.split('.')[0]
-        ),
-      };
-    } else {
-      vcFromStorage = JSON.parse(vcFromStorage);
-    }
-    setColumnDefs(
-      addHideWhereNecessary(
-        columnDefs,
-        vcFromStorage,
-        newAggregateBySymbolValue
-      )
     );
   };
 
@@ -558,7 +401,7 @@ const CurrentDayResultsTable = (props) => {
     }, 500);
   };
 
-  const addHideWhereNecessary = (colDefs, vc, aggBySymbol) => {
+  const addHideWhereNecessary = (colDefs, vc) => {
     const cd = [...colDefs];
     // first set show/hide on the bar groups
     for (const c of cd) {
@@ -582,7 +425,7 @@ const CurrentDayResultsTable = (props) => {
             subCol.field === 'sourceDate'
           ) {
             if (columnApi) {
-              columnApi.hideColumn(subCol.field, aggBySymbol);
+              columnApi.hideColumn(subCol.field, false);
             }
           }
         }
@@ -766,8 +609,7 @@ const CurrentDayResultsTable = (props) => {
 
       const hiddenWhereNecessary = addHideWhereNecessary(
         colDefs,
-        vcFromStorage,
-        aggregateBySymbol
+        vcFromStorage
       );
       setColumnDefs(hiddenWhereNecessary);
       setVisibleColumns(vcFromStorage);
@@ -969,28 +811,6 @@ const CurrentDayResultsTable = (props) => {
             </Grid>
           )}
 
-        {!props.singleSymbolMode && (
-          <Grid item>
-            <Tooltip
-              title={
-                aggregateBySymbol
-                  ? 'Stop aggregating by symbol'
-                  : 'Aggregate by symbol'
-              }
-            >
-              <IconButton
-                className={classes.footerControl}
-                onClick={handleToggleAggregateBySymbol}
-              >
-                {aggregateBySymbol ? (
-                  <FiberManualRecordIcon />
-                ) : (
-                  <GroupWorkIcon />
-                )}
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        )}
         {props.singleSymbolMode && (
           <Grid item>
             <Grid container direction={'row'} alignItems={'center'}>

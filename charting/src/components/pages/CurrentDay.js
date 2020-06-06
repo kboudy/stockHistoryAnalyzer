@@ -13,7 +13,7 @@ import CurrentDayResultsTable from '../CurrentDayResultsTable';
 import Chart from '../Chart';
 import _ from 'lodash';
 import nodeServer from '../../helpers/nodeServer';
-import { toTwoDecimals } from '../../helpers/commonMethods';
+import { toXDecimals } from '../../helpers/commonMethods';
 
 const {
   isNullOrUndefined,
@@ -87,7 +87,7 @@ function CurrentDay(props) {
       const sellCandle = candles[buyCandleIndex + significantBar];
 
       if (buyCandle && sellCandle) {
-        const pl = toTwoDecimals(
+        const pl = toXDecimals(
           ((sellCandle.close - buyCandle.close) * 100) / buyCandle.close
         );
         rechartsFormattedData.push({ name: scoreDate, ['p/l %']: pl });
@@ -104,13 +104,15 @@ function CurrentDay(props) {
     setTableData([
       {
         name: ['avg pl %'],
-        value:
+        value: toXDecimals(
           _.sumBy(rechartsFormattedData, (r) => r['p/l %']) /
-          rechartsFormattedData.length,
+            rechartsFormattedData.length,
+          1
+        ),
       },
       {
         name: ['% profitable'],
-        value: percentProfitable,
+        value: toXDecimals(percentProfitable, 1),
       },
       { name: ['trade count'], value: scoreDates.length },
     ]);

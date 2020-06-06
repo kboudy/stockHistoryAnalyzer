@@ -2,9 +2,10 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   moment = require('moment'),
   { discoverPatternsForSymbol } = require('./discoverPatternsHelper'),
-  { isNullOrUndefined, percentile } = require('./commonMethods'),
+  { isNullOrUndefined, isObject, percentile } = require('./commonMethods'),
   { numberOfBarsArray } = require('./constants');
 
+const ALL = 'all';
 const significantBarToUse_forThresholdEvaluation = 1;
 const getLogDate = () => {
   return `[${moment().format('YYYY-MM-DD HH:mm:ss')}]`;
@@ -47,6 +48,92 @@ const getPLAveragesAcrossAllNumberOfBars = (
   const avgPL = pl_sum / pl_count;
   const avgPercentProfitable = (100 * pl_profitable_count) / pl_count;
   return { avgPL, avgPercentProfitable };
+};
+
+const addInAverages = (results) => {
+  // add the averaged (per symbol+numberOfBars) fields
+  for (const symbol in results) {
+    const symbolNode = results[symbol];
+    const averagedNode = {};
+    symbolNode[ALL] = averagedNode;
+    for (const numberOfBar in symbolNode) {
+      if (numberOfBar === ALL) {
+        continue;
+      }
+      for (const fieldName in symbolNode[numberOfBar]) {
+        const scoreCount = symbolNode[numberOfBar].scoreCount;
+        const fieldObj = symbolNode[numberOfBar][fieldName];
+
+        if (fieldName === 'sourceDate') {
+          continue;
+        } else if (fieldName === 'scoreDates') {
+          if (!averagedNode[fieldName]) {
+            averagedNode[fieldName] = [];
+          }
+          averagedNode[fieldName] = [...averagedNode[fieldName], ...fieldObj];
+        } else if (fieldName === 'scoreCount') {
+          if (!averagedNode[fieldName]) {
+            averagedNode[fieldName] = 0;
+          }
+          averagedNode[fieldName] += fieldObj;
+        } else {
+          // anything else should be averaged
+          //  - could be a numeric value, or an object with significantBars fields
+          const fieldObjUsesSignificantBars =
+            isObject(fieldObj) && !Object.keys(fieldObj).includes('divisor');
+          if (fieldObjUsesSignificantBars) {
+            // it's segmented into significant bars
+            if (!averagedNode[fieldName]) {
+              averagedNode[fieldName] = {};
+            }
+            for (const sb in fieldObj) {
+              if (!averagedNode[fieldName][sb]) {
+                averagedNode[fieldName][sb] = {
+                  runningTotal: 0,
+                  divisor: 0,
+                };
+              }
+              averagedNode[fieldName][sb].runningTotal =
+                averagedNode[fieldName][sb].runningTotal +
+                scoreCount * fieldObj[sb];
+              averagedNode[fieldName][sb].divisor =
+                averagedNode[fieldName][sb].divisor + scoreCount;
+            }
+          } else {
+            // it's a numeric value, not segmented into significant bars
+            if (!averagedNode[fieldName]) {
+              averagedNode[fieldName] = { runningTotal: 0, divisor: 0 };
+            }
+            averagedNode[fieldName].runningTotal += scoreCount * fieldObj;
+            averagedNode[fieldName].divisor += scoreCount;
+          }
+        }
+      }
+    }
+  }
+
+  // finally, average the runningTotal/divisor combos
+  for (const symbol in results) {
+    const symbolNode = results[symbol];
+    const averagedNode = symbolNode[ALL];
+    for (const fieldName in averagedNode) {
+      if (fieldName === 'sourceDate' || fieldName === 'scoreCount') {
+        continue;
+      }
+      const fieldObj = averagedNode[fieldName];
+      if (fieldObj.divisor) {
+        // it was a simple value - we can avg it up here
+        averagedNode[fieldName] = fieldObj.runningTotal / fieldObj.divisor;
+      } else {
+        // it has significant bars
+        for (const sb in fieldObj) {
+          averagedNode[fieldName][sb] =
+            fieldObj[sb].runningTotal / fieldObj[sb].divisor;
+        }
+      }
+    }
+  }
+  return results;
 };
 
 exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
@@ -135,5 +222,6 @@ exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
     );
   }
 
-  return filtered;
+  const withAverages = addInAverages(filtered);
+  return withAverages;
 };
