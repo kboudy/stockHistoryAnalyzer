@@ -1,10 +1,7 @@
-const { getAvailableSymbolNames, isCrypto } = require('./symbolData'),
+const { loadHistoricalDataForSymbol } = require('./symbolData'),
   _ = require('lodash'),
   moment = require('moment'),
-  {
-    discoverPatternsForSymbol,
-    dropPatternCollections,
-  } = require('./discoverPatternsHelper'),
+  { discoverPatternsForSymbol } = require('./discoverPatternsHelper'),
   { isNullOrUndefined, percentile } = require('./commonMethods'),
   { numberOfBarsArray } = require('./constants');
 
@@ -70,13 +67,15 @@ exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
         `${symbol} (${symbols.indexOf(symbol) + 1}/${symbols.length})`
       );
     }
+    const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
     for (const nb of numberOfBarsArray) {
       let results = await discoverPatternsForSymbol(
         symbol,
+        sourcePriceHistory,
         [symbol],
         nb,
         ignoreMatchesAboveThisScore,
-        true
+        sourcePriceHistory.length - 1
       );
 
       if (results) {

@@ -158,12 +158,13 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
       }
     }
   }
-  if (getTheseInBulk.length > 0)
+  if (getTheseInBulk.length > 0) {
     console.log('Bulk downloading the symbols that only needed today...');
-  const currentDayCandles_fromBulk = await downloadBulkCurrentEquityData(
-    getTheseInBulk
-  );
-  if (currentDayCandles_fromBulk.length > 0) {
-    await Candle.insertMany(currentDayCandles_fromBulk);
+    const currentDayCandles_fromBulk = await downloadBulkCurrentEquityData(
+      getTheseInBulk
+    );
+    if (currentDayCandles_fromBulk.length > 0) {
+      await Candle.insertMany(currentDayCandles_fromBulk);
+    }
   }
 };

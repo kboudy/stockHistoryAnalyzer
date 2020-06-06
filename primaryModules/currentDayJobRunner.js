@@ -37,7 +37,7 @@ if (cluster.isMaster) {
     let symbolsLeftToProcess = allSymbols.length;
     let symbolChunks = chunkArray(allSymbols, SYMBOL_CHUNK_SIZE);
     let gatheredResults = {};
-    const fireOffNewChunk = async (symbolChunk) => {
+    const startNewWorker = async (symbolChunk) => {
       const worker = cluster.fork();
       worker.on('message', (res) => {
         const { results, originalChunkSize } = res;
@@ -50,7 +50,7 @@ if (cluster.isMaster) {
       if (symbolChunks.length > 0) {
         const symbolChunk = symbolChunks[0];
         symbolChunks = symbolChunks.slice(1);
-        await fireOffNewChunk(symbolChunk);
+        await startNewWorker(symbolChunk);
 
         const percentComplete = Math.round(
           (100 * (allSymbols.length - symbolsLeftToProcess)) / allSymbols.length
@@ -81,7 +81,7 @@ if (cluster.isMaster) {
         const symbolChunk = symbolChunks[0];
         symbolChunks = symbolChunks.slice(1);
 
-        await fireOffNewChunk(symbolChunk);
+        await startNewWorker(symbolChunk);
       }
     }
   })();

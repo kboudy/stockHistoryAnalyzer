@@ -8,20 +8,22 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   mongoose = require('mongoose'),
   patternMatching = require('./patternMatching'),
   PatternStats = require('../models/patternStats'),
+  { isNullOrUndefined } = require('../helpers/commonMethods'),
   PatternStatsJobRun = require('../models/patternStatsJobRun');
 
 exports.discoverPatternsForSymbol = async (
   symbol,
+  sourcePriceHistory,
   targetSymbols,
   numberOfBars,
   ignoreMatchesAboveThisScore,
-  mostRecentResultOnly = false // this will be set when looking at "current day" evaluations
+  specificSourceIndex = null // this will be set when looking at "current day" evaluations
 ) => {
-  // implications of mostRecentResultOnly: don't log to console, don't write to db & return the single patternStat
-  const writeToDb = !mostRecentResultOnly;
-  const logToConsole = !mostRecentResultOnly;
+  const isSpecificIndexSet = !isNullOrUndefined(specificSourceIndex);
+  // implications of setting specificSourceIndex: don't log to console, don't write to db & return the single patternStat
+  const writeToDb = !isSpecificIndexSet;
+  const logToConsole = !isSpecificIndexSet;
 
-  const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
   let lastLoggedPercentComplete = 0;
 
   // pre-existing check
@@ -59,11 +61,13 @@ exports.discoverPatternsForSymbol = async (
     }
   }
 
-  const maxIndex = sourcePriceHistory.length - numberOfBars - 1;
+  const maxIndex =
+    (isSpecificIndexSet ? specificSourceIndex : sourcePriceHistory.length - 1) -
+    numberOfBars;
   if (maxIndex < numberOfBars) {
     return null;
   }
-  const minIndex = mostRecentResultOnly ? maxIndex : numberOfBars;
+  const minIndex = isSpecificIndexSet ? maxIndex : numberOfBars;
 
   for (let i = minIndex; i <= maxIndex; i++) {
     const percentComplete = Math.round(
@@ -110,7 +114,7 @@ exports.discoverPatternsForSymbol = async (
       patternStat.jobRun = jobRun.id;
     }
     patternStat.sourceDate = sourcePriceHistory[i].date;
-    if (!mostRecentResultOnly) {
+    if (!isSpecificIndexSet) {
       patternStat.futureResults = {
         profitLossPercent_atBarX: {},
         profitLossSellDate_atBarX: {},
@@ -208,7 +212,7 @@ exports.discoverPatternsForSymbol = async (
 
       //------------------------------------------------------------------------------------
       // finally, we'll record the real (forward-looking) profit loss %, per significant bar
-      if (!mostRecentResultOnly) {
+      if (!isSpecificIndexSet) {
         const actualTradeSellCandle =
           sourcePriceHistory[i + (numberOfBars - 1) + sb];
         if (actualTradeSellCandle) {
@@ -230,7 +234,7 @@ exports.discoverPatternsForSymbol = async (
     patternStat.avgScore =
       scores.map((s) => s.score).reduce((a, b) => a + b) / scores.length;
 
-    if (mostRecentResultOnly && !writeToDb) {
+    if (isSpecificIndexSet && !writeToDb) {
       // patternStat.scoreDates would take up too much space in the db
       // but am including it for the "current day" scan results
 
@@ -249,7 +253,7 @@ exports.discoverPatternsForSymbol = async (
     if (writeToDb) {
       await PatternStats.create(patternStat);
     }
-    if (mostRecentResultOnly) {
+    if (isSpecificIndexSet) {
       return patternStat;
     }
   }

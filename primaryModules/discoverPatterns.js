@@ -1,6 +1,10 @@
 //PURPOSE: to run multiple price history series against the matching algo & store the aggregated results in mongodb
 
-const { getAvailableSymbolNames, isCrypto } = require('../helpers/symbolData'),
+const {
+    getAvailableSymbolNames,
+    isCrypto,
+    loadHistoricalDataForSymbol,
+  } = require('../helpers/symbolData'),
   _ = require('lodash'),
   {
     discoverPatternsForSymbol,
@@ -89,12 +93,13 @@ const { argv } = require('yargs')
           `  [numberOfBars: ${nb}, includeOtherPriceHistories: ${includeOtherPriceHistories}]`
         );
         process.stdout.write('    ');
+        const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
         await discoverPatternsForSymbol(
           symbol,
+          sourcePriceHistory,
           targetPriceHistorySymbols,
           nb,
-          ignoreMatchesAboveThisScore,
-          false
+          ignoreMatchesAboveThisScore
         );
       }
     }
