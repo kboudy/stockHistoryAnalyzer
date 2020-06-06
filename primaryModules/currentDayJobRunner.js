@@ -11,7 +11,7 @@ const cluster = require('cluster'),
   } = require('../helpers/candleDownloading'),
   { chunkArray, sleep } = require('../helpers/commonMethods'),
   chalk = require('chalk'),
-  moment = require('moment'),
+  moment = require('moment-timezone'),
   CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   os = require('os'),
   mongoApi = require('../helpers/mongoApi'),
@@ -21,7 +21,13 @@ const cluster = require('cluster'),
 const numWorkers = Math.round(require('os').cpus().length * 0.75);
 const SYMBOL_CHUNK_SIZE = 50;
 
-const argOptions = {};
+const argOptions = {
+  historicalDate: {
+    alias: 'd',
+    description: `run for a historical date (format: YYYY-MM-DD)`,
+  },
+};
+
 const { argv } = require('yargs')
   .alias('help', 'h')
   .version(false)
@@ -44,7 +50,10 @@ if (cluster.isMaster) {
         gatheredResults = { ...gatheredResults, ...results };
         symbolsLeftToProcess = symbolsLeftToProcess - originalChunkSize;
       });
-      worker.send({ runTheseSymbols: symbolChunk });
+      worker.send({
+        runTheseSymbols: symbolChunk,
+        historicalDate: argv.historicalDate,
+      });
     };
     cluster.on('exit', async (worker, code, signal) => {
       if (symbolChunks.length > 0) {
@@ -62,8 +71,12 @@ if (cluster.isMaster) {
       }
       if (symbolsLeftToProcess === 0) {
         // done - save the gathered results
+
+        let createdDate = argv.historicalDate
+          ? moment(`${argv.historicalDate} 4:00PM`, 'YYYY-MM-DD h:mmA').utc()
+          : moment.utc();
         await CurrentDayEvaluationJobRun.create({
-          created: moment.utc(),
+          created: createdDate,
           results: gatheredResults,
         });
         await mongoApi.disconnectMongoose();
@@ -90,8 +103,8 @@ if (cluster.isMaster) {
     (async () => {
       await mongoApi.connectMongoose();
       //message from the master
-      const { runTheseSymbols } = message;
-      const results = await runCurrentDayJob(runTheseSymbols);
+      const { runTheseSymbols, historicalDate } = message;
+      const results = await runCurrentDayJob(runTheseSymbols, historicalDate);
       process.send({ results, originalChunkSize: runTheseSymbols.length });
       await mongoApi.disconnectMongoose();
       process.exit(0);

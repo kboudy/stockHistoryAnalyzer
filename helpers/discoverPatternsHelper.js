@@ -70,9 +70,7 @@ exports.discoverPatternsForSymbol = async (
   const minIndex = isSpecificIndexSet ? maxIndex : numberOfBars;
 
   for (let i = minIndex; i <= maxIndex; i++) {
-    const percentComplete = Math.round(
-      (100 * (i + 1)) / (sourcePriceHistory.length - numberOfBars)
-    );
+    const percentComplete = Math.round((100 * (i + 1)) / (maxIndex - minIndex));
     if (logToConsole && percentComplete - lastLoggedPercentComplete === 10) {
       process.stdout.write(`${percentComplete}%`);
       if (percentComplete !== 100) {
@@ -83,6 +81,7 @@ exports.discoverPatternsForSymbol = async (
 
     if (
       // allows us to efficiently add to existing patternStatsJobRuns
+      writeToDb &&
       preExistingMaxDate &&
       sourcePriceHistory[i].date <= preExistingMaxDate
     ) {

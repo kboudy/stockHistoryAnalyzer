@@ -222,11 +222,20 @@ const addInAverages = (results) => {
   return results;
 };
 
-exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
+exports.runCurrentDayJob = async (
+  symbols,
+  historicalDate = null,
+  logToConsole = false
+) => {
+  const strHistDateMessage = historicalDate
+    ? ` for historical date ${historicalDate}`
+    : '';
   const ignoreMatchesAboveThisScore = 12;
   if (logToConsole) {
     console.log(
-      `${getLogDate()}* running "CurrentDay" job with ${symbols.length} symbols`
+      `${getLogDate()}* running "CurrentDay" job with ${
+        symbols.length
+      } symbols${strHistDateMessage}`
     );
   }
 
@@ -241,6 +250,12 @@ exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
       );
     }
     const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
+    let specificSourceIndex = null;
+    if (historicalDate) {
+      specificSourceIndex = sourcePriceHistory.indexOf(
+        sourcePriceHistory.filter((s) => s.date === historicalDate)[0]
+      );
+    }
     for (const nb of numberOfBarsArray) {
       let results = await discoverPatternsForSymbol(
         symbol,
@@ -248,7 +263,7 @@ exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
         [symbol],
         nb,
         ignoreMatchesAboveThisScore,
-        sourcePriceHistory.length - 1
+        specificSourceIndex
       );
 
       if (results) {
