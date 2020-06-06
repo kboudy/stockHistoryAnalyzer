@@ -75,47 +75,47 @@ const runTradeSimulation = async (
 
   addToQueryFilter(
     'min_percentProfitable_atBarX',
-    'percentProfitable_atBarX',
+    'pastResults.percentProfitable_atBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_percentProfitable_by_1_percent_atBarX',
-    'percentProfitable_by_1_percent_atBarX',
+    'pastResults.percentProfitable_by_1_percent_atBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_percentProfitable_by_2_percent_atBarX',
-    'percentProfitable_by_2_percent_atBarX',
+    'pastResults.percentProfitable_by_2_percent_atBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_percentProfitable_by_5_percent_atBarX',
-    'percentProfitable_by_5_percent_atBarX',
+    'pastResults.percentProfitable_by_5_percent_atBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_percentProfitable_by_10_percent_atBarX',
-    'percentProfitable_by_10_percent_atBarX',
+    'pastResults.percentProfitable_by_10_percent_atBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_upsideDownsideRatio_byBarX',
-    'upsideDownsideRatio_byBarX',
+    'pastResults.upsideDownsideRatio_byBarX',
     '$gte'
   );
   addToQueryFilter(
     'min_avg_maxUpsidePercent_byBarX',
-    'avg_maxUpsidePercent_byBarX',
+    'pastResults.avg_maxUpsidePercent_byBarX',
     '$gte'
   );
   addToQueryFilter(
     'max_avg_maxDownsidePercent_byBarX',
-    'avg_maxDownsidePercent_byBarX',
+    'pastResults.avg_maxDownsidePercent_byBarX',
     '$lte'
   );
   addToQueryFilter(
     'min_avg_profitLossPercent_atBarX',
-    'avg_profitLossPercent_atBarX',
+    'pastResults.avg_profitLossPercent_atBarX',
     '$gte'
   );
   addToQueryFilter('min_scoreCount', 'scoreCount', '$gte', false);
@@ -134,23 +134,25 @@ const runTradeSimulation = async (
     })
   ).filter(
     (ps) =>
-      !isNullOrUndefined(ps.actualProfitLossPercent_atBarX) &&
-      !isNullOrUndefined(ps.actualProfitLossPercent_atBarX[significantBar])
+      !isNullOrUndefined(ps.futureResults.actualProfitLossPercent_atBarX) &&
+      !isNullOrUndefined(
+        ps.futureResults.actualProfitLossPercent_atBarX[significantBar]
+      )
   );
   const listedActualProfitLossPercents = patternStats.map(
-    (p) => p.actualProfitLossPercent_atBarX[significantBar]
+    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar]
   );
   const listedActualProfitLossSellDates = patternStats.map(
-    (p) => p.actualProfitLossSellDate_atBarX[significantBar]
+    (p) => p.futureResults.actualProfitLossSellDate_atBarX[significantBar]
   );
 
   const tradeCount = patternStats.length;
   const profitableCount = patternStats.filter(
-    (p) => p.actualProfitLossPercent_atBarX[significantBar] > 0
+    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar] > 0
   ).length;
   const avgProfitLossPercent = _.meanBy(
     patternStats,
-    (p) => p.actualProfitLossPercent_atBarX[significantBar]
+    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar]
   );
 
   const percentProfitable = (100 * profitableCount) / tradeCount;

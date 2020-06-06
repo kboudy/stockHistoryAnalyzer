@@ -12,6 +12,12 @@ const PatternStatsSchema = new Schema({
     type: Schema.Types.String,
     sparse: true,
   },
+  futureResults: {
+    type: Schema.Types.Mixed,
+  },
+  /*
+  moved these two fields into futureResults (above).  making things dynamic
+
   // actualProfitLossPercent_atBarX is the "real" result, based on the source price history
   // (for running trade simulations, not pattern discovery)
   actualProfitLossPercent_atBarX: {
@@ -20,7 +26,12 @@ const PatternStatsSchema = new Schema({
   actualProfitLossSellDate_atBarX: {
     type: Schema.Types.Mixed,
   },
-  upsideDownsideRatio_byBarX: {
+ */
+  pastResults: {
+    type: Schema.Types.Mixed,
+  },
+  /*
+   upsideDownsideRatio_byBarX: {
     type: Schema.Types.Mixed,
   },
   avg_maxUpsidePercent_byBarX: {
@@ -47,6 +58,7 @@ const PatternStatsSchema = new Schema({
   percentProfitable_by_10_percent_atBarX: {
     type: Schema.Types.Mixed,
   },
+   */
   scoreDates: {
     type: Schema.Types.Mixed,
     sparse: true,

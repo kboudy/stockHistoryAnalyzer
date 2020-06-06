@@ -27,7 +27,7 @@ const argOptions = {
   },
   includeOtherPriceHistories: {
     alias: 'i',
-    description: `include other symbols' price histories as target matches`,
+    description: `include other symbols' price histories as target matches (default=false)`,
     choices: ['true', 'false', 'both'],
   },
 };
@@ -54,7 +54,7 @@ const { argv } = require('yargs')
       includeOtherPriceHistoriesAsTargets = [true, false];
     }
   } else {
-    includeOtherPriceHistoriesAsTargets = [true, false];
+    includeOtherPriceHistoriesAsTargets = [false];
   }
 
   const ignoreMatchesAboveThisScore = 12;

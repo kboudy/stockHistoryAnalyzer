@@ -17,9 +17,10 @@ const confirm_profitLossAtBarX = async () => {
       (ps) => ps.sourceDate
     );
     for (const ps of patternStats) {
-      const bars = Object.keys(ps.avg_profitLossPercent_atBarX);
+      const bars = Object.keys(ps.pastResults.avg_profitLossPercent_atBarX);
       for (const b of bars) {
-        const avg_profitLossPercent_atBar = ps.avg_profitLossPercent_atBarX[b];
+        const avg_profitLossPercent_atBar =
+          ps.pastResults.avg_profitLossPercent_atBarX[b];
         if (avg_profitLossPercent_atBar === null) {
           continue;
         }

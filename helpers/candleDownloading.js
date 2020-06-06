@@ -91,7 +91,7 @@ exports.downloadAndSaveMultipleSymbolHistory = async (symbols) => {
     if (getTheseInBulk.includes(symbol)) {
       continue;
     }
-    console.log(`    + downloading ${symbol}`);
+    console.log(`  + ${symbol}`);
     const symbolIsCrypto = isCrypto(symbol);
     let existingMaxDate = null;
     let currentYear = 1960;

@@ -111,18 +111,22 @@ exports.discoverPatternsForSymbol = async (
     }
     patternStat.sourceDate = sourcePriceHistory[i].date;
     if (!mostRecentResultOnly) {
-      patternStat.actualProfitLossPercent_atBarX = {};
-      patternStat.actualProfitLossSellDate_atBarX = {};
+      patternStat.futureResults = {
+        actualProfitLossPercent_atBarX: {},
+        actualProfitLossSellDate_atBarX: {},
+      };
     }
-    patternStat.avg_maxUpsidePercent_byBarX = {};
-    patternStat.avg_maxDownsidePercent_byBarX = {};
-    patternStat.upsideDownsideRatio_byBarX = {};
-    patternStat.avg_profitLossPercent_atBarX = {};
-    patternStat.percentProfitable_atBarX = {};
-    patternStat.percentProfitable_by_1_percent_atBarX = {};
-    patternStat.percentProfitable_by_2_percent_atBarX = {};
-    patternStat.percentProfitable_by_5_percent_atBarX = {};
-    patternStat.percentProfitable_by_10_percent_atBarX = {};
+    patternStat.pastResults = {
+      avg_maxUpsidePercent_byBarX: {},
+      avg_maxDownsidePercent_byBarX: {},
+      upsideDownsideRatio_byBarX: {},
+      avg_profitLossPercent_atBarX: {},
+      percentProfitable_atBarX: {},
+      percentProfitable_by_1_percent_atBarX: {},
+      percentProfitable_by_2_percent_atBarX: {},
+      percentProfitable_by_5_percent_atBarX: {},
+      percentProfitable_by_10_percent_atBarX: {},
+    };
 
     if (scores.length === 0) {
       continue;
@@ -142,55 +146,64 @@ exports.discoverPatternsForSymbol = async (
         .map((s) => s.profitLossPercent_atBarX[sb]);
 
       if (mup_by.length > 0) {
-        patternStat.avg_maxUpsidePercent_byBarX[sb] =
+        patternStat.pastResults.avg_maxUpsidePercent_byBarX[sb] =
           mup_by.reduce((a, b) => a + b) / mup_by.length;
       } else {
-        patternStat.avg_maxUpsidePercent_byBarX[sb] = null;
+        patternStat.pastResults.avg_maxUpsidePercent_byBarX[sb] = null;
       }
 
       if (mdp_by.length > 0) {
-        patternStat.avg_maxDownsidePercent_byBarX[sb] =
+        patternStat.pastResults.avg_maxDownsidePercent_byBarX[sb] =
           -mdp_by.reduce((a, b) => a + b) / mdp_by.length;
       } else {
-        patternStat.avg_maxDownsidePercent_byBarX[sb] = null;
+        patternStat.pastResults.avg_maxDownsidePercent_byBarX[sb] = null;
       }
       if (
-        patternStat.avg_maxUpsidePercent_byBarX[sb] !== null &&
-        patternStat.avg_maxDownsidePercent_byBarX[sb] !== null
+        patternStat.pastResults.avg_maxUpsidePercent_byBarX[sb] !== null &&
+        patternStat.pastResults.avg_maxDownsidePercent_byBarX[sb] !== null
       ) {
-        patternStat.upsideDownsideRatio_byBarX[sb] =
-          patternStat.avg_maxUpsidePercent_byBarX[sb] /
-          patternStat.avg_maxDownsidePercent_byBarX[sb];
+        patternStat.pastResults.upsideDownsideRatio_byBarX[sb] =
+          patternStat.pastResults.avg_maxUpsidePercent_byBarX[sb] /
+          patternStat.pastResults.avg_maxDownsidePercent_byBarX[sb];
         if (
-          patternStat.upsideDownsideRatio_byBarX[sb] ===
+          patternStat.pastResults.upsideDownsideRatio_byBarX[sb] ===
           Number.NEGATIVE_INFINITY
         ) {
-          patternStat.upsideDownsideRatio_byBarX[sb] = Number.INFINITY;
+          patternStat.pastResults.upsideDownsideRatio_byBarX[sb] =
+            Number.INFINITY;
         }
       } else {
-        patternStat.upsideDownsideRatio_byBarX[sb] = null;
+        patternStat.pastResults.upsideDownsideRatio_byBarX[sb] = null;
       }
 
       if (plp_at.length > 0) {
-        patternStat.avg_profitLossPercent_atBarX[sb] =
+        patternStat.pastResults.avg_profitLossPercent_atBarX[sb] =
           plp_at.reduce((a, b) => a + b) / plp_at.length;
-        patternStat.percentProfitable_atBarX[sb] =
+        patternStat.pastResults.percentProfitable_atBarX[sb] =
           (plp_at.filter((a) => a > 0).length * 100) / plp_at.length;
-        patternStat.percentProfitable_by_1_percent_atBarX[sb] =
+        patternStat.pastResults.percentProfitable_by_1_percent_atBarX[sb] =
           (plp_at.filter((a) => a >= 1).length * 100) / plp_at.length;
-        patternStat.percentProfitable_by_2_percent_atBarX[sb] =
+        patternStat.pastResults.percentProfitable_by_2_percent_atBarX[sb] =
           (plp_at.filter((a) => a >= 2).length * 100) / plp_at.length;
-        patternStat.percentProfitable_by_5_percent_atBarX[sb] =
+        patternStat.pastResults.percentProfitable_by_5_percent_atBarX[sb] =
           (plp_at.filter((a) => a >= 5).length * 100) / plp_at.length;
-        patternStat.percentProfitable_by_10_percent_atBarX[sb] =
+        patternStat.pastResults.percentProfitable_by_10_percent_atBarX[sb] =
           (plp_at.filter((a) => a >= 10).length * 100) / plp_at.length;
       } else {
-        patternStat.avg_profitLossPercent_atBarX[sb] = null;
-        patternStat.percentProfitable_atBarX[sb] = null;
-        patternStat.percentProfitable_by_1_percent_atBarX[sb] = null;
-        patternStat.percentProfitable_by_2_percent_atBarX[sb] = null;
-        patternStat.percentProfitable_by_5_percent_atBarX[sb] = null;
-        patternStat.percentProfitable_by_10_percent_atBarX[sb] = null;
+        patternStat.pastResults.avg_profitLossPercent_atBarX[sb] = null;
+        patternStat.pastResults.percentProfitable_atBarX[sb] = null;
+        patternStat.pastResults.percentProfitable_by_1_percent_atBarX[
+          sb
+        ] = null;
+        patternStat.pastResults.percentProfitable_by_2_percent_atBarX[
+          sb
+        ] = null;
+        patternStat.pastResults.percentProfitable_by_5_percent_atBarX[
+          sb
+        ] = null;
+        patternStat.pastResults.percentProfitable_by_10_percent_atBarX[
+          sb
+        ] = null;
       }
 
       //------------------------------------------------------------------------------------
@@ -202,14 +215,14 @@ exports.discoverPatternsForSymbol = async (
           const actualTradeBuyCandle =
             sourcePriceHistory[i + (numberOfBars - 1)];
 
-          patternStat.actualProfitLossPercent_atBarX[sb] =
+          patternStat.futureResults.actualProfitLossPercent_atBarX[sb] =
             (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
             100;
-          patternStat.actualProfitLossSellDate_atBarX[sb] =
+          patternStat.futureResults.actualProfitLossSellDate_atBarX[sb] =
             actualTradeSellCandle.date;
         } else {
-          patternStat.actualProfitLossPercent_atBarX[sb] = null;
-          patternStat.actualProfitLossSellDate_atBarX[sb] = null;
+          patternStat.futureResults.actualProfitLossPercent_atBarX[sb] = null;
+          patternStat.futureResults.actualProfitLossSellDate_atBarX[sb] = null;
         }
       }
       //------------------------------------------------------------------------------------

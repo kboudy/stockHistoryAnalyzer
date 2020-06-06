@@ -70,10 +70,12 @@ if (cluster.isMaster) {
         console.log('job complete');
       }
     });
-    console.log('  -- downloading latest symbol data');
+    console.log('Downloading latest symbol data');
     await downloadAndSaveMultipleSymbolHistory(allSymbols);
 
-    console.log(`starting job - spinning off ${numWorkers} processes`);
+    console.log(
+      `Starting current day job: spinning off ${numWorkers} processes`
+    );
     for (let i = 0; i < numWorkers; i++) {
       if (symbolChunks.length > 0) {
         const symbolChunk = symbolChunks[0];

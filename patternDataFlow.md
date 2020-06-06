@@ -1,12 +1,14 @@
 ## discoverPatternsHelper.js
 
-- `discoverPatternsForSymbol (symbol,targetSymbols,numberOfBars,ignoreMatchesAboveThisScore,mostRecentResultOnly)`
+- `discoverPatternsForSymbol`
+  - args: `symbol`,`targetSymbols`,`numberOfBars`,`ignoreMatchesAboveThisScore`,`mostRecentResultOnly`
   - called by `currentDayJobRunEngine.js` and `primaryModules/discoverPatterns.js`
   - calls `patternMatching.js`.`getMatches` _(the only thing that does)_
 
 ## patternMatching.js
 
-- `getMatches(sourcePriceHistory,startIndex,numberOfBars,targetPriceHistories,targetPriceHistorySymbols,significantBars,ignoreMatchesAboveThisScore)`
+- `getMatches`
+  - args: `sourcePriceHistory`,`startIndex`,`numberOfBars`,`targetPriceHistories`,`targetPriceHistorySymbols`,`significantBars`,`ignoreMatchesAboveThisScore`
   - returns collection of `score`, which includes the following three fields which are used by discoverPatternsForSymbol to build the aggregated results (they are not themselves patternStats fields, since a `score` represents a single match of a pattern, whereas a patternStat represents a collection/aggregation of all the target matches for a single source pattern):
     - `maxUpsidePercent_byBarX`
     - `maxDownsidePercent_byBarX`

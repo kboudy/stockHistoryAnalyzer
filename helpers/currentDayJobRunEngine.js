@@ -71,17 +71,24 @@ exports.runCurrentDayJob = async (symbols, logToConsole = false) => {
       );
     }
     for (const nb of numberOfBarsArray) {
-      const results = await discoverPatternsForSymbol(
+      let results = await discoverPatternsForSymbol(
         symbol,
         [symbol],
         nb,
         ignoreMatchesAboveThisScore,
         true
       );
-      if (!thisSymbolPatternStats) {
-        thisSymbolPatternStats = {};
+
+      if (results) {
+        // no need for the .pastResults field, since there are no .futureResults with currentDay
+        results = { ...results, ...results.pastResults };
+        delete results.pastResults;
+
+        if (!thisSymbolPatternStats) {
+          thisSymbolPatternStats = {};
+        }
+        thisSymbolPatternStats[nb] = results;
       }
-      thisSymbolPatternStats[nb] = results;
     }
 
     // we'll add these two aggregated stats temporarily, so we can sort by them & return only the best
