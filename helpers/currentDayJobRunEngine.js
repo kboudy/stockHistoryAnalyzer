@@ -5,10 +5,96 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   { isNullOrUndefined, isObject, percentile } = require('./commonMethods'),
   { numberOfBarsArray } = require('./constants');
 
-const ALL = 'all';
+const ALL_FIELD_NAME = 'all';
+
 const significantBarToUse_forThresholdEvaluation = 1;
 const getLogDate = () => {
   return `[${moment().format('YYYY-MM-DD HH:mm:ss')}]`;
+};
+
+// this is the automated "buy these today" filter
+exports.applyStringentFilter = (results, heldDays) => {
+  const isSingleHeldDay = parseInt(heldDays) === 1;
+  const symbolsThatPass = [];
+  for (const symbol in results) {
+    let passes = true;
+    // first the aggregated/all filters
+    const allNode = results[symbol][ALL_FIELD_NAME];
+    const minPl = isSingleHeldDay ? 1 : 3;
+    const minPP = 60;
+    const minScoreCount = 15;
+    if (
+      allNode.avg_profitLossPercent_atBarX[heldDays] < minPl ||
+      allNode.percentProfitable_atBarX[heldDays] < minPP ||
+      allNode.scoreCount < minScoreCount
+    ) {
+      continue;
+    }
+
+    // then the non-aggregated filters
+    for (const nb in results[symbol]) {
+      if (nb === ALL_FIELD_NAME) {
+        continue;
+      }
+      const { scoreCount } = results[symbol][nb];
+      const avgPL =
+        results[symbol][nb].avg_profitLossPercent_atBarX[[heldDays]];
+      const minPLNonAgg = isSingleHeldDay ? -0.5 : 0;
+      if (avgPL < minPLNonAgg && scoreCount > 2) {
+        passes = false;
+        break;
+      }
+      const minPLPercentProfitableNonAgg = 50;
+      const avgProfitablePercent =
+        results[symbol][nb].percentProfitable_atBarX[[heldDays]];
+      if (
+        avgProfitablePercent < minPLPercentProfitableNonAgg &&
+        scoreCount > 2
+      ) {
+        passes = false;
+        break;
+      }
+    }
+    if (!passes) {
+      continue;
+    }
+
+    symbolsThatPass.push(symbol);
+  }
+  for (const s in results) {
+    if (!symbolsThatPass.includes(s)) {
+      delete results[s];
+    }
+  }
+
+  // finally, choose the top 10 results, sorting by aggregated % profitable
+  const pProfitable = Object.keys(results).map((symbol) => {
+    return {
+      symbol,
+      percentProfitable:
+        results[symbol][ALL_FIELD_NAME].percentProfitable_atBarX[heldDays],
+      avgProfitLossPercent:
+        results[symbol][ALL_FIELD_NAME].avg_profitLossPercent_atBarX[heldDays],
+    };
+  });
+  const top7PercentProfitable = _.take(
+    _.orderBy(pProfitable, (p) => -p.percentProfitable),
+    7
+  ).map((pp) => pp.symbol);
+  const top7ProfitLoss = _.take(
+    _.orderBy(pProfitable, (p) => -p.avgProfitLossPercent),
+    7
+  ).map((pp) => pp.symbol);
+
+  for (const s in results) {
+    if (!top7PercentProfitable.includes(s) && !top7ProfitLoss.includes(s)) {
+      delete results[s];
+    } else {
+      const zz = 5;
+    }
+  }
+
+  return results;
 };
 
 const getPLAveragesAcrossAllNumberOfBars = (
@@ -55,9 +141,9 @@ const addInAverages = (results) => {
   for (const symbol in results) {
     const symbolNode = results[symbol];
     const averagedNode = {};
-    symbolNode[ALL] = averagedNode;
+    symbolNode[ALL_FIELD_NAME] = averagedNode;
     for (const numberOfBar in symbolNode) {
-      if (numberOfBar === ALL) {
+      if (numberOfBar === ALL_FIELD_NAME) {
         continue;
       }
       for (const fieldName in symbolNode[numberOfBar]) {
@@ -115,7 +201,7 @@ const addInAverages = (results) => {
   // finally, average the runningTotal/divisor combos
   for (const symbol in results) {
     const symbolNode = results[symbol];
-    const averagedNode = symbolNode[ALL];
+    const averagedNode = symbolNode[ALL_FIELD_NAME];
     for (const fieldName in averagedNode) {
       if (fieldName === 'sourceDate' || fieldName === 'scoreCount') {
         continue;

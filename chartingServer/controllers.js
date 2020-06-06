@@ -6,7 +6,7 @@ const _ = require('lodash'),
   { downloadBulkCurrentEquityData } = require('../helpers/tdaCommunication'),
   moment = require('moment'),
   { significantBarsArray } = require('../helpers/constants'),
-  { isObject } = require('../helpers/commonMethods'),
+  { applyStringentFilter } = require('../helpers/currentDayJobRunEngine'),
   { runTradeSimulation } = require('../helpers/simulateTrades'),
   Candle = require('../models/candle'),
   PaperTrade = require('../models/paperTrade'),
@@ -14,8 +14,6 @@ const _ = require('lodash'),
   CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
-
-const ALL = 'all';
 
 exports.getSymbolNames = async (req, res, next) => {
   try {
@@ -90,18 +88,20 @@ exports.getPatternStatsJobRuns = async (req, res, next) => {
 
 exports.getCurrentDayEvaluationJobRun = async (req, res, next) => {
   try {
-    const { jobRunId, applyStringentFilterForHeldDays } = req.query;
-    const results = await CurrentDayEvaluationJobRun.findById(jobRunId)
+    const { jobRunId, useStringentFilterForHeldDays } = req.query;
+    let results = await CurrentDayEvaluationJobRun.findById(jobRunId)
       .lean()
       .sort({
         created: -1,
       })
       .limit(1);
 
-    if (!!applyStringentFilterForHeldDays) {
-      //TODO
+    if (useStringentFilterForHeldDays) {
+      results.results = applyStringentFilter(
+        results.results,
+        useStringentFilterForHeldDays
+      );
     }
-
     res.json(results);
   } catch (error) {
     return next(error);

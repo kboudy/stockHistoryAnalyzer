@@ -15,6 +15,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import Tooltip from '@material-ui/core/Tooltip';
 import Snackbar from '@material-ui/core/Snackbar';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import CloseIcon from '@material-ui/icons/Close';
 import DeleteSweepTwoToneIcon from '@material-ui/icons/DeleteSweepTwoTone';
@@ -84,6 +85,7 @@ const CurrentDayResultsTable = (props) => {
     setCurrentDayJobRuns_datesAndIds,
   ] = useState([]);
   const [snackbarMessage, setSnackbarMessage] = useState(null);
+  const [useStringentFilter, setUseStringentFilter] = useState(false);
 
   const [gridApi, setGridApi] = useState(null);
   const [columnApi, setColumnApi] = useState(null);
@@ -114,9 +116,23 @@ const CurrentDayResultsTable = (props) => {
       return { rows: [], allSymbols: [] };
     }
 
+    let usfString = '';
+    let chosenBars;
+    if (useStringentFilter && visibleColumns) {
+      chosenBars = visibleColumns['Bar Groups'].map((bgName) =>
+        parseInt(bgName.split(' ')[1])
+      );
+      if (chosenBars.length !== 1) {
+        setSnackbarMessage(
+          `Please focus on 1 bar length first.  Results will be optimized for it`
+        );
+        return;
+      }
+      usfString = `&useStringentFilterForHeldDays=${chosenBars[0]}`;
+    }
     const { results, created } = (
       await nodeServer.get(
-        `currentDayEvaluationJobRun?jobRunId=${currentDayJobRun._id}&applyStringentFilterForHeldDays=1`
+        `currentDayEvaluationJobRun?jobRunId=${currentDayJobRun._id}${usfString}`
       )
     ).data;
     const { rows, allSymbols } = convertToRowsAndSymbols(results);
@@ -125,6 +141,14 @@ const CurrentDayResultsTable = (props) => {
     setGridData([...rows]);
     setAllSymbolsInGrid(allSymbols);
     setSelectedSymbols([]);
+
+    if (useStringentFilter && chosenBars) {
+      setSnackbarMessage(
+        `Results filtered/optimized for ${chosenBars[0]} bar${
+          parseInt(chosenBars[0]) === 1 ? '' : 's'
+        }`
+      );
+    }
   };
 
   useEffect(() => {
@@ -139,7 +163,7 @@ const CurrentDayResultsTable = (props) => {
     (async () => {
       await reloadData();
     })();
-  }, [currentDayJobRun]);
+  }, [currentDayJobRun, useStringentFilter]);
 
   const clone = (obj) => {
     return JSON.parse(JSON.stringify(obj));
@@ -256,7 +280,6 @@ const CurrentDayResultsTable = (props) => {
                             visibleColumns[gf.group].includes(hn)
                           }
                           tabIndex={-1}
-                          disableRipple
                           inputProps={{ 'aria-labelledby': hn }}
                           onClick={() =>
                             handleColumnVisibleToggle(gf.group, hn)
@@ -346,7 +369,6 @@ const CurrentDayResultsTable = (props) => {
 
     let syms = selectedSymbols.length ? selectedSymbols : allSymbolsInGrid;
 
-    debugger;
     if (syms.length > 0) {
       await nodeServer.post(`paperTrades`, {
         symbolsToBuy: syms,
@@ -733,6 +755,23 @@ const CurrentDayResultsTable = (props) => {
                 })}
               </Select>
             </FormControl>
+          </Grid>
+        )}
+
+        {!props.singleSymbolMode && (
+          <Grid item>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  className={classes.footerControl}
+                  edge="start"
+                  checked={useStringentFilter}
+                  onClick={() => setUseStringentFilter(!useStringentFilter)}
+                  tabIndex={-1}
+                />
+              }
+              label="Use stringent filter"
+            />
           </Grid>
         )}
 
