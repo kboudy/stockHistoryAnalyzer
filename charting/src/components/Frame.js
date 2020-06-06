@@ -2,12 +2,14 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 
 import AppBar from '@material-ui/core/AppBar';
+import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
 import Toolbar from '@material-ui/core/Toolbar';
 import Grid from '@material-ui/core/Grid';
-import InfoIcon from '@material-ui/icons/Info';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
+import TodayIcon from '@material-ui/icons/Today';
+import MoneyIcon from '@material-ui/icons/Money';
+import ExploreIcon from '@material-ui/icons/Explore';
+import history from '../history';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -18,36 +20,32 @@ const useStyles = makeStyles((theme) => ({
 
 function Frame(props) {
   const classes = useStyles();
-  const [infoAnchorEl, setInfoAnchorEl] = React.useState(null);
 
   return (
     <div className={classes.root}>
       <AppBar position="fixed" style={{ backgroundColor: '#111' }}>
         <Toolbar>
-          <Grid container justify="space-between" alignItems="center">
+          <Grid container justify="flex-start" alignItems="center">
             <Grid item>
-              <IconButton
-                aria-controls="get-info"
-                aria-haspopup="true"
-                onClick={(e) => setInfoAnchorEl(e.currentTarget)}
-              >
-                <InfoIcon style={{ color: '#fff' }}></InfoIcon>
-              </IconButton>
-              <Menu
-                id="get-info"
-                anchorEl={infoAnchorEl}
-                keepMounted
-                open={Boolean(infoAnchorEl)}
-                onClose={() => setInfoAnchorEl(null)}
-              >
-                <MenuItem
-                  onClick={() => {
-                    setInfoAnchorEl(null);
-                  }}
-                >
-                  Data sources
-                </MenuItem>
-              </Menu>
+              <Tooltip title={'Current day job'}>
+                <IconButton onClick={(e) => history.push('/currentDay')}>
+                  <TodayIcon style={{ color: '#fff' }}></TodayIcon>
+                </IconButton>
+              </Tooltip>
+            </Grid>
+            <Grid item>
+              <Tooltip title={'Paper trading'}>
+                <IconButton onClick={(e) => history.push('/paperTrading')}>
+                  <MoneyIcon style={{ color: '#fff' }}></MoneyIcon>
+                </IconButton>
+              </Tooltip>
+            </Grid>
+            <Grid item>
+              <Tooltip title={'Explore results'}>
+                <IconButton onClick={(e) => history.push('/')}>
+                  <ExploreIcon style={{ color: '#fff' }}></ExploreIcon>
+                </IconButton>
+              </Tooltip>
             </Grid>
           </Grid>
         </Toolbar>
