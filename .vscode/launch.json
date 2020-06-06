@@ -49,6 +49,14 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "historicCurrentDayJobRunLooper",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/historicCurrentDayJobRunLooper.js"
+    },
+
+    {
+      "type": "node",
+      "request": "launch",
       "name": "historicVolatility",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/helpers/historicVolatility.js"
