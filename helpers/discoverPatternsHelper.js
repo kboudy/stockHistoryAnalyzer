@@ -112,8 +112,8 @@ exports.discoverPatternsForSymbol = async (
     patternStat.sourceDate = sourcePriceHistory[i].date;
     if (!mostRecentResultOnly) {
       patternStat.futureResults = {
-        actualProfitLossPercent_atBarX: {},
-        actualProfitLossSellDate_atBarX: {},
+        profitLossPercent_atBarX: {},
+        profitLossSellDate_atBarX: {},
       };
     }
     patternStat.pastResults = {
@@ -215,14 +215,14 @@ exports.discoverPatternsForSymbol = async (
           const actualTradeBuyCandle =
             sourcePriceHistory[i + (numberOfBars - 1)];
 
-          patternStat.futureResults.actualProfitLossPercent_atBarX[sb] =
+          patternStat.futureResults.profitLossPercent_atBarX[sb] =
             (actualTradeSellCandle.close / actualTradeBuyCandle.close - 1) *
             100;
-          patternStat.futureResults.actualProfitLossSellDate_atBarX[sb] =
+          patternStat.futureResults.profitLossSellDate_atBarX[sb] =
             actualTradeSellCandle.date;
         } else {
-          patternStat.futureResults.actualProfitLossPercent_atBarX[sb] = null;
-          patternStat.futureResults.actualProfitLossSellDate_atBarX[sb] = null;
+          patternStat.futureResults.profitLossPercent_atBarX[sb] = null;
+          patternStat.futureResults.profitLossSellDate_atBarX[sb] = null;
         }
       }
       //------------------------------------------------------------------------------------

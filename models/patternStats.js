@@ -18,12 +18,12 @@ const PatternStatsSchema = new Schema({
   /*
   moved these two fields into futureResults (above).  making things dynamic
 
-  // actualProfitLossPercent_atBarX is the "real" result, based on the source price history
+  // profitLossPercent_atBarX is the "real" result, based on the source price history
   // (for running trade simulations, not pattern discovery)
-  actualProfitLossPercent_atBarX: {
+  profitLossPercent_atBarX: {
     type: Schema.Types.Mixed,
   },
-  actualProfitLossSellDate_atBarX: {
+  profitLossSellDate_atBarX: {
     type: Schema.Types.Mixed,
   },
  */

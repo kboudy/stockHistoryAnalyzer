@@ -16,16 +16,16 @@
 
 ## need to make aggregate field generation dynamic
 
-- these fields are calculated by `discoverPatternsHelper.js`.`discoverPatternsForSymbol` after calling `getMatches`. `discoverPatternsForSymbol` should calculate them all with dynamic methods, that are passed in to discoverPatternsForSymbol (`actualProfitLossPercent_atBarX` & `actualProfitLossSellDate_atBarX` wouldn't be passed in by `currentDayJobRunEngine`)
+- these fields are calculated by `discoverPatternsHelper.js`.`discoverPatternsForSymbol` after calling `getMatches`. `discoverPatternsForSymbol` should calculate them all with dynamic methods, that are passed in to discoverPatternsForSymbol (`futureResults.profitLossPercent_atBarX` & `futureResults.profitLossSellDate_atBarX` wouldn't be passed in by `currentDayJobRunEngine`)
 
-  - `actualProfitLossPercent_atBarX`
-  - `actualProfitLossSellDate_atBarX`
-  - `avg_maxUpsidePercent_byBarX`
-  - `avg_maxDownsidePercent_byBarX`
-  - `upsideDownsideRatio_byBarX`
-  - `avg_profitLossPercent_atBarX`
-  - `percentProfitable_atBarX`
-  - `percentProfitable_by_1_percent_atBarX`
-  - `percentProfitable_by_2_percent_atBarX`
-  - `percentProfitable_by_5_percent_atBarX`
-  - `percentProfitable_by_10_percent_atBarX`
+  - `futureResults.profitLossPercent_atBarX`
+  - `futureResults.profitLossSellDate_atBarX`
+  - `pastResults.avg_maxUpsidePercent_byBarX`
+  - `pastResults.avg_maxDownsidePercent_byBarX`
+  - `pastResults.upsideDownsideRatio_byBarX`
+  - `pastResults.avg_profitLossPercent_atBarX`
+  - `pastResults.percentProfitable_atBarX`
+  - `pastResults.percentProfitable_by_1_percent_atBarX`
+  - `pastResults.percentProfitable_by_2_percent_atBarX`
+  - `pastResults.percentProfitable_by_5_percent_atBarX`
+  - `pastResults.percentProfitable_by_10_percent_atBarX`

@@ -134,25 +134,25 @@ const runTradeSimulation = async (
     })
   ).filter(
     (ps) =>
-      !isNullOrUndefined(ps.futureResults.actualProfitLossPercent_atBarX) &&
+      !isNullOrUndefined(ps.futureResults.profitLossPercent_atBarX) &&
       !isNullOrUndefined(
-        ps.futureResults.actualProfitLossPercent_atBarX[significantBar]
+        ps.futureResults.profitLossPercent_atBarX[significantBar]
       )
   );
-  const listedActualProfitLossPercents = patternStats.map(
-    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar]
+  const listedProfitLossPercents = patternStats.map(
+    (p) => p.futureResults.profitLossPercent_atBarX[significantBar]
   );
-  const listedActualProfitLossSellDates = patternStats.map(
-    (p) => p.futureResults.actualProfitLossSellDate_atBarX[significantBar]
+  const listedProfitLossSellDates = patternStats.map(
+    (p) => p.futureResults.profitLossSellDate_atBarX[significantBar]
   );
 
   const tradeCount = patternStats.length;
   const profitableCount = patternStats.filter(
-    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar] > 0
+    (p) => p.futureResults.profitLossPercent_atBarX[significantBar] > 0
   ).length;
   const avgProfitLossPercent = _.meanBy(
     patternStats,
-    (p) => p.futureResults.actualProfitLossPercent_atBarX[significantBar]
+    (p) => p.futureResults.profitLossPercent_atBarX[significantBar]
   );
 
   const percentProfitable = (100 * profitableCount) / tradeCount;
@@ -165,8 +165,8 @@ const runTradeSimulation = async (
 
   const tradeResults = {
     avgProfitLossPercent,
-    listedProfitLossPercents: listedActualProfitLossPercents,
-    listedProfitLossSellDates: listedActualProfitLossSellDates,
+    listedProfitLossPercents: listedProfitLossPercents,
+    listedProfitLossSellDates: listedProfitLossSellDates,
     percentProfitable,
     tradeCount,
     daysEvaluatedCount,
