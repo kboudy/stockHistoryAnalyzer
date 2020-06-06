@@ -8,10 +8,12 @@ const _ = require('lodash'),
     loadHistoricalDataForSymbol,
   } = require('../helpers/symbolData'),
   Candle = require('../models/candle'),
+  { optionableSymbols } = require('../helpers/constants'),
   downloadBulkCurrentEquityData = require('../helpers/tdaCommunication'),
   PatternStats = require('../models/patternStats'),
   PaperTrade = require('../models/paperTrade'),
   SymbolInfo = require('../models/symbolInfo'),
+  { isNullOrUndefined } = require('../helpers/commonMethods'),
   PatternStatsJobRun = require('../models/patternStatsJobRun'),
   TradeSimulationRun = require('../models/tradeSimulationRun');
 
@@ -89,6 +91,43 @@ const validateCandleDates = async () => {
   }
 };
 
+const recentProfitLossHistory_allSymbols = async () => {
+  const allDates = (await Candle.find({ symbol: 'SPY' })).map((c) => c.date);
+  const recentDates = allDates.slice(allDates.length - 100);
+
+  for (const endDate of recentDates) {
+    const startDate = allDates[allDates.indexOf(endDate) - 1];
+    const candlesBefore = await Candle.find({ date: startDate });
+    const candlesBefore_BySymbol = candlesBefore.reduce((reduced, c) => {
+      reduced[c.symbol] = parseFloat(`${c.close}`);
+      return reduced;
+    }, {});
+
+    const candlesAfter = await Candle.find({ date: endDate });
+    const candlesAfter_BySymbol = candlesAfter.reduce(
+      (reduced, c, currentIndex) => {
+        reduced[c.symbol] = parseFloat(`${c.close}`);
+        return reduced;
+      },
+      {}
+    );
+    const pls = [];
+    for (const s in candlesBefore_BySymbol) {
+      if (isCrypto(s) || !optionableSymbols.includes(s)) {
+        continue;
+      }
+      if (!isNullOrUndefined(candlesAfter_BySymbol[s])) {
+        const thisPl =
+          ((candlesAfter_BySymbol[s] - candlesBefore_BySymbol[s]) * 100) /
+          candlesBefore_BySymbol[s];
+        pls.push(thisPl);
+      }
+    }
+    const avgPL = _.mean(pls);
+    console.log(`${startDate},${endDate},${avgPL.toFixed(1)}`);
+  }
+};
+
 const copyCandlesFromAnotherDb = async () => {
   let currentIdx = 0;
   const incrementer = 10000;
@@ -133,6 +172,6 @@ const removeSymbolsThatDontExistInSymbolInfo = async () => {
 
 (async () => {
   await mongoApi.connectMongoose();
-  await removeSymbolsThatDontExistInSymbolInfo();
+  await recentProfitLossHistory_allSymbols();
   await mongoApi.disconnectMongoose();
 })();
