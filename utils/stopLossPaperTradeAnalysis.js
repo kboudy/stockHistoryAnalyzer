@@ -32,13 +32,15 @@ const listPaperTrade_avgProfits_byDate = async () => {
     {}
   );
 
+  const plPerSymbol = {};
   for (const buyDate of distinctBuyDates) {
     const paperTrades = await PaperTrade.find({ buyDate, heldDays: HELD_DAYS });
     const strBuyDate = moment(buyDate).format('YYYY-MM-DD');
-    /*     if (strBuyDate === '2019-05-31') {
-      break;
-    }
- */
+    /* 
+      if (strBuyDate === '2018-12-17') {
+        break;
+      }
+    */
     let strSellDate;
     const plListByStop = [];
     for (const pt of paperTrades) {
@@ -69,6 +71,14 @@ const listPaperTrade_avgProfits_byDate = async () => {
               break;
             }
           }
+        } else {
+          if (!plPerSymbol[pt.symbol]) {
+            plPerSymbol[pt.symbol] = [];
+          }
+          plPerSymbol[pt.symbol].push(
+            (100 * (pt.sellPrice_underlying - pt.buyPrice_underlying)) /
+              pt.buyPrice_underlying
+          );
         }
 
         plByStop[stopLossPercent] =
@@ -106,6 +116,16 @@ const listPaperTrade_avgProfits_byDate = async () => {
     }
     console.log(outputLine);
   }
+  /* 
+// to output PL/symbol
+for (const symbol in plPerSymbol) {
+    console.log(
+      `${symbol},${plPerSymbol[symbol].length},${_.mean(
+        plPerSymbol[symbol]
+      ).toFixed(2)}`
+    );
+  }
+ */
 };
 
 (async () => {
