@@ -37,7 +37,7 @@ const listPaperTrade_avgProfits_byDate = async () => {
     /*     if (strBuyDate === '2019-08-20') {
       break;
     }
- */
+    */
     let strSellDate;
     const plListByStop = [];
     for (const pt of paperTrades) {

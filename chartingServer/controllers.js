@@ -126,13 +126,13 @@ exports.getPaperTradingData = async (req, res, next) => {
       res.json({ data: [] });
       return;
     }
-    let queryObj = {};
+    let queryObj = { buyDate: { $gte: moment().add(-60, 'days').toDate() } };
     if (date) {
       const buyDateTime = moment(`${date} 4:00PM`, 'YYYY-MM-DD h:mmA')
         .utc()
         .toDate();
 
-      queryObj = date ? { buyDate: buyDateTime } : {};
+      queryObj = { buyDate: buyDateTime };
     }
 
     const results = await PaperTrade.find(queryObj).lean().sort({
