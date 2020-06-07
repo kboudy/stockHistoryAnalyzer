@@ -75,16 +75,21 @@ if (cluster.isMaster) {
         let createdDate = argv.historicalDate
           ? moment(`${argv.historicalDate} 4:00PM`, 'YYYY-MM-DD h:mmA').utc()
           : moment.utc();
-        await CurrentDayEvaluationJobRun.create({
-          created: createdDate,
-          results: gatheredResults,
-        });
+        const currentDayEvaluationJobRun = await CurrentDayEvaluationJobRun.create(
+          {
+            created: createdDate,
+            results: gatheredResults,
+          }
+        );
         await mongoApi.disconnectMongoose();
-        console.log('job complete');
+        console.log(`Created job id: ${currentDayEvaluationJobRun.id}`);
       }
     });
-    console.log('Downloading latest symbol data');
-    await downloadAndSaveMultipleSymbolHistory(allSymbols);
+
+    if (!argv.historicalDate) {
+      console.log('Downloading latest symbol data');
+      await downloadAndSaveMultipleSymbolHistory(allSymbols);
+    }
 
     console.log(
       `Starting current day job: spinning off ${numWorkers} processes`
