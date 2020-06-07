@@ -71,6 +71,13 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "stopLossPaperTradeAnalysis",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/utils/stopLossPaperTradeAnalysis.js"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "symbolDiscovery",
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/utils/symbolDiscovery.js"

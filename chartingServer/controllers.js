@@ -121,7 +121,21 @@ exports.getPatternStats = async (req, res, next) => {
 
 exports.getPaperTradingData = async (req, res, next) => {
   try {
-    const results = await PaperTrade.find({}).lean().sort({
+    const { date } = req.query;
+    if (date && !date.match(/\d\d\d\d-\d\d-\d\d/g)) {
+      res.json({ data: [] });
+      return;
+    }
+    let queryObj = {};
+    if (date) {
+      const buyDateTime = moment(`${date} 4:00PM`, 'YYYY-MM-DD h:mmA')
+        .utc()
+        .toDate();
+
+      queryObj = date ? { buyDate: buyDateTime } : {};
+    }
+
+    const results = await PaperTrade.find(queryObj).lean().sort({
       buyDate: 1,
     });
 
