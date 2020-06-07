@@ -70,7 +70,7 @@ const createPaperTrades = async (currentDayJob) => {
   let currentLoopDate = allDates.filter((d) => d < earliestJobDate);
   currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
 
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 1000; i++) {
     console.log(`--historicalDate: ${currentLoopDate}`);
 
     const jobRunnerPath = `${path.join(
