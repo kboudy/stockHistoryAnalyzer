@@ -10,7 +10,7 @@ const _ = require('lodash'),
   Candle = require('../models/candle'),
   { optionableSymbols } = require('../helpers/constants'),
   downloadBulkCurrentEquityData = require('../helpers/tdaCommunication'),
-  PatternStats = require('../models/patternStats'),
+  CurrentDayEvaluationJobRun = require('../models/currentDayEvaluationJobRun'),
   PaperTrade = require('../models/paperTrade'),
   SymbolInfo = require('../models/symbolInfo'),
   { isNullOrUndefined } = require('../helpers/commonMethods'),
@@ -147,7 +147,6 @@ const copyCandlesFromAnotherDb = async () => {
 };
 
 const removeSymbolsThatDontExistInSymbolInfo = async () => {
-  await mongoApi.connectMongoose();
   const symbolInfoSymbols = (await SymbolInfo.find({})).map((s) => s.symbol);
 
   const candleSymbolsToDelete = (await getAvailableSymbolNames()).filter(
@@ -165,13 +164,54 @@ const removeSymbolsThatDontExistInSymbolInfo = async () => {
     console.log(`Deleting paperTrades for: ${s}`);
     await PaperTrade.deleteMany({ symbol: s });
   }
+};
 
+const removeOrphanedPaperTrades = async () => {
+  const jobIds = (await CurrentDayEvaluationJobRun.find({})).map((c) => c.id);
+  for (const pt of await PaperTrade.find({})) {
+    const id = pt.currentDayEvaluationJobRun.toString();
+    if (!jobIds.includes(id)) {
+      await PaperTrade.findByIdAndDelete(pt.id);
+    } else {
+      const zz = 5;
+    }
+  }
+};
+
+const listPaperTrade_avgProfits_byDate = async () => {
+  const results = await PaperTrade.aggregate([
+    {
+      $group: {
+        _id: {
+          buyDate: '$buyDate',
+          heldDays: '$heldDays',
+        },
+        profitPercent_underlying: {
+          $avg: {
+            $divide: [
+              { $subtract: ['$sellPrice_underlying', '$buyPrice_underlying'] },
+              '$buyPrice_underlying',
+            ],
+          },
+        },
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+  for (const r of results) {
+    console.log(
+      `${moment(r._id.buyDate).format('YYYY-MM-DD')},${r._id.heldDays},${
+        Math.round(r.profitPercent_underlying * 10000) / 100
+      }`
+    );
+  }
   debugger;
-  await mongoApi.disconnectMongoose();
 };
 
 (async () => {
   await mongoApi.connectMongoose();
-  await recentProfitLossHistory_allSymbols();
+  await removeOrphanedPaperTrades();
   await mongoApi.disconnectMongoose();
 })();

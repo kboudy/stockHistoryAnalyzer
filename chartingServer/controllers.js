@@ -89,7 +89,7 @@ exports.getPatternStatsJobRuns = async (req, res, next) => {
 exports.getCurrentDayEvaluationJobRun = async (req, res, next) => {
   try {
     const { jobRunId, useStringentFilterForHeldDays } = req.query;
-    let res = await CurrentDayEvaluationJobRun.findById(jobRunId)
+    let r = await CurrentDayEvaluationJobRun.findById(jobRunId)
       .lean()
       .sort({
         created: -1,
@@ -97,12 +97,12 @@ exports.getCurrentDayEvaluationJobRun = async (req, res, next) => {
       .limit(1);
 
     if (useStringentFilterForHeldDays) {
-      res.results = applyStringentFilter(
-        res.results,
+      r.results = applyStringentFilter(
+        r.results,
         useStringentFilterForHeldDays
       );
     }
-    res.json(res);
+    res.json(r);
   } catch (error) {
     return next(error);
   }

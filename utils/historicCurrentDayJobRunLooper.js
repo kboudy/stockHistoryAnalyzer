@@ -30,10 +30,16 @@ const createPaperTrades = async (currentDayJob) => {
       if (datesForSymbol.length < buyDateIndex + heldDays - 1) {
         continue;
       }
-      const sellDate = datesForSymbol[buyDateIndex + heldDays];
-      const sellDateTime = moment(`${sellDate} 4:00PM`, 'YYYY-MM-DD h:mmA')
-        .utc()
-        .toDate();
+
+      let sellDateTime = null;
+      let sellPrice_underlying = null;
+      if (candlesForSymbol[buyDateIndex + heldDays]) {
+        sellPrice_underlying = candlesForSymbol[buyDateIndex + heldDays].close;
+        const sellDate = datesForSymbol[buyDateIndex + heldDays];
+        sellDateTime = moment(`${sellDate} 4:00PM`, 'YYYY-MM-DD h:mmA')
+          .utc()
+          .toDate();
+      }
 
       await PaperTrade.create({
         created: cdejrCreatedDate,
@@ -45,7 +51,7 @@ const createPaperTrades = async (currentDayJob) => {
         optionStrike: null,
         buyPrice_underlying: candlesForSymbol[buyDateIndex].close,
         buyPrice_option: null,
-        sellPrice_underlying: candlesForSymbol[buyDateIndex + heldDays].close,
+        sellPrice_underlying,
         sellPrice_option: null,
         currentDayEvaluationJobRun: currentDayJob.id,
       });
@@ -64,7 +70,9 @@ const createPaperTrades = async (currentDayJob) => {
   let currentLoopDate = allDates.filter((d) => d < earliestJobDate);
   currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 150; i++) {
+    console.log(`--historicalDate: ${currentLoopDate}`);
+
     const jobRunnerPath = `${path.join(
       path.dirname(__dirname),
       'primaryModules/currentDayJobRunner.js'
