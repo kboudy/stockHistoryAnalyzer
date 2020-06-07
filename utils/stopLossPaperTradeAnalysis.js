@@ -4,11 +4,12 @@ const _ = require('lodash'),
   PaperTrade = require('../models/paperTrade'),
   Candle = require('../models/candle');
 
-const STOP_LOSS_ARRAY = [0, 1, 2, 5];
+const STOP_LOSS_ARRAY = [0, 1, 2, 5, 10, 15];
+const HELD_DAYS = 1;
 
 const listPaperTrade_avgProfits_byDate = async () => {
   const results = await PaperTrade.aggregate([
-    { $match: { heldDays: 1 } },
+    { $match: { heldDays: HELD_DAYS } },
     {
       $group: {
         _id: {
@@ -32,12 +33,12 @@ const listPaperTrade_avgProfits_byDate = async () => {
   );
 
   for (const buyDate of distinctBuyDates) {
-    const paperTrades = await PaperTrade.find({ buyDate, heldDays: 1 });
+    const paperTrades = await PaperTrade.find({ buyDate, heldDays: HELD_DAYS });
     const strBuyDate = moment(buyDate).format('YYYY-MM-DD');
-    /*     if (strBuyDate === '2019-08-20') {
+    /*     if (strBuyDate === '2019-05-31') {
       break;
     }
-    */
+ */
     let strSellDate;
     const plListByStop = [];
     for (const pt of paperTrades) {
