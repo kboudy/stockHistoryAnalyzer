@@ -78,7 +78,11 @@ const createPaperTrades = async (currentDayJob) => {
       .split(':')[1]
       .trim();
 
-    await createPaperTrades(await CurrentDayEvaluationJobRun.findById(jobId));
+    const job = await CurrentDayEvaluationJobRun.findById(jobId);
+    await createPaperTrades(job);
+    await CurrentDayEvaluationJobRun.deleteMany({
+      created: { $lte: new Date('2020-05-29'), $gt: job.created },
+    });
 
     currentLoopDate = allDates.filter((d) => d < currentLoopDate);
     currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
