@@ -99,7 +99,11 @@ const { argv } = require('yargs')
           sourcePriceHistory,
           targetPriceHistorySymbols,
           nb,
-          ignoreMatchesAboveThisScore
+          ignoreMatchesAboveThisScore,
+          true,
+          true,
+          true,
+          null
         );
       }
     }

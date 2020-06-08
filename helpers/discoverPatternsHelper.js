@@ -17,12 +17,12 @@ exports.discoverPatternsForSymbol = async (
   targetSymbols,
   numberOfBars,
   ignoreMatchesAboveThisScore,
+  startAfterPreExistingInDb,
+  writeToDb,
+  logToConsole,
   specificSourceIndex = null // this will be set when looking at "current day" evaluations
 ) => {
   const isSpecificIndexSet = !isNullOrUndefined(specificSourceIndex);
-  // implications of setting specificSourceIndex: don't log to console, don't write to db & return the single patternStat
-  const writeToDb = !isSpecificIndexSet;
-  const logToConsole = !isSpecificIndexSet;
 
   let lastLoggedPercentComplete = 0;
 
@@ -81,7 +81,7 @@ exports.discoverPatternsForSymbol = async (
 
     if (
       // allows us to efficiently add to existing patternStatsJobRuns
-      writeToDb &&
+      startAfterPreExistingInDb &&
       preExistingMaxDate &&
       sourcePriceHistory[i].date <= preExistingMaxDate
     ) {

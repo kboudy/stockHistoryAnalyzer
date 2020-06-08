@@ -59,7 +59,7 @@ const createPaperTrades = async (currentDayJob) => {
   }
 };
 
-let lastJob = null;
+let lastJobId = null;
 
 (async () => {
   await mongoApi.connectMongoose();
@@ -69,9 +69,6 @@ let lastJob = null;
     (await CurrentDayEvaluationJobRun.findOne({}).sort({ created: 1 }).limit(1))
       .created
   ).format('YYYY-MM-DD');
-  if (lastJob) {
-    await CurrentDayEvaluationJobRun.findByIdAndDelete(lastJob.id);
-  }
 
   let currentLoopDate = allDates.filter((d) => d < earliestJobDate);
   currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
@@ -87,17 +84,18 @@ let lastJob = null;
     const { stdout, stderr } = await exec(
       `node "${jobRunnerPath}" --historicalDate ${currentLoopDate}`
     );
-    const jobId = stdout
+    if (lastJobId) {
+      await CurrentDayEvaluationJobRun.findByIdAndDelete(lastJobId);
+    }
+    lastJobId = stdout
       .slice(stdout.indexOf('Created job id'))
       .split(':')[1]
       .trim();
-
-    const job = await CurrentDayEvaluationJobRun.findById(jobId);
+    const job = await CurrentDayEvaluationJobRun.findById(lastJobId);
     await createPaperTrades(job);
 
     currentLoopDate = allDates.filter((d) => d < currentLoopDate);
     currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
-    lastJob = job;
   }
 
   await mongoApi.connectMongoose();

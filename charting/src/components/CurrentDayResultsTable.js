@@ -376,9 +376,7 @@ const CurrentDayResultsTable = (props) => {
         jobRunId: currentDayJobRun._id,
       });
       setSnackbarMessage(
-        `${selectedSymbols.length} paper trade${
-          selectedSymbols.length === 1 ? '' : 's'
-        } created`
+        `${syms.length} paper trade${syms.length === 1 ? '' : 's'} created`
       );
     }
   };

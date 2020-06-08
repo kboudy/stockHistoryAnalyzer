@@ -248,7 +248,7 @@ exports.runCurrentDayJob = async (
       );
     }
     const sourcePriceHistory = await loadHistoricalDataForSymbol(symbol);
-    let specificSourceIndex = null;
+    let specificSourceIndex = sourcePriceHistory.length - 1;
     if (historicalDate) {
       specificSourceIndex = sourcePriceHistory.indexOf(
         sourcePriceHistory.filter((s) => s.date === historicalDate)[0]
@@ -261,6 +261,9 @@ exports.runCurrentDayJob = async (
         [symbol],
         nb,
         ignoreMatchesAboveThisScore,
+        false,
+        false,
+        false,
         specificSourceIndex
       );
 
