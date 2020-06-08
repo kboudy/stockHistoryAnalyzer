@@ -59,6 +59,8 @@ const createPaperTrades = async (currentDayJob) => {
   }
 };
 
+let lastJob = null;
+
 (async () => {
   await mongoApi.connectMongoose();
 
@@ -67,6 +69,10 @@ const createPaperTrades = async (currentDayJob) => {
     (await CurrentDayEvaluationJobRun.findOne({}).sort({ created: 1 }).limit(1))
       .created
   ).format('YYYY-MM-DD');
+  if (lastJob) {
+    await CurrentDayEvaluationJobRun.findByIdAndDelete(lastJob.id);
+  }
+
   let currentLoopDate = allDates.filter((d) => d < earliestJobDate);
   currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
 
@@ -88,12 +94,10 @@ const createPaperTrades = async (currentDayJob) => {
 
     const job = await CurrentDayEvaluationJobRun.findById(jobId);
     await createPaperTrades(job);
-    await CurrentDayEvaluationJobRun.deleteMany({
-      created: { $lte: new Date('2020-05-29'), $gt: job.created },
-    });
 
     currentLoopDate = allDates.filter((d) => d < currentLoopDate);
     currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
+    lastJob = job;
   }
 
   await mongoApi.connectMongoose();

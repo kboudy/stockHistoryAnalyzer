@@ -73,24 +73,22 @@ exports.applyStringentFilter = (results, heldDays) => {
       symbol,
       percentProfitable:
         results[symbol][ALL_FIELD_NAME].percentProfitable_atBarX[heldDays],
-      avgProfitLossPercent:
-        results[symbol][ALL_FIELD_NAME].avg_profitLossPercent_atBarX[heldDays],
+      // avgProfitLossPercent:
+      //   results[symbol][ALL_FIELD_NAME].avg_profitLossPercent_atBarX[heldDays],
     };
   });
-  const top7PercentProfitable = _.take(
+  const topPercentProfitable = _.take(
     _.orderBy(pProfitable, (p) => -p.percentProfitable),
-    7
+    15
   ).map((pp) => pp.symbol);
-  const top7ProfitLoss = _.take(
-    _.orderBy(pProfitable, (p) => -p.avgProfitLossPercent),
-    7
-  ).map((pp) => pp.symbol);
+  // const top7ProfitLoss = _.take(
+  //   _.orderBy(pProfitable, (p) => -p.avgProfitLossPercent),
+  //   7
+  // ).map((pp) => pp.symbol);
 
   for (const s in results) {
-    if (!top7PercentProfitable.includes(s) && !top7ProfitLoss.includes(s)) {
+    if (!topPercentProfitable.includes(s)) {
       delete results[s];
-    } else {
-      const zz = 5;
     }
   }
 
