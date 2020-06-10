@@ -12,6 +12,8 @@ exports.significantBarsArray = [1, 5, 10];
 
 exports.numberOfBarsArray = [10, 20, 30];
 
+exports.ignoreMatchesAboveThisScore = 10;
+
 exports.optionableSymbols = [
   'A',
   'AA',

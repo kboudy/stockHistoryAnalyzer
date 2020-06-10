@@ -3,7 +3,7 @@ const { loadHistoricalDataForSymbol } = require('./symbolData'),
   moment = require('moment'),
   { discoverPatternsForSymbol } = require('./discoverPatternsHelper'),
   { isNullOrUndefined, isObject, percentile } = require('./commonMethods'),
-  { numberOfBarsArray } = require('./constants');
+  { numberOfBarsArray, ignoreMatchesAboveThisScore } = require('./constants');
 
 const ALL_FIELD_NAME = 'all';
 
@@ -228,7 +228,6 @@ exports.runCurrentDayJob = async (
   const strHistDateMessage = historicalDate
     ? ` for historical date ${historicalDate}`
     : '';
-  const ignoreMatchesAboveThisScore = 12;
   if (logToConsole) {
     console.log(
       `${getLogDate()}* running "CurrentDay" job with ${

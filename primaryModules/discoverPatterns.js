@@ -10,7 +10,10 @@ const {
     discoverPatternsForSymbol,
     dropPatternCollections,
   } = require('../helpers/discoverPatternsHelper'),
-  { numberOfBarsArray } = require('../helpers/constants'),
+  {
+    ignoreMatchesAboveThisScore,
+    numberOfBarsArray,
+  } = require('../helpers/constants'),
   mongoApi = require('../helpers/mongoApi');
 
 const argOptions = {
@@ -61,7 +64,6 @@ const { argv } = require('yargs')
     includeOtherPriceHistoriesAsTargets = [false];
   }
 
-  const ignoreMatchesAboveThisScore = 12;
   const numberOfBars = argv.numberOfBars
     ? argv.numberOfBars
     : numberOfBarsArray;

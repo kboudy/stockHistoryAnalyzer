@@ -221,7 +221,6 @@ const { argv } = require('yargs')
 
   const includeOtherSymbolsTargetsArray = [true, false];
   const symbols = argv.symbols ? argv.symbols : await getAvailableSymbolNames();
-  const ignoreMatchesAboveThisScore = 12;
   const bruteForceValsConfig = {
     max_avgScore: [10, 11, 12],
     max_avg_maxDownsidePercent_byBarX: [null],
@@ -241,7 +240,7 @@ const { argv } = require('yargs')
     constants.numberOfBarsArray,
     constants.significantBars,
     includeOtherSymbolsTargetsArray,
-    ignoreMatchesAboveThisScore,
+    constants.ignoreMatchesAboveThisScore,
     bruteForceValsConfig
   );
 

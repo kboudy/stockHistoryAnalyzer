@@ -65,10 +65,12 @@ let lastJobId = null;
   await mongoApi.connectMongoose();
 
   const allDates = (await Candle.find({ symbol: 'SPY' })).map((c) => c.date);
-  const earliestJobDate = moment(
+  const earliestJobDate = '2020-06-09';
+
+  /* moment(
     (await CurrentDayEvaluationJobRun.findOne({}).sort({ created: 1 }).limit(1))
       .created
-  ).format('YYYY-MM-DD');
+  ).format('YYYY-MM-DD'); */
 
   let currentLoopDate = allDates.filter((d) => d < earliestJobDate);
   currentLoopDate = currentLoopDate[currentLoopDate.length - 1];
