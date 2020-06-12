@@ -31,7 +31,6 @@
     "moment": "^2.25.3",
     "moment-timezone": "^0.5.31",
     "mongoose": "^5.9.14",
-    "opn": "^6.0.0",
     "option-pricing-tree": "^1.0.1",
     "prompt-confirm": "^2.0.4",
     "selenium-webdriver": "^4.0.0-alpha.7",
